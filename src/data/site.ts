@@ -8,6 +8,8 @@ export const navLinks = [
   { label: "Contact", href: "/contact" },
 ];
 
+export const hotDealsLink = { label: "Hot Deals", href: "/hot-deals" };
+
 const catImg = (id: string) =>
   `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&crop=entropy&w=900&h=1200&q=90`;
 

@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import LegalHero from "@/components/legal/LegalHero";
 import LegalToc from "@/components/legal/LegalToc";
 import LegalSection from "@/components/legal/LegalSection";
-import LegalCallout from "@/components/legal/LegalCallout";
 import LegalList from "@/components/legal/LegalList";
 
 export const metadata: Metadata = {
@@ -150,24 +149,22 @@ export default function PrivacyPolicyPage() {
             </LegalSection>
 
             <LegalSection id="security" number="4" title="Data Storage, Security & Encryption Protocols">
-              <LegalCallout>
-                <LegalList
-                  items={[
-                    {
-                      label: "Encryption",
-                      text: "All data transmitted between your browser and Snapingo is encrypted using Transport Layer Security (TLS 1.3). Sensitive records and identity documents are encrypted at rest using AES-256 standards.",
-                    },
-                    {
-                      label: "Access Control",
-                      text: "Strict role-based access control (RBAC) ensures only authorized concierge personnel and operational agents access booking files.",
-                    },
-                    {
-                      label: "Data Retention",
-                      text: "Personal booking data is retained for the duration required to service your travel, handle tax and accounting compliance, and resolve potential post-travel claims, after which it is securely purged or anonymized.",
-                    },
-                  ]}
-                />
-              </LegalCallout>
+              <LegalList
+                items={[
+                  {
+                    label: "Encryption",
+                    text: "All data transmitted between your browser and Snapingo is encrypted using Transport Layer Security (TLS 1.3). Sensitive records and identity documents are encrypted at rest using AES-256 standards.",
+                  },
+                  {
+                    label: "Access Control",
+                    text: "Strict role-based access control (RBAC) ensures only authorized concierge personnel and operational agents access booking files.",
+                  },
+                  {
+                    label: "Data Retention",
+                    text: "Personal booking data is retained for the duration required to service your travel, handle tax and accounting compliance, and resolve potential post-travel claims, after which it is securely purged or anonymized.",
+                  },
+                ]}
+              />
             </LegalSection>
 
             <LegalSection id="cookies" number="5" title="Cookies & Tracking Technologies">

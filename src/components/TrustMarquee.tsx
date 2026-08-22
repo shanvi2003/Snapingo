@@ -16,7 +16,7 @@ export default function TrustMarquee() {
         </div>
 
         <div className="overflow-hidden mask-fade-x">
-          <div className="flex w-max animate-marquee items-center gap-4 sm:gap-5">
+          <div className="flex w-max animate-marquee items-center gap-4 hover:[animation-play-state:paused] sm:gap-5">
             {[...trustLogos, ...trustLogos].map((brand, i) => (
               <div
                 key={`${brand.name}-${i}`}

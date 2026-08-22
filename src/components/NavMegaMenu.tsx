@@ -127,19 +127,15 @@ export default function NavMegaMenu({
         title="Explore Holiday Packages"
         description="All-inclusive itineraries: flights, stay, meals & transfers bundled at one transparent price."
         items={[
-          "Honeymoon Packages",
-          "Family Packages",
-          "Group Tours",
-          "Luxury Escapes",
-          "Adventure Trips",
-          "Weekend Getaways",
-          "Budget Trips",
-          "Customized Tours",
-          "Solo Trip Packages",
-          "Religious Tours",
-          "Corporate Trips",
-          "Surprise Trip",
-        ].map((label) => ({ label, href: "/packages" }))}
+          { label: "Honeymoon Packages", href: "/packages?category=honeymoon" },
+          { label: "Family Packages", href: "/packages?category=family" },
+          { label: "Group Tours", href: "/packages?category=group" },
+          { label: "Adventure Trips", href: "/packages?category=adventure" },
+          { label: "Weekend Getaways", href: "/packages?category=weekend" },
+          { label: "Solo Trip Packages", href: "/packages?category=solo" },
+          { label: "Religious Tours", href: "/packages?category=religious" },
+          { label: "Corporate Trips", href: "/packages?category=corporate" },
+        ]}
         ctaLabel="View all featured packages"
         ctaHref="/packages"
         onNavigate={onNavigate}

@@ -48,8 +48,8 @@ export default function AboutPage() {
     <>
       <section className="relative flex h-[70vh] min-h-[480px] items-end overflow-hidden bg-ink-950">
         <Image
-          src="https://images.unsplash.com/photo-1569604402759-c8e0c98766f9?auto=format&fit=crop&crop=entropy&w=1920&h=1080&q=90"
-          alt="A winding mountain road at sunset"
+          src="https://images.unsplash.com/photo-1573843981267-be1999ff37cd?auto=format&fit=crop&crop=entropy&w=1920&h=1080&q=90"
+          alt="Overwater villas in the Maldives at golden hour"
           fill
           loading="eager"
           fetchPriority="high"

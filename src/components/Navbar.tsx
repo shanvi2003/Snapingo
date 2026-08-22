@@ -5,8 +5,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, Menu, Phone, X } from "lucide-react";
-import { navLinks } from "@/data/site";
+import { ChevronDown, Flame, Menu, Phone, X } from "lucide-react";
+import { hotDealsLink, navLinks } from "@/data/site";
 import NavMegaMenu from "@/components/NavMegaMenu";
 
 const menuLinks = ["Domestic", "International", "Packages", "Services"];
@@ -14,6 +14,7 @@ const menuLinks = ["Domestic", "International", "Packages", "Services"];
 export default function Navbar() {
   const pathname = usePathname();
   const isHome = pathname === "/";
+  const onHotDeals = pathname === hotDealsLink.href;
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [hoveredLink, setHoveredLink] = useState<string | null>(null);
@@ -78,7 +79,7 @@ export default function Navbar() {
           </span>
         </Link>
 
-        <div className="hidden items-center gap-9 lg:flex">
+        <div className="hidden items-center gap-6 xl:flex">
           {navLinks.map((link) => (
             <Link
               key={link.label}
@@ -116,12 +117,27 @@ export default function Navbar() {
               />
             </Link>
           ))}
+
+          <Link
+            href={hotDealsLink.href}
+            onClick={() => setHoveredLink(null)}
+            className="group flex items-center transition hover:-translate-y-0.5"
+          >
+            <span
+              className={`flex items-center gap-2 rounded-full bg-brand-600 px-6 py-3 font-heading text-base font-bold text-white ${
+                onHotDeals ? "" : "animate-hot-deal-pulse group-hover:[animation-play-state:paused] group-hover:opacity-100!"
+              }`}
+            >
+              <Flame className="h-5 w-5" />
+              {hotDealsLink.label}
+            </span>
+          </Link>
         </div>
 
         <button
           aria-label="Toggle menu"
           onClick={() => setOpen((v) => !v)}
-          className={`grid h-10 w-10 place-items-center rounded-full transition-colors lg:hidden ${
+          className={`grid h-10 w-10 place-items-center rounded-full transition-colors xl:hidden ${
             solid ? "text-ink-800 hover:bg-ink-100" : "text-white hover:bg-white/10"
           }`}
         >
@@ -137,7 +153,7 @@ export default function Navbar() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
-            className="pointer-events-none fixed inset-x-0 bottom-0 top-18 hidden bg-ink-950/25 backdrop-blur-[2px] lg:block"
+            className="pointer-events-none fixed inset-x-0 bottom-0 top-18 hidden bg-ink-950/25 backdrop-blur-[2px] xl:block"
           />
         )}
       </AnimatePresence>
@@ -152,7 +168,7 @@ export default function Navbar() {
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
             onMouseEnter={() => hoveredLink && openMenu(hoveredLink)}
             onMouseLeave={scheduleClose}
-            className="absolute inset-x-0 top-full hidden border-t border-ink-100 bg-white shadow-2xl lg:block"
+            className="absolute inset-x-0 top-full hidden border-t border-ink-100 bg-white shadow-2xl xl:block"
           >
             <AnimatePresence mode="wait">
               <motion.div
@@ -176,7 +192,7 @@ export default function Navbar() {
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.28, ease: "easeInOut" }}
-            className="overflow-hidden border-t border-ink-100 bg-white lg:hidden"
+            className="overflow-hidden border-t border-ink-100 bg-white xl:hidden"
           >
             <div className="container-app flex flex-col gap-1 py-4">
               {navLinks.map((link) => (
@@ -189,6 +205,20 @@ export default function Navbar() {
                   {link.label}
                 </Link>
               ))}
+              <Link
+                href={hotDealsLink.href}
+                onClick={() => setOpen(false)}
+                className="group mt-1 flex items-center"
+              >
+                <span
+                  className={`flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 px-3 py-4 font-heading text-xl font-bold tracking-wide text-white ${
+                    onHotDeals ? "" : "animate-hot-deal-pulse group-hover:[animation-play-state:paused] group-hover:opacity-100!"
+                  }`}
+                >
+                  <Flame className="h-5.5 w-5.5" />
+                  {hotDealsLink.label}
+                </span>
+              </Link>
               <a
                 href="tel:+918700368575"
                 className="mt-2 flex items-center gap-2 rounded-lg px-3 py-3 text-base font-semibold text-ink-700"

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import PackagesGrid from "@/components/PackagesGrid";
+import type { PackageCategory } from "@/lib/packageCategoryHelpers";
 
 export const metadata: Metadata = {
   title: "Holiday Packages | Snapingo",
@@ -7,19 +8,37 @@ export const metadata: Metadata = {
     "Browse all-inclusive domestic and international holiday packages from Snapingo: flights, stay, meals & transfers bundled at one transparent price.",
 };
 
+const VALID_CATEGORIES: PackageCategory[] = [
+  "honeymoon",
+  "family",
+  "group",
+  "adventure",
+  "weekend",
+  "solo",
+  "religious",
+  "corporate",
+];
+
 export default async function PackagesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ type?: string }>;
+  searchParams: Promise<{ type?: string; category?: string }>;
 }) {
-  const { type } = await searchParams;
+  const { type, category } = await searchParams;
   const initialType = type === "domestic" || type === "international" ? type : "all";
+  const initialCategory = VALID_CATEGORIES.includes(category as PackageCategory)
+    ? (category as PackageCategory)
+    : null;
 
   return (
     <>
       <section className="bg-ink-50/60 pb-14 pt-28 sm:pb-16 sm:pt-32">
         <div className="container-app">
-          <PackagesGrid key={initialType} initialType={initialType} />
+          <PackagesGrid
+            key={`${initialType}-${initialCategory ?? "none"}`}
+            initialType={initialType}
+            initialCategory={initialCategory}
+          />
         </div>
       </section>
     </>

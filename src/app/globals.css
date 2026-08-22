@@ -48,6 +48,7 @@
   --animate-blob: blob 14s ease-in-out infinite;
   --animate-float: float 6s ease-in-out infinite;
   --animate-shimmer: shimmer 2.4s linear infinite;
+  --animate-hot-deal-pulse: hot-deal-pulse 1s steps(1, end) infinite;
 }
 
 :root {
@@ -62,7 +63,6 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
-  overflow-x: hidden;
 }
 
 @layer utilities {
@@ -181,11 +181,23 @@ body {
   }
 }
 
+@keyframes hot-deal-pulse {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  /* Marquees carry real content (offers, partner logos, testimonials) rather
+     than decorative motion, so freezing them clips content instead of
+     reducing motion. They stay animated but pause on hover/focus below. */
   .animate-blob,
   .animate-float,
-  .animate-marquee,
-  .animate-marquee-slow,
   .animate-shimmer {
     animation: none !important;
   }
@@ -194,6 +206,14 @@ body {
 @media print {
   @page {
     margin: 1.5cm;
+  }
+
+  /* Browsers drop background colors on print by default (to save ink)
+     unless a page explicitly opts back in - the itinerary PDF relies on
+     tinted accommodation/inclusion/exclusion boxes to stay legible. */
+  * {
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
   }
 
   .print-hide {

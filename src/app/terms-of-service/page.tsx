@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import LegalHero from "@/components/legal/LegalHero";
 import LegalToc from "@/components/legal/LegalToc";
 import LegalSection from "@/components/legal/LegalSection";
-import LegalCallout from "@/components/legal/LegalCallout";
 import LegalList from "@/components/legal/LegalList";
 
 export const metadata: Metadata = {
@@ -159,38 +158,39 @@ export default function TermsOfServicePage() {
             </LegalSection>
 
             <LegalSection id="cancellation" number="5" title="Cancellation, Rescheduling & Refund Policy">
-              <LegalCallout title="Standard Package Cancellation Timeline">
-                <LegalList
-                  items={[
-                    {
-                      label: "Token / Advance Payment",
-                      text: "Non-refundable in all cases, regardless of how far in advance the cancellation is made.",
-                    },
-                    {
-                      label: "15+ Days Prior to Departure",
-                      text: "A cancellation fee of 25% to 50% of the total package value applies, depending on the package and supplier terms.",
-                    },
-                    {
-                      label: "Within 15 Days of Departure, or No-Show",
-                      text: "100% retention charges apply and the booking becomes fully non-refundable.",
-                    },
-                    {
-                      label: "Unused Services",
-                      text: "No refunds are issued for services already confirmed but not used, including flights, hotels, meals, or sightseeing.",
-                    },
-                    {
-                      label: "Flight Tickets & Non-Refundable Hotels",
-                      text: "Any airline ticket issued under non-refundable fare buckets or promotional flash deals is subject strictly to airline policy rules.",
-                    },
-                  ]}
-                />
-                <p className="border-t border-brand-100 pt-3">
-                  <span className="font-bold text-ink-900">Refund Processing SLA: </span>
-                  Approved refunds will be credited back to the original payment method within 7
-                  to 14 business days from supplier receipt confirmation. All cancellation
-                  requests must be submitted in writing.
-                </p>
-              </LegalCallout>
+              <h3 className="font-heading text-base font-bold text-ink-900">
+                Standard Package Cancellation Timeline
+              </h3>
+              <LegalList
+                items={[
+                  {
+                    label: "Token / Advance Payment",
+                    text: "Non-refundable in all cases, regardless of how far in advance the cancellation is made.",
+                  },
+                  {
+                    label: "15+ Days Prior to Departure",
+                    text: "A cancellation fee of 25% to 50% of the total package value applies, depending on the package and supplier terms.",
+                  },
+                  {
+                    label: "Within 15 Days of Departure, or No-Show",
+                    text: "100% retention charges apply and the booking becomes fully non-refundable.",
+                  },
+                  {
+                    label: "Unused Services",
+                    text: "No refunds are issued for services already confirmed but not used, including flights, hotels, meals, or sightseeing.",
+                  },
+                  {
+                    label: "Flight Tickets & Non-Refundable Hotels",
+                    text: "Any airline ticket issued under non-refundable fare buckets or promotional flash deals is subject strictly to airline policy rules.",
+                  },
+                ]}
+              />
+              <p>
+                <span className="font-bold text-ink-900">Refund Processing SLA: </span>
+                Approved refunds will be credited back to the original payment method within 7 to
+                14 business days from supplier receipt confirmation. All cancellation requests
+                must be submitted in writing.
+              </p>
             </LegalSection>
 
             <LegalSection id="documentation" number="6" title="Passports, Visas & Travel Documentation">

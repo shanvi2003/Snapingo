@@ -24,6 +24,7 @@ export type TourPackage = {
   itinerary: ItineraryDay[];
   badge?: string;
   featured: boolean;
+  hotDeal?: boolean;
 };
 
 const img = (id: string, w = 1920) =>
@@ -4466,9 +4467,135 @@ export const allPackages: TourPackage[] = [
     ],
     featured: false,
   },
+  {
+    id: "kasol-malana-trek",
+    title: "Kasol & Malana Trek",
+    destination: "Kasol & Malana, India",
+    destinationSlug: "himachal",
+    type: "domestic",
+    image: img("1581791534721-e599df4417f7"),
+    duration: "2 Nights / 3 Days",
+    price: 6500,
+    originalPrice: 8999,
+    rating: 4.6,
+    reviews: 612,
+    inclusions: ["hotel", "meals", "transfer", "sightseeing"],
+    exclusions: standardExclusions,
+    highlights: [
+      "Guided trek to Malana, one of India's most mystical villages",
+      "Riverside stay in Kasol on the banks of the Parvati River",
+      "Evening bonfire session with music (weather permitting)",
+      "Overnight Volvo travel from Delhi both ways",
+    ],
+    itinerary: [
+      { day: 1, title: "Departure from Delhi", desc: "Gather at the meeting point (R K Ashram Metro Station / Majnu Ka Tila) by 7 PM and depart for Kasol by Volvo." },
+      { day: 2, title: "Kasol Arrival & Sightseeing", desc: "Check in at hotel/camps, brunch, sightseeing along the Parvati River and optional Manikaran visit, dinner and overnight stay in Kasol." },
+      { day: 3, title: "Trek to Malana & Return", desc: "Breakfast, guided trek to Malana with packed lunch, explore the village's heritage and culture, return to Kasol for an evening bonfire, dinner and overnight stay." },
+      { day: 4, title: "Departure from Kasol", desc: "Breakfast, check out, free time for local sightseeing or cafes, evening departure back to Delhi." },
+    ],
+    badge: "Hot Deal",
+    featured: false,
+    hotDeal: true,
+  },
+  {
+    id: "mcleodganj-triund-bir-trek",
+    title: "McLeodganj Triund Bir Trek",
+    destination: "McLeodganj, Triund & Bir, India",
+    destinationSlug: "himachal",
+    type: "domestic",
+    image: img("1655469795982-40b85d7faf92"),
+    duration: "5 Nights / 6 Days",
+    price: 15000,
+    originalPrice: 20999,
+    rating: 4.7,
+    reviews: 734,
+    inclusions: ["hotel", "meals", "transfer", "sightseeing"],
+    exclusions: standardExclusions,
+    highlights: [
+      "Moderate trek to Triund Top (9,432 ft) with camping under the stars",
+      "Paragliding session in Bir Billing, the paragliding capital of India",
+      "McLeodganj's Tibetan culture, Namgyal Monastery & Bhagsunag waterfall",
+      "Overnight Volvo travel from Delhi both ways",
+    ],
+    itinerary: [
+      { day: 1, title: "Delhi to McLeodganj", desc: "Assemble at the pickup point (Kashmere Gate, tentative) by 7 PM for a tour briefing, then head out on an overnight journey to McLeodganj." },
+      { day: 2, title: "Arrival & Local Sightseeing", desc: "Check in at the hotel, visit Namgyal Monastery, Bhagsunag Waterfall and the Tibetan Market, cafe hopping in the evening, dinner and overnight stay." },
+      { day: 3, title: "Trek to Triund (9 km)", desc: "Early breakfast, trek to Triund Top for panoramic views of the Kangra Valley, packed lunch enroute, dinner and overnight camping near Triund." },
+      { day: 4, title: "Drive to Bir (72 km)", desc: "Descend to McLeodganj, drive to Bir via Dharamshala, evening paragliding session at Bir Billing, dinner and overnight stay in Bir." },
+      { day: 5, title: "Bir Sightseeing & Departure", desc: "Breakfast, explore Bir's cafes, local market and a nearby monastery, evening overnight bus back to Delhi." },
+      { day: 6, title: "Delhi Arrival", desc: "Reach Delhi by early morning as the trip concludes." },
+    ],
+    badge: "Hot Deal",
+    featured: false,
+    hotDeal: true,
+  },
+  {
+    id: "kasol-kheerganga-manali-tour",
+    title: "Kasol Kheerganga Manali Backpacking Tour",
+    destination: "Kasol, Kheerganga & Manali, India",
+    destinationSlug: "himachal",
+    type: "domestic",
+    image: img("1634539132466-abaca3a2438b"),
+    duration: "5 Nights / 6 Days",
+    price: 12000,
+    originalPrice: 16999,
+    rating: 4.8,
+    reviews: 10240,
+    inclusions: ["hotel", "meals", "transfer", "sightseeing"],
+    exclusions: standardExclusions,
+    highlights: [
+      "Kheerganga trek via Barshaini with natural hot springs at the top",
+      "Panoramic views of Pin Parvati, Tosh Glacier & Sar Pass",
+      "Adventure day in Solang Valley with optional paragliding, ATV rides & zorbing",
+      "Manikaran Gurudwara hot springs & Chalal Village hike",
+    ],
+    itinerary: [
+      { day: 1, title: "Delhi to Kasol", desc: "Assemble at Kashmere Gate by 5-7 PM for a tour briefing, then head out on an overnight journey to Kasol." },
+      { day: 2, title: "Chalal Village Hike & Cafe Hopping", desc: "Check in at the hotel, hike to Chalal Village for views of the Parvati Valley, evening market visit and cafe hopping, dinner and overnight stay in Kasol." },
+      { day: 3, title: "Trek to Kheerganga (15 km)", desc: "Breakfast, drive to Barshaini and trek to Kheerganga through pine forests and waterfalls, explore the hot springs, dinner and overnight camping at Rudranaag." },
+      { day: 4, title: "Rudranaag to Kasol, Drive to Manali", desc: "Trek down to Barshaini, visit Manikaran Gurudwara's hot springs, drive to Manali, explore Old Manali and Mall Road, dinner and overnight stay." },
+      { day: 5, title: "Manali to Solang Valley", desc: "Breakfast and check out, scenic drive to Solang Valley for paragliding, zorbing and ATV rides, visit the Atal Tunnel and Sissu Valley, evening overnight bus to Delhi." },
+      { day: 6, title: "Delhi Arrival", desc: "Reach Delhi by early morning as the trip concludes." },
+    ],
+    badge: "Hot Deal",
+    featured: false,
+    hotDeal: true,
+  },
+  {
+    id: "haridwar-rishikesh-tour",
+    title: "Haridwar Rishikesh Tour",
+    destination: "Haridwar & Rishikesh, India",
+    destinationSlug: "uttarakhand",
+    type: "domestic",
+    image: img("1719581827279-e9a8d8fce924"),
+    duration: "3 Nights / 4 Days",
+    price: 9000,
+    originalPrice: 12499,
+    rating: 4.5,
+    reviews: 356,
+    inclusions: ["hotel", "meals", "transfer", "sightseeing"],
+    exclusions: standardExclusions,
+    highlights: [
+      "Evening Ganga Aarti at Har Ki Pauri, Haridwar",
+      "Visit to the legendary Beatles Ashram in Rishikesh",
+      "Optional white water rafting on the Ganges",
+      "Mansa Devi, Maya Devi & Chandi Devi temple visits",
+    ],
+    itinerary: [
+      { day: 1, title: "Delhi to Haridwar", desc: "Pickup from Delhi and a scenic 5-hour drive to Haridwar, check in and freshen up, evening Ganga Aarti at Har Ki Pauri, dinner and overnight stay." },
+      { day: 2, title: "Haridwar Sightseeing", desc: "Breakfast, visit Har Ki Pauri, Maya Devi Temple, Mansa Devi Temple, Chandi Devi Temple and Shanti Kunj, evening local shopping, dinner and overnight stay." },
+      { day: 3, title: "Haridwar to Rishikesh", desc: "Breakfast and drive to Rishikesh, check in and local sightseeing at Lakshman Jhula, Ram Jhula and Triveni Ghat, optional white water rafting, dinner and overnight stay." },
+      { day: 4, title: "Rishikesh to Delhi", desc: "Breakfast, check out and a scenic drive back to Delhi, concluding the tour." },
+    ],
+    badge: "Hot Deal",
+    featured: false,
+    hotDeal: true,
+  },
 ];
 
 export const featuredPackages: TourPackage[] = allPackages.filter((p) => p.featured);
+
+export const hotDealPackages: TourPackage[] = allPackages.filter((p) => p.hotDeal);
 
 export function getPackageById(id: string): TourPackage | undefined {
   return allPackages.find((p) => p.id === id);

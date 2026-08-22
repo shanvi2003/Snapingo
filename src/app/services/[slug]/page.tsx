@@ -24,6 +24,9 @@ import {
 import { services, getServiceBySlug } from "@/data/services";
 import DetailHero from "@/components/DetailHero";
 import { WhatsappIcon } from "@/components/SocialIcons";
+import HotelBookingModal from "@/components/HotelBookingModal";
+import FlightBookingModal from "@/components/FlightBookingModal";
+import TravelGuideModal from "@/components/TravelGuideModal";
 
 const highlightIcons: Record<string, LucideIcon> = {
   Search,
@@ -77,10 +80,15 @@ export default async function ServiceDetailPage({
 
   return (
     <>
+      {service.slug === "hotels" && <HotelBookingModal />}
+      {service.slug === "flights" && <FlightBookingModal />}
+      {service.slug === "travel-guide" && <TravelGuideModal />}
+
       <DetailHero
         image={service.image}
         title={service.name}
         subtitle={service.tagline}
+        animateImage
         breadcrumb={[{ label: "Services" }, { label: service.name }]}
       />
 

@@ -70,6 +70,7 @@ export default async function PackageDetailPage({
         <DetailHero
           image={pkg.image}
           title={pkg.title}
+          animateImage
           breadcrumb={[
             { label: "Packages", href: "/packages" },
             { label: pkg.title },

@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Image from "next/image";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 
 const COLS: number = 6;
 const ROWS: number = 4;
@@ -26,7 +26,7 @@ export default function TileRevealImage({
   alt: string;
   priority?: boolean;
 }) {
-  const reduceMotion = useReducedMotion();
+  const [loaded, setLoaded] = useState(false);
 
   const tiles = useMemo(() => {
     const arr = [];
@@ -71,6 +71,8 @@ export default function TileRevealImage({
         loading={priority ? "eager" : undefined}
         fetchPriority={priority ? "high" : undefined}
         className="object-cover opacity-0"
+        onLoad={() => setLoaded(true)}
+        onError={() => setLoaded(true)}
       />
 
       {tiles.map((t) => (
@@ -90,13 +92,13 @@ export default function TileRevealImage({
             backgroundSize: `${COLS * 100}% ${ROWS * 100}%`,
             backgroundPosition: `${t.bgPosX}% ${t.bgPosY}%`,
           }}
-          initial={reduceMotion ? { opacity: 1 } : { x: t.offsetX, y: t.offsetY, rotate: t.rotate, opacity: 0, scale: 0.4 }}
-          animate={{ x: 0, y: 0, rotate: 0, opacity: 1, scale: 1 }}
-          transition={
-            reduceMotion
-              ? { duration: 0.3 }
-              : { duration: 1, delay: t.delay, ease: [0.16, 1, 0.3, 1] }
+          initial={{ x: t.offsetX, y: t.offsetY, rotate: t.rotate, opacity: 0, scale: 0.4 }}
+          animate={
+            loaded
+              ? { x: 0, y: 0, rotate: 0, opacity: 1, scale: 1 }
+              : { x: t.offsetX, y: t.offsetY, rotate: t.rotate, opacity: 0, scale: 0.4 }
           }
+          transition={{ duration: 1, delay: t.delay, ease: [0.16, 1, 0.3, 1] }}
         />
       ))}
     </div>

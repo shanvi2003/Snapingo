@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, ChevronDown } from "lucide-react";
 
@@ -26,14 +27,26 @@ export default function CustomSelect({
 }) {
   const [open, setOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [mounted, setMounted] = useState(false);
+  const [rect, setRect] = useState<{ top: number; left: number; width: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const dropdownRef = useRef<HTMLUListElement>(null);
   const optionRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  useEffect(() => {
+    const markMounted = () => setMounted(true);
+    markMounted();
+  }, []);
 
   const selectedIndex = options.findIndex((o) => o.value === value);
   const selected = selectedIndex >= 0 ? options[selectedIndex] : undefined;
 
   const openList = (startIndex?: number) => {
+    if (buttonRef.current) {
+      const r = buttonRef.current.getBoundingClientRect();
+      setRect({ top: r.bottom + 4, left: r.left, width: r.width });
+    }
     setHighlightedIndex(startIndex ?? (selectedIndex >= 0 ? selectedIndex : 0));
     setOpen(true);
   };
@@ -54,12 +67,31 @@ export default function CustomSelect({
   useEffect(() => {
     if (!open) return;
     const onClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      const insideTrigger = containerRef.current?.contains(target);
+      const insideDropdown = dropdownRef.current?.contains(target);
+      if (!insideTrigger && !insideDropdown) {
         closeList();
       }
     };
     document.addEventListener("mousedown", onClickOutside);
     return () => document.removeEventListener("mousedown", onClickOutside);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const reposition = () => {
+      if (buttonRef.current) {
+        const r = buttonRef.current.getBoundingClientRect();
+        setRect({ top: r.bottom + 4, left: r.left, width: r.width });
+      }
+    };
+    window.addEventListener("scroll", reposition, true);
+    window.addEventListener("resize", reposition);
+    return () => {
+      window.removeEventListener("scroll", reposition, true);
+      window.removeEventListener("resize", reposition);
+    };
   }, [open]);
 
   useEffect(() => {
@@ -129,16 +161,20 @@ export default function CustomSelect({
         />
       </button>
 
-      <AnimatePresence>
-        {open && (
-          <motion.ul
-            role="listbox"
-            initial={{ opacity: 0, y: -6, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -6, scale: 0.98 }}
-            transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute z-30 mt-2 max-h-64 w-full overflow-auto rounded-xl border border-brand-100 bg-white p-1.5 shadow-soft"
-          >
+      {mounted &&
+        createPortal(
+          <AnimatePresence>
+            {open && rect && (
+              <motion.ul
+                ref={dropdownRef}
+                role="listbox"
+                initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+                style={{ position: "fixed", top: rect.top, left: rect.left, width: rect.width }}
+                className="z-[100] max-h-64 overflow-auto rounded-xl border border-brand-100 bg-white p-1.5 shadow-soft"
+              >
             {options.map((opt, i) => (
               <li key={opt.value} role="option" aria-selected={opt.value === value}>
                 <button
@@ -161,9 +197,11 @@ export default function CustomSelect({
                 </button>
               </li>
             ))}
-          </motion.ul>
+              </motion.ul>
+            )}
+          </AnimatePresence>,
+          document.body
         )}
-      </AnimatePresence>
     </div>
   );
 }

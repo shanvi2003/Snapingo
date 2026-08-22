@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { Baloo_2, Inter } from "next/font/google";
+import { MotionConfig } from "framer-motion";
 import "./globals.css";
 import OfferBar from "@/components/OfferBar";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import FloatingButtons from "@/components/FloatingButtons";
+import TripPlannerModal from "@/components/TripPlannerModal";
 
 const baloo = Baloo_2({
   variable: "--font-display",
@@ -30,13 +32,16 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${baloo.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-white font-sans text-ink-900">
-        <OfferBar />
-        <main className="relative flex-1">
-          <Navbar />
-          {children}
-        </main>
-        <Footer />
-        <FloatingButtons />
+        <MotionConfig reducedMotion="never">
+          <OfferBar />
+          <main className="relative flex-1">
+            <Navbar />
+            {children}
+          </main>
+          <Footer />
+          <FloatingButtons />
+          <TripPlannerModal />
+        </MotionConfig>
       </body>
     </html>
   );
