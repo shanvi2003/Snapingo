@@ -1,0 +1,167 @@
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e5]:
+      - generic [ref=e6]: ✈️ Flat 20% OFF on International Packages, limited seats
+      - generic [ref=e7]: 🏨 Free hotel upgrade on bookings above ₹25,000
+      - generic [ref=e8]: "📞 Talk to a travel expert now: +91 87003 68575"
+      - generic [ref=e9]: 🎉 Zero-cost EMI available on all holiday packages
+      - generic [ref=e10]: ✈️ Flat 20% OFF on International Packages, limited seats
+      - generic [ref=e11]: 🏨 Free hotel upgrade on bookings above ₹25,000
+      - generic [ref=e12]: "📞 Talk to a travel expert now: +91 87003 68575"
+      - generic [ref=e13]: 🎉 Zero-cost EMI available on all holiday packages
+    - button "Dismiss offer bar" [ref=e14]
+  - main [ref=e18]:
+    - navigation [ref=e20]:
+      - link "Snapingo Snapingo" [ref=e21] [cursor=pointer]:
+        - /url: /
+        - img "Snapingo" [ref=e23]
+        - generic [ref=e24]: Snapingo
+      - generic [ref=e25]:
+        - link "Domestic" [ref=e26] [cursor=pointer]:
+          - /url: /destinations?type=domestic
+        - link "International" [ref=e29] [cursor=pointer]:
+          - /url: /destinations?type=international
+        - link "Packages" [ref=e32] [cursor=pointer]:
+          - /url: /packages
+        - link "Services" [ref=e35] [cursor=pointer]:
+          - /url: /services
+        - link "About Us" [active] [ref=e38] [cursor=pointer]:
+          - /url: /about
+        - link "Blog" [ref=e39] [cursor=pointer]:
+          - /url: /blog
+        - link "Contact" [ref=e40] [cursor=pointer]:
+          - /url: /contact
+    - generic [ref=e1137]:
+      - img "A winding mountain road at sunset" [ref=e1138]
+      - heading "Redefining Journeys, Crafting Memories" [level=1] [ref=e1141]
+    - generic [ref=e1144]:
+      - paragraph [ref=e1145]: Travel, to us, is never just about the destination.
+      - paragraph [ref=e1147]: It’s the stories you create, the cultures you discover, and the moments that stay with you forever. Welcome to Snapingo, a premium travel venture and unit of Snap Tours and Travel Pvt. Ltd. As a modern Indian travel and tourism enterprise, we’re dedicated to curating seamless, enriching, and unforgettable experiences, across India and around the globe.
+    - generic [ref=e1149]:
+      - generic [ref=e1150]:
+        - heading "Who We Are" [level=2] [ref=e1151]
+        - paragraph [ref=e1153]: "Snapingo was founded with a singular vision: to make world-class travel accessible, effortless, and deeply personal. Whether it’s an idyllic domestic getaway, a bespoke international vacation, a cultural expedition, or a corporate retreat, we craft every itinerary with meticulous attention to detail."
+        - paragraph [ref=e1154]: Backed by the expertise and trusted foundation of Snap Tours and Travel Pvt. Ltd., we bring together reliable logistics, local insights, and personalized support to ensure your journey is smooth from departure to arrival.
+      - img "A group of friends laughing together on a mountain hike" [ref=e1157]
+    - generic [ref=e1159]:
+      - heading "Built Around Your Journey" [level=2] [ref=e1161]
+      - generic [ref=e1163]:
+        - generic [ref=e1164]:
+          - heading "Personalized Itineraries" [level=3] [ref=e1170]
+          - paragraph [ref=e1171]: Every trip built around you, whether it's an idyllic domestic getaway, a bespoke international vacation, or a corporate retreat.
+        - generic [ref=e1172]:
+          - heading "Trusted Backing" [level=3] [ref=e1180]
+          - paragraph [ref=e1181]: Backed by Snap Tours and Travel Pvt. Ltd., bringing reliable logistics and dependable support to every journey.
+        - generic [ref=e1182]:
+          - heading "Local Insights" [level=3] [ref=e1188]
+          - paragraph [ref=e1189]: On-ground knowledge and personalized support, so your journey stays smooth from departure to arrival.
+        - generic [ref=e1190]:
+          - heading "Growing Into Hospitality" [level=3] [ref=e1197]
+          - paragraph [ref=e1198]: Establishing our own facilities, stays and travel amenities, built to set new benchmarks in comfort and service.
+    - generic [ref=e1200]:
+      - img "A luxury overwater resort at dusk" [ref=e1203]
+      - generic [ref=e1204]:
+        - heading "Our Vision & Expansion" [level=2] [ref=e1205]
+        - paragraph [ref=e1207]: We are not just building itineraries; we are building ecosystems of comfort and luxury. As we expand, Snapingo is actively establishing its presence in the hospitality sector, developing world-class facilities, stays, and travel amenities designed to set new benchmarks in comfort, warmth, and service excellence.
+    - generic [ref=e1211]:
+      - heading "Ready to start your journey with us?" [level=2] [ref=e1212]
+      - paragraph [ref=e1213]: Talk to a travel expert and get a custom itinerary built around your dates and budget.
+      - generic [ref=e1214]:
+        - link "Chat With Us" [ref=e1215] [cursor=pointer]:
+          - /url: https://wa.me/918700368575?text=Hi%20Snapingo!%20I%20came%20across%20your%20About%20page%20and%20would%20like%20to%20plan%20a%20trip.%20Can%20you%20help%20me%3F
+        - link "Explore Destinations" [ref=e1218] [cursor=pointer]:
+          - /url: /destinations
+  - contentinfo [ref=e1026]:
+    - generic [ref=e1027]:
+      - generic [ref=e1028]:
+        - generic [ref=e1029]:
+          - link "Snapingo Snapingo" [ref=e1030] [cursor=pointer]:
+            - /url: /
+            - img "Snapingo" [ref=e1032]
+            - generic [ref=e1033]: Snapingo
+          - paragraph [ref=e1034]: A unit of SNAP Tour and Travels Pvt. Ltd.
+          - paragraph [ref=e1035]: Snapingo curates all-inclusive holiday packages, including flights, stay, transfers & sightseeing, across domestic and international destinations, so your entire trip fits into one booking.
+          - generic [ref=e1036]:
+            - link "Instagram" [ref=e1037] [cursor=pointer]:
+              - /url: https://www.instagram.com/snapingo.travel?utm_source=qr&igsh=NHJ2YjZrN3phcGgw
+            - link "Facebook" [ref=e1043] [cursor=pointer]:
+              - /url: https://www.facebook.com/share/1SeCwwiBoX/
+            - link "LinkedIn" [ref=e1047] [cursor=pointer]:
+              - /url: https://www.linkedin.com/company/snapingo/
+            - link "YouTube" [ref=e1053] [cursor=pointer]:
+              - /url: https://www.youtube.com/@Snapingo.travel
+        - generic [ref=e1058]:
+          - heading "Domestic" [level=4] [ref=e1059]
+          - list [ref=e1060]:
+            - listitem [ref=e1061]:
+              - link "Himachal Pradesh Packages" [ref=e1062] [cursor=pointer]:
+                - /url: /destinations/himachal
+            - listitem [ref=e1063]:
+              - link "Kashmir Packages" [ref=e1064] [cursor=pointer]:
+                - /url: /destinations/kashmir
+            - listitem [ref=e1065]:
+              - link "Uttarakhand Packages" [ref=e1066] [cursor=pointer]:
+                - /url: /destinations/uttarakhand
+            - listitem [ref=e1067]:
+              - link "Andaman & Nicobar Packages" [ref=e1068] [cursor=pointer]:
+                - /url: /destinations/andaman-nicobar
+            - listitem [ref=e1069]:
+              - link "Kerala Packages" [ref=e1070] [cursor=pointer]:
+                - /url: /destinations/kerala
+            - listitem [ref=e1071]:
+              - link "Rajasthan Packages" [ref=e1072] [cursor=pointer]:
+                - /url: /destinations/rajasthan
+        - generic [ref=e1073]:
+          - heading "International" [level=4] [ref=e1074]
+          - list [ref=e1075]:
+            - listitem [ref=e1076]:
+              - link "Bali Packages" [ref=e1077] [cursor=pointer]:
+                - /url: /destinations/bali
+            - listitem [ref=e1078]:
+              - link "Dubai Packages" [ref=e1079] [cursor=pointer]:
+                - /url: /destinations/dubai
+            - listitem [ref=e1080]:
+              - link "Maldives Packages" [ref=e1081] [cursor=pointer]:
+                - /url: /destinations/maldives
+            - listitem [ref=e1082]:
+              - link "Vietnam Packages" [ref=e1083] [cursor=pointer]:
+                - /url: /destinations/vietnam
+            - listitem [ref=e1084]:
+              - link "Malaysia Packages" [ref=e1085] [cursor=pointer]:
+                - /url: /destinations/malaysia
+            - listitem [ref=e1086]:
+              - link "Thailand Packages" [ref=e1087] [cursor=pointer]:
+                - /url: /destinations/thailand
+        - generic [ref=e1088]:
+          - heading "Get in touch" [level=4] [ref=e1089]
+          - list [ref=e1090]:
+            - listitem [ref=e1091]:
+              - link "+91 87003 68575" [ref=e1094] [cursor=pointer]:
+                - /url: tel:+918700368575
+            - listitem [ref=e1095]:
+              - link "info@snapingo.com" [ref=e1099] [cursor=pointer]:
+                - /url: mailto:info@snapingo.com
+            - listitem [ref=e1100]:
+              - generic [ref=e1104]: A 710, Tower 4, NX One,Greater Noida West, UP 201318
+      - generic [ref=e1105]:
+        - paragraph [ref=e1106]: © 2026 SNAP Tour and Travels Pvt. Ltd. All rights reserved.
+        - generic [ref=e1107]:
+          - link "Privacy Policy" [ref=e1108] [cursor=pointer]:
+            - /url: /privacy-policy
+          - link "Terms of Service" [ref=e1109] [cursor=pointer]:
+            - /url: /terms-of-service
+          - link "Cancellation & Refunds" [ref=e1110] [cursor=pointer]:
+            - /url: /cancellation-refund
+        - generic [ref=e1111]: Secure & verified bookings
+  - generic [ref=e1115]:
+    - button "Scroll to top" [ref=e1133]
+    - link "Chat with Snapingo on WhatsApp" [ref=e1116] [cursor=pointer]:
+      - /url: https://wa.me/918700368575?text=Hi%20Snapingo!%20I'd%20like%20to%20plan%20a%20trip.%20Can%20you%20help%20me%20with%20the%20packages%3F
+  - button "Open Next.js Dev Tools" [ref=e1221] [cursor=pointer]:
+    - generic [ref=e1224]:
+      - text: Rendering
+      - generic [ref=e1225]:
+        - generic [ref=e1226]: .
+        - generic [ref=e1227]: .
+        - generic [ref=e1228]: .
+  - alert [ref=e1136]: Redefining Journeys, Crafting Memories

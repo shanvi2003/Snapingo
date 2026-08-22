@@ -1,0 +1,225 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-body);
+  --font-heading: var(--font-display);
+
+  /* Extra breakpoints for large/ultra-wide desktop monitors */
+  --breakpoint-3xl: 100rem; /* 1600px */
+  --breakpoint-4xl: 120rem; /* 1920px */
+
+  /* Brand pink, sampled from the Snapingo logo */
+  --color-brand-50: #fff0f8;
+  --color-brand-100: #ffe1f1;
+  --color-brand-200: #ffc0e3;
+  --color-brand-300: #fd8fc9;
+  --color-brand-400: #f757a3;
+  --color-brand-500: #ec1278;
+  --color-brand-600: #d10e68;
+  --color-brand-700: #ab0a55;
+  --color-brand-800: #850843;
+  --color-brand-900: #5f0631;
+  --color-brand-950: #3a021d;
+
+  /* Ink, near-black with a warm plum undertone to stay in the logo's family */
+  --color-ink-50: #faf6f9;
+  --color-ink-100: #f4ecf1;
+  --color-ink-200: #e5d7e0;
+  --color-ink-300: #c9b0c1;
+  --color-ink-400: #9c7d94;
+  --color-ink-500: #715769;
+  --color-ink-600: #513e4c;
+  --color-ink-700: #3a2b37;
+  --color-ink-800: #261a24;
+  --color-ink-900: #180f17;
+  --color-ink-950: #0d080c;
+
+  /* Gold, small-dose accent for ratings / badges only */
+  --color-gold-400: #ffcb47;
+  --color-gold-500: #ffb020;
+  --color-gold-600: #f08c00;
+
+  --shadow-brand: 0 20px 45px -15px rgb(236 18 120 / 0.45);
+  --shadow-soft: 0 10px 40px -12px rgb(24 15 23 / 0.15);
+
+  --animate-marquee: marquee 28s linear infinite;
+  --animate-marquee-fast: marquee 16s linear infinite;
+  --animate-marquee-slow: marquee 50s linear infinite;
+  --animate-blob: blob 14s ease-in-out infinite;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-shimmer: shimmer 2.4s linear infinite;
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: var(--color-ink-900);
+}
+
+html {
+  overflow-x: hidden;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  overflow-x: hidden;
+}
+
+@layer utilities {
+  .container-app {
+    width: 100%;
+    max-width: 84rem;
+    margin-inline: auto;
+    padding-inline: 1.25rem;
+  }
+
+  @media (min-width: 640px) {
+    .container-app {
+      padding-inline: 2rem;
+    }
+  }
+
+  @media (min-width: 1600px) {
+    .container-app {
+      max-width: 96rem;
+      padding-inline: 3rem;
+    }
+  }
+
+  @media (min-width: 1920px) {
+    .container-app {
+      max-width: 112rem;
+      padding-inline: 4rem;
+    }
+  }
+
+  .text-gradient-brand {
+    background-image: linear-gradient(
+      100deg,
+      var(--color-brand-600),
+      var(--color-brand-400) 60%,
+      var(--color-gold-500)
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .bg-noise {
+    background-image: radial-gradient(
+        circle at 1px 1px,
+        rgb(255 255 255 / 0.06) 1px,
+        transparent 0
+      );
+    background-size: 22px 22px;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .mask-fade-x {
+    -webkit-mask-image: linear-gradient(
+      90deg,
+      transparent,
+      black 8%,
+      black 92%,
+      transparent
+    );
+    mask-image: linear-gradient(
+      90deg,
+      transparent,
+      black 8%,
+      black 92%,
+      transparent
+    );
+  }
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes blob {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(4%, -6%) scale(1.08);
+  }
+  66% {
+    transform: translate(-3%, 4%) scale(0.95);
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-14px);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-blob,
+  .animate-float,
+  .animate-marquee,
+  .animate-marquee-slow,
+  .animate-shimmer {
+    animation: none !important;
+  }
+}
+
+@media print {
+  @page {
+    margin: 1.5cm;
+  }
+
+  .print-hide {
+    display: none !important;
+  }
+
+  /* Framer Motion leaves scroll-triggered elements at opacity:0 via inline
+     style until they've entered the viewport, which print never triggers. */
+  .print-show-opaque {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .print-plain-hero {
+    background: #ffffff !important;
+    height: auto !important;
+    min-height: 0 !important;
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+  }
+
+  .print-plain-hero * {
+    color: var(--color-ink-900) !important;
+    text-shadow: none !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    border-color: var(--color-ink-200) !important;
+  }
+}

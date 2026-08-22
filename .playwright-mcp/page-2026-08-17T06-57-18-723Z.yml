@@ -1,0 +1,638 @@
+- generic [active] [ref=f5e1]:
+  - generic [ref=f5e3]:
+    - generic [ref=f5e5]:
+      - generic [ref=f5e6]: ✈️ Flat 20% OFF on International Packages, limited seats
+      - generic [ref=f5e7]: 🏨 Free hotel upgrade on bookings above ₹25,000
+      - generic [ref=f5e8]: "📞 Talk to a travel expert now: +91 87003 68575"
+      - generic [ref=f5e9]: 🎉 Zero-cost EMI available on all holiday packages
+      - generic [ref=f5e10]: ✈️ Flat 20% OFF on International Packages, limited seats
+      - generic [ref=f5e11]: 🏨 Free hotel upgrade on bookings above ₹25,000
+      - generic [ref=f5e12]: "📞 Talk to a travel expert now: +91 87003 68575"
+      - generic [ref=f5e13]: 🎉 Zero-cost EMI available on all holiday packages
+    - button "Dismiss offer bar" [ref=f5e14]
+  - main [ref=f5e18]:
+    - navigation [ref=f5e20]:
+      - link "Snapingo Snapingo" [ref=f5e21] [cursor=pointer]:
+        - /url: /
+        - img "Snapingo" [ref=f5e23]
+        - generic [ref=f5e24]: Snapingo
+      - generic [ref=f5e25]:
+        - link "Domestic" [ref=f5e26] [cursor=pointer]:
+          - /url: /destinations?type=domestic
+        - link "International" [ref=f5e29] [cursor=pointer]:
+          - /url: /destinations?type=international
+        - link "Packages" [ref=f5e32] [cursor=pointer]:
+          - /url: /packages
+        - link "Services" [ref=f5e35] [cursor=pointer]:
+          - /url: /services
+        - link "About Us" [ref=f5e38] [cursor=pointer]:
+          - /url: /about
+        - link "Blog" [ref=f5e39] [cursor=pointer]:
+          - /url: /blog
+        - link "Contact" [ref=f5e40] [cursor=pointer]:
+          - /url: /contact
+    - generic [ref=f5e41]:
+      - generic [ref=f5e42]:
+        - img "Maldives" [ref=f5e44]
+        - img "Santorini, Greece" [ref=f5e46]
+        - img "Kerala, India" [ref=f5e48]
+        - img "Himachal Pradesh, India" [ref=f5e50]
+      - generic [ref=f5e52]:
+        - heading "Your whole trip, packed into one snap." [level=1] [ref=f5e53]
+        - paragraph [ref=f5e54]: Flights, stays, transfers & sightseeing, bundled into one package, for destinations across India and the world.
+      - generic [ref=f5e55]:
+        - button "Show Maldives" [ref=f5e56]
+        - button "Show Santorini, Greece" [ref=f5e57]
+        - button "Show Kerala, India" [ref=f5e58]
+        - button "Show Himachal Pradesh, India" [ref=f5e59]
+    - generic [ref=f5e61]:
+      - paragraph [ref=f5e64]: Trusted Booking Partners
+      - generic [ref=f5e70]:
+        - img "IndiGo" [ref=f5e73]
+        - img "Air India" [ref=f5e76]
+        - img "Vistara" [ref=f5e79]
+        - img "Emirates" [ref=f5e82]
+        - img "Qatar Airways" [ref=f5e85]
+        - img "Singapore Airlines" [ref=f5e88]
+        - img "Marriott" [ref=f5e91]
+        - img "Taj Hotels" [ref=f5e94]
+        - img "ITC Hotels" [ref=f5e97]
+        - img "OYO" [ref=f5e100]
+        - img "IndiGo" [ref=f5e103]
+        - img "Air India" [ref=f5e106]
+        - img "Vistara" [ref=f5e109]
+        - img "Emirates" [ref=f5e112]
+        - img "Qatar Airways" [ref=f5e115]
+        - img "Singapore Airlines" [ref=f5e118]
+        - img "Marriott" [ref=f5e121]
+        - img "Taj Hotels" [ref=f5e124]
+        - img "ITC Hotels" [ref=f5e127]
+        - img "OYO" [ref=f5e130]
+    - generic [ref=f5e132]:
+      - generic [ref=f5e133]:
+        - heading "One booking, every part of your trip" [level=2] [ref=f5e134]
+        - paragraph [ref=f5e135]: Snapingo bundles flights, stay, transfers & experiences so you never juggle separate bookings to plan a trip.
+      - generic [ref=f5e136]:
+        - generic [ref=f5e137]:
+          - img "Flights" [ref=f5e138]
+          - generic [ref=f5e144]:
+            - heading "Flights" [level=3] [ref=f5e145]
+            - paragraph [ref=f5e146]: Domestic & international fares
+        - generic [ref=f5e147]:
+          - img "Hotels" [ref=f5e148]
+          - generic [ref=f5e155]:
+            - heading "Hotels" [level=3] [ref=f5e156]
+            - paragraph [ref=f5e157]: Handpicked stays, every budget
+        - generic [ref=f5e158]:
+          - img "Holiday Packages" [ref=f5e159]
+          - generic [ref=f5e167]:
+            - heading "Holiday Packages" [level=3] [ref=f5e168]
+            - paragraph [ref=f5e169]: All-inclusive itineraries
+        - generic [ref=f5e170]:
+          - img "Honeymoon" [ref=f5e171]
+          - generic [ref=f5e177]:
+            - heading "Honeymoon" [level=3] [ref=f5e178]
+            - paragraph [ref=f5e179]: Curated romantic getaways
+        - generic [ref=f5e180]:
+          - img "Group Tours" [ref=f5e181]
+          - generic [ref=f5e190]:
+            - heading "Group Tours" [level=3] [ref=f5e191]
+            - paragraph [ref=f5e192]: Travel with like-minded people
+        - generic [ref=f5e193]:
+          - img "Cabs & Transfers" [ref=f5e194]
+          - generic [ref=f5e202]:
+            - heading "Cabs & Transfers" [level=3] [ref=f5e203]
+            - paragraph [ref=f5e204]: Airport & local transport
+    - generic [ref=f5e206]:
+      - generic [ref=f5e207]:
+        - generic [ref=f5e208]:
+          - heading "Popular destinations" [level=2] [ref=f5e209]
+          - paragraph [ref=f5e210]: Handpicked spots across India and the world, ready-made into full packages.
+        - generic [ref=f5e211]:
+          - button "domestic" [ref=f5e212]
+          - button "international" [ref=f5e213]
+      - generic [ref=f5e214]:
+        - link [ref=f5e216] [cursor=pointer]:
+          - /url: /destinations/himachal
+          - img "Himachal Pradesh" [ref=f5e217]
+          - generic [ref=f5e223]:
+            - paragraph [ref=f5e224]: 168 packages
+            - heading "Himachal Pradesh" [level=3] [ref=f5e228]
+            - paragraph [ref=f5e229]: Snow peaks & hill towns
+            - paragraph [ref=f5e230]: From ₹7,999
+        - link [ref=f5e232] [cursor=pointer]:
+          - /url: /destinations/kashmir
+          - img "Kashmir" [ref=f5e233]
+          - generic [ref=f5e239]:
+            - paragraph [ref=f5e240]: 87 packages
+            - heading "Kashmir" [level=3] [ref=f5e244]
+            - paragraph [ref=f5e245]: Paradise on earth
+            - paragraph [ref=f5e246]: From ₹15,999
+        - link [ref=f5e248] [cursor=pointer]:
+          - /url: /destinations/uttarakhand
+          - img "Uttarakhand" [ref=f5e249]
+          - generic [ref=f5e255]:
+            - paragraph [ref=f5e256]: 94 packages
+            - heading "Uttarakhand" [level=3] [ref=f5e260]
+            - paragraph [ref=f5e261]: Ganga ghats & Himalayan trails
+            - paragraph [ref=f5e262]: From ₹6,999
+        - link [ref=f5e264] [cursor=pointer]:
+          - /url: /destinations/andaman-nicobar
+          - img "Andaman & Nicobar" [ref=f5e265]
+          - generic [ref=f5e271]:
+            - paragraph [ref=f5e272]: 64 packages
+            - heading "Andaman & Nicobar" [level=3] [ref=f5e276]
+            - paragraph [ref=f5e277]: Turquoise island escape
+            - paragraph [ref=f5e278]: From ₹17,999
+        - link [ref=f5e280] [cursor=pointer]:
+          - /url: /destinations/kerala
+          - img "Kerala" [ref=f5e281]
+          - generic [ref=f5e287]:
+            - paragraph [ref=f5e288]: 96 packages
+            - heading "Kerala" [level=3] [ref=f5e292]
+            - paragraph [ref=f5e293]: God's own backwaters
+            - paragraph [ref=f5e294]: From ₹12,499
+        - link [ref=f5e296] [cursor=pointer]:
+          - /url: /destinations/rajasthan
+          - img "Rajasthan" [ref=f5e297]
+          - generic [ref=f5e303]:
+            - paragraph [ref=f5e304]: 143 packages
+            - heading "Rajasthan" [level=3] [ref=f5e308]
+            - paragraph [ref=f5e309]: Forts, palaces & desert
+            - paragraph [ref=f5e310]: From ₹10,999
+        - link [ref=f5e312] [cursor=pointer]:
+          - /url: /destinations/uttar-pradesh
+          - img "Uttar Pradesh" [ref=f5e313]
+          - generic [ref=f5e319]:
+            - paragraph [ref=f5e320]: 78 packages
+            - heading "Uttar Pradesh" [level=3] [ref=f5e324]
+            - paragraph [ref=f5e325]: Taj Mahal & temple ghats
+            - paragraph [ref=f5e326]: From ₹8,499
+        - link [ref=f5e328] [cursor=pointer]:
+          - /url: /destinations/madhya-pradesh
+          - img "Madhya Pradesh" [ref=f5e329]
+          - generic [ref=f5e335]:
+            - paragraph [ref=f5e336]: 51 packages
+            - heading "Madhya Pradesh" [level=3] [ref=f5e340]
+            - paragraph [ref=f5e341]: Temples & tiger reserves
+            - paragraph [ref=f5e342]: From ₹9,499
+        - link [ref=f5e344] [cursor=pointer]:
+          - /url: /destinations/leh-ladakh
+          - img "Leh Ladakh" [ref=f5e345]
+          - generic [ref=f5e351]:
+            - paragraph [ref=f5e352]: 59 packages
+            - heading "Leh Ladakh" [level=3] [ref=f5e356]
+            - paragraph [ref=f5e357]: High-altitude adventure
+            - paragraph [ref=f5e358]: From ₹18,999
+        - link [ref=f5e360] [cursor=pointer]:
+          - /url: /destinations/north-east
+          - img "North East" [ref=f5e361]
+          - generic [ref=f5e367]:
+            - paragraph [ref=f5e368]: 46 packages
+            - heading "North East" [level=3] [ref=f5e372]
+            - paragraph [ref=f5e373]: Meghalaya, Assam, Arunachal & Sikkim
+            - paragraph [ref=f5e374]: From ₹14,999
+      - link "View all domestic destinations" [ref=f5e376] [cursor=pointer]:
+        - /url: /destinations?type=domestic
+    - generic [ref=f5e380]:
+      - generic [ref=f5e381]:
+        - generic [ref=f5e382]:
+          - heading "Featured holiday packages" [level=2] [ref=f5e383]
+          - paragraph [ref=f5e384]: "All-inclusive itineraries: flights, stay, meals & transfers bundled at one transparent price."
+        - generic [ref=f5e385]:
+          - button "Previous package" [disabled] [ref=f5e386]
+          - button "Next package" [disabled] [ref=f5e389]
+      - generic [ref=f5e393]:
+        - generic [ref=f5e395]:
+          - link "Goa Beach Bliss Bestseller 31% OFF" [ref=f5e396] [cursor=pointer]:
+            - /url: /packages/goa-beach-bliss
+            - img "Goa Beach Bliss" [ref=f5e397]
+            - generic [ref=f5e398]:
+              - generic [ref=f5e399]: Bestseller
+              - generic [ref=f5e400]: 31% OFF
+          - generic [ref=f5e401]:
+            - generic [ref=f5e402]:
+              - link [ref=f5e403] [cursor=pointer]:
+                - /url: /packages/goa-beach-bliss
+                - heading "Goa Beach Bliss" [level=3] [ref=f5e404]
+              - generic [ref=f5e405]:
+                - generic [ref=f5e408]: "4.6"
+                - generic [ref=f5e409]: (1,284)
+            - paragraph [ref=f5e410]: Goa, India
+            - paragraph [ref=f5e411]: 3 Nights / 4 Days
+            - generic [ref=f5e412]:
+              - generic "flight" [ref=f5e413]
+              - generic "hotel" [ref=f5e416]
+              - generic "meals" [ref=f5e420]
+              - generic "transfer" [ref=f5e424]
+            - generic [ref=f5e429]:
+              - generic [ref=f5e430]:
+                - paragraph [ref=f5e431]: ₹12,999
+                - paragraph [ref=f5e432]: ₹8,999/person
+              - link "View Details" [ref=f5e433] [cursor=pointer]:
+                - /url: /packages/goa-beach-bliss
+        - generic [ref=f5e435]:
+          - link "Kerala Backwater Retreat Trending 24% OFF" [ref=f5e436] [cursor=pointer]:
+            - /url: /packages/kerala-backwater-retreat
+            - img "Kerala Backwater Retreat" [ref=f5e437]
+            - generic [ref=f5e438]:
+              - generic [ref=f5e439]: Trending
+              - generic [ref=f5e440]: 24% OFF
+          - generic [ref=f5e441]:
+            - generic [ref=f5e442]:
+              - link [ref=f5e443] [cursor=pointer]:
+                - /url: /packages/kerala-backwater-retreat
+                - heading "Kerala Backwater Retreat" [level=3] [ref=f5e444]
+              - generic [ref=f5e445]:
+                - generic [ref=f5e448]: "4.8"
+                - generic [ref=f5e449]: (942)
+            - paragraph [ref=f5e450]: Alleppey & Munnar, India
+            - paragraph [ref=f5e451]: 4 Nights / 5 Days
+            - generic [ref=f5e452]:
+              - generic "hotel" [ref=f5e453]
+              - generic "meals" [ref=f5e457]
+              - generic "transfer" [ref=f5e461]
+              - generic "sightseeing" [ref=f5e466]
+            - generic [ref=f5e470]:
+              - generic [ref=f5e471]:
+                - paragraph [ref=f5e472]: ₹18,999
+                - paragraph [ref=f5e473]: ₹14,499/person
+              - link "View Details" [ref=f5e474] [cursor=pointer]:
+                - /url: /packages/kerala-backwater-retreat
+        - generic [ref=f5e476]:
+          - link "Manali Snow Escape 29% OFF" [ref=f5e477] [cursor=pointer]:
+            - /url: /packages/manali-snow-escape
+            - img "Manali Snow Escape" [ref=f5e478]
+            - generic [ref=f5e479]: 29% OFF
+          - generic [ref=f5e481]:
+            - generic [ref=f5e482]:
+              - link [ref=f5e483] [cursor=pointer]:
+                - /url: /packages/manali-snow-escape
+                - heading "Manali Snow Escape" [level=3] [ref=f5e484]
+              - generic [ref=f5e485]:
+                - generic [ref=f5e488]: "4.5"
+                - generic [ref=f5e489]: (1,567)
+            - paragraph [ref=f5e490]: Manali, India
+            - paragraph [ref=f5e491]: 5 Nights / 6 Days
+            - generic [ref=f5e492]:
+              - generic "hotel" [ref=f5e493]
+              - generic "meals" [ref=f5e497]
+              - generic "transfer" [ref=f5e501]
+              - generic "sightseeing" [ref=f5e506]
+            - generic [ref=f5e510]:
+              - generic [ref=f5e511]:
+                - paragraph [ref=f5e512]: ₹15,499
+                - paragraph [ref=f5e513]: ₹10,999/person
+              - link "View Details" [ref=f5e514] [cursor=pointer]:
+                - /url: /packages/manali-snow-escape
+        - generic [ref=f5e516]:
+          - link "Kashmir Paradise Tour Handpicked 21% OFF" [ref=f5e517] [cursor=pointer]:
+            - /url: /packages/kashmir-paradise-tour
+            - img "Kashmir Paradise Tour" [ref=f5e518]
+            - generic [ref=f5e519]:
+              - generic [ref=f5e520]: Handpicked
+              - generic [ref=f5e521]: 21% OFF
+          - generic [ref=f5e522]:
+            - generic [ref=f5e523]:
+              - link [ref=f5e524] [cursor=pointer]:
+                - /url: /packages/kashmir-paradise-tour
+                - heading "Kashmir Paradise Tour" [level=3] [ref=f5e525]
+              - generic [ref=f5e526]:
+                - generic [ref=f5e529]: "4.9"
+                - generic [ref=f5e530]: (731)
+            - paragraph [ref=f5e531]: Srinagar & Gulmarg, India
+            - paragraph [ref=f5e532]: 5 Nights / 6 Days
+            - generic [ref=f5e533]:
+              - generic "flight" [ref=f5e534]
+              - generic "hotel" [ref=f5e537]
+              - generic "meals" [ref=f5e541]
+              - generic "transfer" [ref=f5e545]
+              - generic "sightseeing" [ref=f5e550]
+            - generic [ref=f5e554]:
+              - generic [ref=f5e555]:
+                - paragraph [ref=f5e556]: ₹27,999
+                - paragraph [ref=f5e557]: ₹21,999/person
+              - link "View Details" [ref=f5e558] [cursor=pointer]:
+                - /url: /packages/kashmir-paradise-tour
+        - generic [ref=f5e560]:
+          - link "Bali Honeymoon Special Bestseller 22% OFF" [ref=f5e561] [cursor=pointer]:
+            - /url: /packages/bali-honeymoon-special
+            - img "Bali Honeymoon Special" [ref=f5e562]
+            - generic [ref=f5e563]:
+              - generic [ref=f5e564]: Bestseller
+              - generic [ref=f5e565]: 22% OFF
+          - generic [ref=f5e566]:
+            - generic [ref=f5e567]:
+              - link [ref=f5e568] [cursor=pointer]:
+                - /url: /packages/bali-honeymoon-special
+                - heading "Bali Honeymoon Special" [level=3] [ref=f5e569]
+              - generic [ref=f5e570]:
+                - generic [ref=f5e573]: "4.9"
+                - generic [ref=f5e574]: (856)
+            - paragraph [ref=f5e575]: Bali, Indonesia
+            - paragraph [ref=f5e576]: 5 Nights / 6 Days
+            - generic [ref=f5e577]:
+              - generic "flight" [ref=f5e578]
+              - generic "hotel" [ref=f5e581]
+              - generic "meals" [ref=f5e585]
+              - generic "transfer" [ref=f5e589]
+              - generic "sightseeing" [ref=f5e594]
+            - generic [ref=f5e598]:
+              - generic [ref=f5e599]:
+                - paragraph [ref=f5e600]: ₹54,999
+                - paragraph [ref=f5e601]: ₹42,999/person
+              - link "View Details" [ref=f5e602] [cursor=pointer]:
+                - /url: /packages/bali-honeymoon-special
+        - generic [ref=f5e604]:
+          - link "Dubai City Lights Trending 21% OFF" [ref=f5e605] [cursor=pointer]:
+            - /url: /packages/dubai-city-lights
+            - img "Dubai City Lights" [ref=f5e606]
+            - generic [ref=f5e607]:
+              - generic [ref=f5e608]: Trending
+              - generic [ref=f5e609]: 21% OFF
+          - generic [ref=f5e610]:
+            - generic [ref=f5e611]:
+              - link [ref=f5e612] [cursor=pointer]:
+                - /url: /packages/dubai-city-lights
+                - heading "Dubai City Lights" [level=3] [ref=f5e613]
+              - generic [ref=f5e614]:
+                - generic [ref=f5e617]: "4.7"
+                - generic [ref=f5e618]: (1,123)
+            - paragraph [ref=f5e619]: Dubai, UAE
+            - paragraph [ref=f5e620]: 4 Nights / 5 Days
+            - generic [ref=f5e621]:
+              - generic "flight" [ref=f5e622]
+              - generic "hotel" [ref=f5e625]
+              - generic "transfer" [ref=f5e629]
+              - generic "sightseeing" [ref=f5e634]
+            - generic [ref=f5e638]:
+              - generic [ref=f5e639]:
+                - paragraph [ref=f5e640]: ₹46,999
+                - paragraph [ref=f5e641]: ₹36,999/person
+              - link "View Details" [ref=f5e642] [cursor=pointer]:
+                - /url: /packages/dubai-city-lights
+        - generic [ref=f5e644]:
+          - link "Thailand Island Hopper 21% OFF" [ref=f5e645] [cursor=pointer]:
+            - /url: /packages/thailand-island-hopper
+            - img "Thailand Island Hopper" [ref=f5e646]
+            - generic [ref=f5e647]: 21% OFF
+          - generic [ref=f5e649]:
+            - generic [ref=f5e650]:
+              - link [ref=f5e651] [cursor=pointer]:
+                - /url: /packages/thailand-island-hopper
+                - heading "Thailand Island Hopper" [level=3] [ref=f5e652]
+              - generic [ref=f5e653]:
+                - generic [ref=f5e656]: "4.6"
+                - generic [ref=f5e657]: (998)
+            - paragraph [ref=f5e658]: Phuket & Krabi, Thailand
+            - paragraph [ref=f5e659]: 5 Nights / 6 Days
+            - generic [ref=f5e660]:
+              - generic "flight" [ref=f5e661]
+              - generic "hotel" [ref=f5e664]
+              - generic "meals" [ref=f5e668]
+              - generic "transfer" [ref=f5e672]
+            - generic [ref=f5e677]:
+              - generic [ref=f5e678]:
+                - paragraph [ref=f5e679]: ₹41,999
+                - paragraph [ref=f5e680]: ₹32,999/person
+              - link "View Details" [ref=f5e681] [cursor=pointer]:
+                - /url: /packages/thailand-island-hopper
+        - generic [ref=f5e683]:
+          - link "Maldives Overwater Dream Luxury 19% OFF" [ref=f5e684] [cursor=pointer]:
+            - /url: /packages/maldives-overwater-dream
+            - img "Maldives Overwater Dream" [ref=f5e685]
+            - generic [ref=f5e686]:
+              - generic [ref=f5e687]: Luxury
+              - generic [ref=f5e688]: 19% OFF
+          - generic [ref=f5e689]:
+            - generic [ref=f5e690]:
+              - link [ref=f5e691] [cursor=pointer]:
+                - /url: /packages/maldives-overwater-dream
+                - heading "Maldives Overwater Dream" [level=3] [ref=f5e692]
+              - generic [ref=f5e693]:
+                - generic [ref=f5e696]: "5"
+                - generic [ref=f5e697]: (412)
+            - paragraph [ref=f5e698]: Maldives
+            - paragraph [ref=f5e699]: 3 Nights / 4 Days
+            - generic [ref=f5e700]:
+              - generic "flight" [ref=f5e701]
+              - generic "hotel" [ref=f5e704]
+              - generic "meals" [ref=f5e708]
+              - generic "transfer" [ref=f5e712]
+            - generic [ref=f5e717]:
+              - generic [ref=f5e718]:
+                - paragraph [ref=f5e719]: ₹84,999
+                - paragraph [ref=f5e720]: ₹68,999/person
+              - link "View Details" [ref=f5e721] [cursor=pointer]:
+                - /url: /packages/maldives-overwater-dream
+    - generic [ref=f5e723]:
+      - generic [ref=f5e724]:
+        - heading "Travel planning, minus the chaos" [level=2] [ref=f5e725]
+        - paragraph [ref=f5e726]: We do the running around (flights, hotels, cabs, and permits) so your itinerary just works.
+      - generic [ref=f5e727]:
+        - generic [ref=f5e728]:
+          - heading "Best Price Guarantee" [level=3] [ref=f5e733]
+          - paragraph [ref=f5e734]: Handpicked packages priced to beat the market, or we match it.
+        - generic [ref=f5e735]:
+          - heading "24/7 Trip Support" [level=3] [ref=f5e740]
+          - paragraph [ref=f5e741]: A real human on WhatsApp & call throughout your journey, not just at booking.
+        - generic [ref=f5e742]:
+          - heading "All-Inclusive Packages" [level=3] [ref=f5e749]
+          - paragraph [ref=f5e750]: Flights, stay, transfers, meals & sightseeing bundled, no hidden add-ons.
+        - generic [ref=f5e751]:
+          - heading "25 Destinations" [level=3] [ref=f5e757]
+          - paragraph [ref=f5e758]: From weekend hills to bucket-list islands, domestic and international.
+    - generic [ref=f5e759]:
+      - generic [ref=f5e761]:
+        - heading "What our travelers say" [level=2] [ref=f5e762]
+        - paragraph [ref=f5e763]: Real trips, real feedback, from families, couples & solo explorers.
+      - generic [ref=f5e765]:
+        - generic [ref=f5e766]:
+          - paragraph [ref=f5e781]: "“Snapingo planned our entire honeymoon end-to-end: flights, resort upgrades, even a private dinner on the beach. We didn't have to think about a single detail.”"
+          - generic [ref=f5e782]:
+            - img "Ayesha Khan" [ref=f5e784]
+            - generic [ref=f5e785]:
+              - paragraph [ref=f5e786]: Ayesha Khan
+              - paragraph [ref=f5e787]: Mumbai · Trip to Bali, Indonesia
+        - generic [ref=f5e788]:
+          - paragraph [ref=f5e803]: “The itinerary was perfectly paced and the local guide they arranged in Gulmarg made the trip unforgettable. Best travel money I've spent.”
+          - generic [ref=f5e804]:
+            - img "Rohan Mehta" [ref=f5e806]
+            - generic [ref=f5e807]:
+              - paragraph [ref=f5e808]: Rohan Mehta
+              - paragraph [ref=f5e809]: Delhi · Trip to Kashmir, India
+        - generic [ref=f5e810]:
+          - paragraph [ref=f5e825]: “Booked a family package for 6 people and everything (visa, hotel, desert safari) was handled by their team. Genuinely stress-free.”
+          - generic [ref=f5e826]:
+            - img "Priya Nair" [ref=f5e828]
+            - generic [ref=f5e829]:
+              - paragraph [ref=f5e830]: Priya Nair
+              - paragraph [ref=f5e831]: Bengaluru · Trip to Dubai, UAE
+        - generic [ref=f5e832]:
+          - paragraph [ref=f5e847]: “Loved the houseboat stay in Alleppey they arranged. Support team was reachable on WhatsApp throughout the trip whenever we needed help.”
+          - generic [ref=f5e848]:
+            - img "Karan Kapoor" [ref=f5e850]
+            - generic [ref=f5e851]:
+              - paragraph [ref=f5e852]: Karan Kapoor
+              - paragraph [ref=f5e853]: Pune · Trip to Kerala, India
+        - generic [ref=f5e854]:
+          - paragraph [ref=f5e869]: “Our overwater villa looked exactly like the photos. Snapingo's package pricing beat three other agents we compared before booking.”
+          - generic [ref=f5e870]:
+            - img "Simran Kaur" [ref=f5e872]
+            - generic [ref=f5e873]:
+              - paragraph [ref=f5e874]: Simran Kaur
+              - paragraph [ref=f5e875]: Chandigarh · Trip to Maldives
+        - generic [ref=f5e876]:
+          - paragraph [ref=f5e891]: "“Snapingo planned our entire honeymoon end-to-end: flights, resort upgrades, even a private dinner on the beach. We didn't have to think about a single detail.”"
+          - generic [ref=f5e892]:
+            - img "Ayesha Khan" [ref=f5e894]
+            - generic [ref=f5e895]:
+              - paragraph [ref=f5e896]: Ayesha Khan
+              - paragraph [ref=f5e897]: Mumbai · Trip to Bali, Indonesia
+        - generic [ref=f5e898]:
+          - paragraph [ref=f5e913]: “The itinerary was perfectly paced and the local guide they arranged in Gulmarg made the trip unforgettable. Best travel money I've spent.”
+          - generic [ref=f5e914]:
+            - img "Rohan Mehta" [ref=f5e916]
+            - generic [ref=f5e917]:
+              - paragraph [ref=f5e918]: Rohan Mehta
+              - paragraph [ref=f5e919]: Delhi · Trip to Kashmir, India
+        - generic [ref=f5e920]:
+          - paragraph [ref=f5e935]: “Booked a family package for 6 people and everything (visa, hotel, desert safari) was handled by their team. Genuinely stress-free.”
+          - generic [ref=f5e936]:
+            - img "Priya Nair" [ref=f5e938]
+            - generic [ref=f5e939]:
+              - paragraph [ref=f5e940]: Priya Nair
+              - paragraph [ref=f5e941]: Bengaluru · Trip to Dubai, UAE
+        - generic [ref=f5e942]:
+          - paragraph [ref=f5e957]: “Loved the houseboat stay in Alleppey they arranged. Support team was reachable on WhatsApp throughout the trip whenever we needed help.”
+          - generic [ref=f5e958]:
+            - img "Karan Kapoor" [ref=f5e960]
+            - generic [ref=f5e961]:
+              - paragraph [ref=f5e962]: Karan Kapoor
+              - paragraph [ref=f5e963]: Pune · Trip to Kerala, India
+        - generic [ref=f5e964]:
+          - paragraph [ref=f5e979]: “Our overwater villa looked exactly like the photos. Snapingo's package pricing beat three other agents we compared before booking.”
+          - generic [ref=f5e980]:
+            - img "Simran Kaur" [ref=f5e982]
+            - generic [ref=f5e983]:
+              - paragraph [ref=f5e984]: Simran Kaur
+              - paragraph [ref=f5e985]: Chandigarh · Trip to Maldives
+    - generic [ref=f5e987]:
+      - generic [ref=f5e988]:
+        - heading "Ideas & inspiration for your next trip" [level=2] [ref=f5e989]
+        - paragraph [ref=f5e990]: Guides, itineraries and tips from the Snapingo travel desk.
+      - generic [ref=f5e991]:
+        - link "10 Hidden Beaches in Goa Only Locals Know About Beach Guide 10 Hidden Beaches in Goa Only Locals Know About Skip the crowds at Baga and Calangute. Here are the quiet stretches of sand worth the extra drive. Read more" [ref=f5e993] [cursor=pointer]:
+          - /url: /blog/b1
+          - generic [ref=f5e994]:
+            - img "10 Hidden Beaches in Goa Only Locals Know About" [ref=f5e995]
+            - generic [ref=f5e996]: Beach Guide
+          - generic [ref=f5e997]:
+            - heading "10 Hidden Beaches in Goa Only Locals Know About" [level=3] [ref=f5e998]
+            - paragraph [ref=f5e999]: Skip the crowds at Baga and Calangute. Here are the quiet stretches of sand worth the extra drive.
+            - generic [ref=f5e1000]: Read more
+        - 'link "Bali on a Budget: A Realistic 6-Day Itinerary International Bali on a Budget: A Realistic 6-Day Itinerary How to see temples, rice terraces, and waterfalls in Bali without blowing your travel budget. Read more" [ref=f5e1005] [cursor=pointer]':
+          - /url: /blog/b2
+          - generic [ref=f5e1006]:
+            - 'img "Bali on a Budget: A Realistic 6-Day Itinerary" [ref=f5e1007]'
+            - generic [ref=f5e1008]: International
+          - generic [ref=f5e1009]:
+            - 'heading "Bali on a Budget: A Realistic 6-Day Itinerary" [level=3] [ref=f5e1010]'
+            - paragraph [ref=f5e1011]: How to see temples, rice terraces, and waterfalls in Bali without blowing your travel budget.
+            - generic [ref=f5e1012]: Read more
+        - link "Best Time to Visit Kashmir for Snow & Shikara Rides Travel Tips Best Time to Visit Kashmir for Snow & Shikara Rides A month-by-month breakdown of Kashmir's weather so you can plan the trip you actually want. Read more" [ref=f5e1017] [cursor=pointer]:
+          - /url: /blog/b3
+          - generic [ref=f5e1018]:
+            - img "Best Time to Visit Kashmir for Snow & Shikara Rides" [ref=f5e1019]
+            - generic [ref=f5e1020]: Travel Tips
+          - generic [ref=f5e1021]:
+            - heading "Best Time to Visit Kashmir for Snow & Shikara Rides" [level=3] [ref=f5e1022]
+            - paragraph [ref=f5e1023]: A month-by-month breakdown of Kashmir's weather so you can plan the trip you actually want.
+            - generic [ref=f5e1024]: Read more
+      - link "Read all articles" [ref=f5e1029] [cursor=pointer]:
+        - /url: /blog
+  - contentinfo [ref=f5e1032]:
+    - generic [ref=f5e1033]:
+      - generic [ref=f5e1034]:
+        - generic [ref=f5e1035]:
+          - link "Snapingo Snapingo" [ref=f5e1036] [cursor=pointer]:
+            - /url: /
+            - img "Snapingo" [ref=f5e1038]
+            - generic [ref=f5e1039]: Snapingo
+          - paragraph [ref=f5e1040]: A unit of SNAP Tour and Travels Pvt. Ltd.
+          - paragraph [ref=f5e1041]: Snapingo curates all-inclusive holiday packages, including flights, stay, transfers & sightseeing, across domestic and international destinations, so your entire trip fits into one booking.
+          - generic [ref=f5e1042]:
+            - link "Instagram" [ref=f5e1043] [cursor=pointer]:
+              - /url: https://www.instagram.com/snapingo.travel?utm_source=qr&igsh=NHJ2YjZrN3phcGgw
+            - link "Facebook" [ref=f5e1049] [cursor=pointer]:
+              - /url: https://www.facebook.com/share/1SeCwwiBoX/
+            - link "LinkedIn" [ref=f5e1053] [cursor=pointer]:
+              - /url: https://www.linkedin.com/company/snapingo/
+            - link "YouTube" [ref=f5e1059] [cursor=pointer]:
+              - /url: https://www.youtube.com/@Snapingo.travel
+        - generic [ref=f5e1064]:
+          - heading "Domestic" [level=4] [ref=f5e1065]
+          - list [ref=f5e1066]:
+            - listitem [ref=f5e1067]:
+              - link "Himachal Pradesh Packages" [ref=f5e1068] [cursor=pointer]:
+                - /url: /destinations/himachal
+            - listitem [ref=f5e1069]:
+              - link "Kashmir Packages" [ref=f5e1070] [cursor=pointer]:
+                - /url: /destinations/kashmir
+            - listitem [ref=f5e1071]:
+              - link "Uttarakhand Packages" [ref=f5e1072] [cursor=pointer]:
+                - /url: /destinations/uttarakhand
+            - listitem [ref=f5e1073]:
+              - link "Andaman & Nicobar Packages" [ref=f5e1074] [cursor=pointer]:
+                - /url: /destinations/andaman-nicobar
+            - listitem [ref=f5e1075]:
+              - link "Kerala Packages" [ref=f5e1076] [cursor=pointer]:
+                - /url: /destinations/kerala
+            - listitem [ref=f5e1077]:
+              - link "Rajasthan Packages" [ref=f5e1078] [cursor=pointer]:
+                - /url: /destinations/rajasthan
+        - generic [ref=f5e1079]:
+          - heading "International" [level=4] [ref=f5e1080]
+          - list [ref=f5e1081]:
+            - listitem [ref=f5e1082]:
+              - link "Bali Packages" [ref=f5e1083] [cursor=pointer]:
+                - /url: /destinations/bali
+            - listitem [ref=f5e1084]:
+              - link "Dubai Packages" [ref=f5e1085] [cursor=pointer]:
+                - /url: /destinations/dubai
+            - listitem [ref=f5e1086]:
+              - link "Maldives Packages" [ref=f5e1087] [cursor=pointer]:
+                - /url: /destinations/maldives
+            - listitem [ref=f5e1088]:
+              - link "Vietnam Packages" [ref=f5e1089] [cursor=pointer]:
+                - /url: /destinations/vietnam
+            - listitem [ref=f5e1090]:
+              - link "Malaysia Packages" [ref=f5e1091] [cursor=pointer]:
+                - /url: /destinations/malaysia
+            - listitem [ref=f5e1092]:
+              - link "Thailand Packages" [ref=f5e1093] [cursor=pointer]:
+                - /url: /destinations/thailand
+        - generic [ref=f5e1094]:
+          - heading "Get in touch" [level=4] [ref=f5e1095]
+          - list [ref=f5e1096]:
+            - listitem [ref=f5e1097]:
+              - link "+91 87003 68575" [ref=f5e1100] [cursor=pointer]:
+                - /url: tel:+918700368575
+            - listitem [ref=f5e1101]:
+              - link "info@snapingo.com" [ref=f5e1105] [cursor=pointer]:
+                - /url: mailto:info@snapingo.com
+            - listitem [ref=f5e1106]:
+              - generic [ref=f5e1110]: A 710, Tower 4, NX One,Greater Noida West, UP 201318
+      - generic [ref=f5e1111]:
+        - paragraph [ref=f5e1112]: © 2026 SNAP Tour and Travels Pvt. Ltd. All rights reserved.
+        - generic [ref=f5e1113]:
+          - link "Privacy Policy" [ref=f5e1114] [cursor=pointer]:
+            - /url: /privacy-policy
+          - link "Terms of Service" [ref=f5e1115] [cursor=pointer]:
+            - /url: /terms-of-service
+          - link "Cancellation & Refunds" [ref=f5e1116] [cursor=pointer]:
+            - /url: /cancellation-refund
+        - generic [ref=f5e1117]: Secure & verified bookings
+  - link "Chat with Snapingo on WhatsApp" [ref=f5e1122] [cursor=pointer]:
+    - /url: https://wa.me/918700368575?text=Hi%20Snapingo!%20I'd%20like%20to%20plan%20a%20trip.%20Can%20you%20help%20me%20with%20the%20packages%3F
+  - button "Open Next.js Dev Tools" [ref=f5e1131] [cursor=pointer]
