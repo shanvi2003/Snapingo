@@ -1,0 +1,44 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
+import type { Service } from "@/data/services";
+import { useRevealOnView } from "@/hooks/useRevealOnView";
+
+export default function ServiceCard({ service, index = 0 }: { service: Service; index?: number }) {
+  const { ref, style } = useRevealOnView<HTMLDivElement>({
+    y: 24,
+    duration: 0.45,
+    delay: (index % 6) * 0.06,
+    margin: "-40px",
+  });
+
+  return (
+    <div ref={ref} style={style}>
+      <Link
+        href={`/services/${service.slug}`}
+        className="group relative block aspect-[4/3] overflow-hidden rounded-2xl shadow-sm"
+      >
+        <Image
+          src={service.image}
+          alt={service.name}
+          fill
+          quality={85}
+          sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 25vw"
+          className="object-cover transition duration-700 group-hover:scale-110"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-ink-950/90 via-ink-950/15 to-transparent" />
+
+        <div className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-full bg-white/90 text-ink-900 opacity-0 shadow transition-all duration-300 group-hover:opacity-100 group-hover:rotate-45">
+          <ArrowUpRight className="h-4 w-4" />
+        </div>
+
+        <div className="absolute inset-x-0 bottom-0 p-5 3xl:p-7">
+          <h3 className="font-heading text-xl font-bold text-white 3xl:text-2xl">{service.name}</h3>
+          <p className="mt-1 text-sm text-white 3xl:text-base">{service.tagline}</p>
+        </div>
+      </Link>
+    </div>
+  );
+}

@@ -1,0 +1,409 @@
+// Prisma schema for Snapingo — leads/enquiries + CMS content.
+// Client is generated into src/generated/prisma (Prisma 7 default), imported
+// from "@/generated/prisma" rather than "@prisma/client" directly.
+//
+// Prisma 7 no longer accepts connection URLs in this file at all:
+// - The CLI (migrate/db push/introspect) reads its URL from prisma.config.ts
+//   (DIRECT_URL — a direct, non-pooled connection, since DDL doesn't work
+//   reliably through PgBouncer's transaction-pooling mode).
+// - The runtime PrismaClient (src/lib/db.ts) is constructed with a driver
+//   adapter (@prisma/adapter-pg) wrapping a pg.Pool pointed at DATABASE_URL
+//   (Render's pooled/PgBouncer connection string), so we control the pool
+//   size ourselves instead of relying on connection-string query params.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Auth / staff accounts
+// ---------------------------------------------------------------------------
+
+enum StaffRole {
+  ADMIN
+  STAFF
+}
+
+// Sub-role for STAFF accounts only (null for ADMIN, which always has full
+// access) - drives which staff-panel features a given account can reach.
+// See src/lib/permissions.ts for the actual permission matrix.
+enum StaffJobRole {
+  TRAVEL_EXECUTIVE
+  BDE
+  SOCIAL_MEDIA_EXECUTIVE
+  DIGITAL_MARKETING
+}
+
+model StaffUser {
+  id                  String        @id @default(cuid())
+  name                String
+  email               String        @unique
+  passwordHash        String
+  role                StaffRole     @default(STAFF)
+  jobRole             StaffJobRole?
+  isActive            Boolean       @default(true)
+  // Brute-force lockout: failedLoginAttempts resets to 0 on any successful
+  // login; hitting the threshold in src/lib/actions/auth.ts sets lockedUntil
+  // instead of letting the counter grow unbounded.
+  failedLoginAttempts Int           @default(0)
+  lockedUntil         DateTime?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  assignedLeads       Lead[]        @relation("AssignedTo")
+  leadNotes           LeadNote[]
+  bookings            Booking[]     @relation("BookingCreatedBy")
+  payments            Payment[]     @relation("PaymentRecordedBy")
+}
+
+// ---------------------------------------------------------------------------
+// Unified lead / enquiry storage — every form touchpoint writes here
+// ---------------------------------------------------------------------------
+
+enum LeadSource {
+  TRAVEL_GUIDE
+  TRIP_PLANNER
+  CONTACT_FORM
+  HOTEL_BOOKING
+  FLIGHT_BOOKING
+  CAB_BOOKING
+  PACKAGE_INTEREST
+  GENERAL_ENQUIRY
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUOTED
+  CONVERTED
+  CLOSED
+}
+
+model Lead {
+  id     String     @id @default(cuid())
+  source LeadSource
+  status LeadStatus @default(NEW)
+
+  // Contact info
+  name  String?
+  phone String?
+  email String?
+
+  // Trip shape
+  tripType        String?
+  destinationSlug String?
+  destinationName String?
+
+  // Dates
+  dateMode  String?
+  startDate DateTime?
+  endDate   DateTime?
+  month     String?
+  days      String?
+
+  // Package / hotel / flight specifics
+  packageId     String?
+  packageTitle  String?
+  hotelName     String?
+  pricePerNight Int?
+  flightLabel   String?
+  fromCityName  String?
+  classLabel    String?
+  categoryLabel String?
+  priceLabel    String?
+
+  // Free text
+  message String?
+
+  // Source-specific extras that don't deserve their own column
+  raw Json?
+
+  // Attribution
+  pageUrl   String?
+  userAgent String?
+
+  assignedTo   StaffUser? @relation("AssignedTo", fields: [assignedToId], references: [id])
+  assignedToId String?
+  notes        LeadNote[]
+  activities   LeadActivity[]
+  bookings     Booking[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([source])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model LeadNote {
+  id        String    @id @default(cuid())
+  lead      Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  leadId    String
+  author    StaffUser @relation(fields: [authorId], references: [id])
+  authorId  String
+  body      String
+  createdAt DateTime  @default(now())
+}
+
+// System-generated timeline entries (created/status changed/assigned/note
+// added) so "Lead Activities" can show a single reverse-chron feed across
+// every lead, not just per-lead notes.
+enum LeadActivityType {
+  CREATED
+  STATUS_CHANGED
+  ASSIGNED
+  NOTE_ADDED
+}
+
+model LeadActivity {
+  id        String           @id @default(cuid())
+  lead      Lead             @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  leadId    String
+  type      LeadActivityType
+  message   String
+  createdAt DateTime         @default(now())
+
+  @@index([createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Manually-confirmed bookings + payment ledger. Booking/payment is 100%
+// manual over WhatsApp per the client's own requirement - this is a record
+// of what staff have already agreed with the traveler, not a checkout flow.
+// ---------------------------------------------------------------------------
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+model Booking {
+  id              String        @id @default(cuid())
+  lead            Lead?         @relation(fields: [leadId], references: [id])
+  leadId          String?
+  travelerName    String
+  phone           String
+  email           String?
+  packageId       String?
+  packageTitle    String?
+  destinationName String?
+  travelStartDate DateTime?
+  travelEndDate   DateTime?
+  totalAmount     Int
+  taxAmount       Int           @default(0)
+  status          BookingStatus @default(PENDING)
+  notes           String?
+  createdBy       StaffUser     @relation("BookingCreatedBy", fields: [createdById], references: [id])
+  createdById     String
+  payments        Payment[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Payment {
+  id          String    @id @default(cuid())
+  booking     Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  bookingId   String
+  amount      Int
+  mode        String
+  paidAt      DateTime  @default(now())
+  notes       String?
+  recordedBy  StaffUser @relation("PaymentRecordedBy", fields: [recordedById], references: [id])
+  recordedById String
+  createdAt   DateTime  @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// CMS content — mirrors src/data/*.ts field-for-field so ids/slugs never change
+// ---------------------------------------------------------------------------
+
+model Package {
+  id              String   @id
+  title           String
+  destination     String
+  destinationSlug String
+  type            String
+  image           String
+  duration        String
+  price           Int
+  originalPrice   Int
+  rating          Float
+  reviews         Int
+  inclusions      String[]
+  exclusions      String[]
+  highlights      String[]
+  badge           String?
+  featured        Boolean  @default(false)
+  hotDeal         Boolean  @default(false)
+  categories      String[]
+  itinerary       ItineraryDay[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model ItineraryDay {
+  id        String  @id @default(cuid())
+  package   Package @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  packageId String
+  day       Int
+  title     String
+  desc      String
+}
+
+model Destination {
+  slug            String   @id
+  name            String
+  tagline         String
+  image           String
+  gallery         String[]
+  packagesCount   Int
+  startingPrice   Int
+  type            String
+  overview        String
+  bestTimeToVisit String
+  idealDuration   String
+  highlights      DestinationHighlight[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model DestinationHighlight {
+  id              String      @id @default(cuid())
+  destination     Destination @relation(fields: [destinationSlug], references: [slug], onDelete: Cascade)
+  destinationSlug String
+  icon            String
+  title           String
+  desc            String
+}
+
+model Service {
+  slug       String   @id
+  name       String
+  tagline    String
+  image      String
+  overview   String
+  highlights ServiceHighlight[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model ServiceHighlight {
+  id          String  @id @default(cuid())
+  service     Service @relation(fields: [serviceSlug], references: [slug], onDelete: Cascade)
+  serviceSlug String
+  icon        String
+  title       String
+  desc        String
+}
+
+model BlogPost {
+  id        String   @id
+  title     String
+  excerpt   String
+  image     String
+  category  String
+  readTime  String
+  author    String
+  date      DateTime
+  content   BlogSection[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BlogSection {
+  id      String   @id @default(cuid())
+  post    BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId  String
+  order   Int
+  heading String?
+  body    String
+}
+
+model FaqCategory {
+  id       String    @id @default(cuid())
+  category String    @unique
+  order    Int       @default(0)
+  items    FaqItem[]
+}
+
+model FaqItem {
+  id         String      @id @default(cuid())
+  category   FaqCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId String
+  order      Int         @default(0)
+  question   String
+  answer     String
+}
+
+model Testimonial {
+  id       String @id
+  name     String
+  location String
+  avatar   String
+  rating   Float
+  trip     String
+  quote    String
+  order    Int    @default(0)
+}
+
+model Hotel {
+  id              String @id
+  name            String
+  destinationSlug String
+  category        String
+  pricePerNight   Int
+  rating          Float
+}
+
+model Flight {
+  id                String @id
+  airline           String
+  departureCitySlug String
+  destinationSlug   String
+  flightClass       String
+  price             Int
+  duration          String
+}
+
+// ---------------------------------------------------------------------------
+// Homepage marketing content — the last corner of the public site that was
+// still hardcoded in src/data/site.ts. Each is managed as one whole-list
+// admin form (RepeatableRows) rather than per-row CRUD pages, since these
+// are small, flat, order-sensitive lists (4-10 rows) rather than the kind of
+// content that grows into hundreds of independently-linked records.
+// ---------------------------------------------------------------------------
+
+model ServiceCategory {
+  id    String @id @default(cuid())
+  icon  String
+  label String
+  desc  String
+  image String
+  order Int    @default(0)
+}
+
+model TrustLogo {
+  id       String @id @default(cuid())
+  name     String
+  category String
+  logo     String
+  order    Int    @default(0)
+}
+
+model Usp {
+  id    String @id @default(cuid())
+  icon  String
+  title String
+  desc  String
+  order Int    @default(0)
+}
