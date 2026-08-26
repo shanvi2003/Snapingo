@@ -26,6 +26,7 @@ export default function TravelGuideModal({ destinations }: { destinations: Desti
   const [destinationSlug, setDestinationSlug] = useState("");
   const [days, setDays] = useState("");
   const [startDate, setStartDate] = useState("");
+  const [sending, setSending] = useState(false);
 
   useScrollLock(open);
 
@@ -49,9 +50,14 @@ export default function TravelGuideModal({ destinations }: { destinations: Desti
     setDestinationSlug("");
     setDays("");
     setStartDate("");
+    setSending(false);
   };
 
   const handleSend = () => {
+    // A fast double-tap can fire this twice before the step-3 re-render
+    // unmounts the button - guard explicitly instead of relying on that.
+    if (sending) return;
+    setSending(true);
     const lines = [
       "Hi Snapingo! I'd like help planning a trip.",
       "",
@@ -261,7 +267,7 @@ export default function TravelGuideModal({ destinations }: { destinations: Desti
                 <div className="border-t border-ink-100 px-6 py-4">
                   <button
                     type="button"
-                    disabled={step === 1 ? !canProceedStep1 : !canProceedStep2}
+                    disabled={step === 1 ? !canProceedStep1 : !canProceedStep2 || sending}
                     onClick={() => (step === 2 ? handleSend() : setStep((s) => (s + 1) as Step))}
                     className="flex w-full items-center justify-center gap-2 rounded-full bg-brand-600 px-6 py-3.5 text-sm font-semibold text-white shadow-brand transition hover:-translate-y-0.5 hover:bg-brand-700 disabled:pointer-events-none disabled:opacity-40 disabled:hover:translate-y-0"
                   >

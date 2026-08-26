@@ -3,40 +3,48 @@ import { db } from "@/lib/db";
 import { LeadSource, LeadStatus } from "@/generated/prisma/enums";
 import { sourceLabels, statusLabels, statusStyles } from "@/components/admin/leads/statusStyles";
 import FilterSelect from "@/components/admin/FilterSelect";
+import Pagination, { PAGE_SIZE } from "@/components/admin/Pagination";
 
 export default async function LeadsInboxPage({
   basePath,
   searchParams,
 }: {
   basePath: string;
-  searchParams: Promise<{ source?: string; status?: string; q?: string }>;
+  searchParams: Promise<{ source?: string; status?: string; q?: string; page?: string }>;
 }) {
-  const { source, status, q } = await searchParams;
+  const { source, status, q, page: pageParam } = await searchParams;
+  const page = Math.max(1, Number(pageParam) || 1);
 
-  const leads = await db.lead.findMany({
-    where: {
-      ...(source ? { source: source as LeadSource } : {}),
-      ...(status ? { status: status as LeadStatus } : {}),
-      ...(q
-        ? {
-            OR: [
-              { name: { contains: q, mode: "insensitive" } },
-              { phone: { contains: q, mode: "insensitive" } },
-              { email: { contains: q, mode: "insensitive" } },
-              { destinationName: { contains: q, mode: "insensitive" } },
-            ],
-          }
-        : {}),
-    },
-    orderBy: { createdAt: "desc" },
-    take: 200,
-    include: { assignedTo: { select: { name: true } } },
-  });
+  const where = {
+    ...(source ? { source: source as LeadSource } : {}),
+    ...(status ? { status: status as LeadStatus } : {}),
+    ...(q
+      ? {
+          OR: [
+            { name: { contains: q, mode: "insensitive" as const } },
+            { phone: { contains: q, mode: "insensitive" as const } },
+            { email: { contains: q, mode: "insensitive" as const } },
+            { destinationName: { contains: q, mode: "insensitive" as const } },
+          ],
+        }
+      : {}),
+  };
+
+  const [total, leads] = await Promise.all([
+    db.lead.count({ where }),
+    db.lead.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+      include: { assignedTo: { select: { name: true } } },
+    }),
+  ]);
 
   return (
     <div>
       <h1 className="font-heading text-2xl font-bold text-ink-900">Leads</h1>
-      <p className="mt-1 text-sm text-ink-500">{leads.length} lead{leads.length === 1 ? "" : "s"}</p>
+      <p className="mt-1 text-sm text-ink-500">{total} lead{total === 1 ? "" : "s"}</p>
 
       <form className="mt-6 flex flex-wrap gap-3" action={basePath} method="get">
         <input
@@ -130,6 +138,8 @@ export default async function LeadsInboxPage({
           </tbody>
         </table>
       </div>
+
+      <Pagination basePath={basePath} params={{ source, status, q }} page={page} total={total} />
     </div>
   );
 }

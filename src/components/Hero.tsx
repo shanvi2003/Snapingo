@@ -51,9 +51,22 @@ export default function Hero() {
     const lines = [line1Ref.current, line2Ref.current];
     if (!container) return;
 
-    const fit = () => {
+    // Shrinking a line's font-size shrinks its own line-height, which
+    // shrinks this container's height - re-firing the very ResizeObserver
+    // below on every fit() call and forcing a fresh layout read each time.
+    // Since fit() never changes the container's WIDTH, skipping re-fitting
+    // when the ResizeObserver reports the same width breaks that
+    // self-triggered loop instead of re-measuring (and forcing a
+    // synchronous reflow) on every one of its own resize notifications.
+    // The initial call and the post-fonts-load call still force a measure
+    // regardless of width, since a font swap changes each line's natural
+    // scrollWidth even when the container's width hasn't moved.
+    let lastWidth = -1;
+
+    const fit = (force = false) => {
       const availableWidth = container.clientWidth;
-      if (availableWidth <= 0) return;
+      if (availableWidth <= 0 || (!force && availableWidth === lastWidth)) return;
+      lastWidth = availableWidth;
       for (const el of lines) {
         if (!el) continue;
         el.style.fontSize = "";
@@ -65,10 +78,10 @@ export default function Hero() {
       }
     };
 
-    fit();
-    const ro = new ResizeObserver(fit);
+    fit(true);
+    const ro = new ResizeObserver(() => fit());
     ro.observe(container);
-    document.fonts?.ready.then(fit);
+    document.fonts?.ready.then(() => fit(true));
     return () => ro.disconnect();
   }, []);
 

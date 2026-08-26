@@ -13,18 +13,38 @@ import {
   tripPurposeOptions,
   type DestinationTypeValue,
 } from "@/data/tripPlanner";
-import { useScrollLock } from "@/hooks/useScrollLock";
+import { isScrollLocked, useScrollLock } from "@/hooks/useScrollLock";
 import CustomSelect from "@/components/CustomSelect";
 import { createLeadAction } from "@/lib/actions/leads";
 
 // The whole Services section already funnels visitors into its own
 // dedicated planning popups (flights/hotels/travel-guide) or is itself just
 // a hub of links to those - skip the generic popup anywhere under it so
-// visitors aren't shown two competing popups at once.
-const SKIP_PREFIX = "/services";
+// visitors aren't shown two competing popups at once. Blog is skipped too -
+// readers there are researching, not ready to be interrupted with a lead
+// form.
+const SKIP_PREFIXES = ["/services", "/blog"];
 function isSkippedPath(pathname: string): boolean {
-  return pathname === SKIP_PREFIX || pathname.startsWith(`${SKIP_PREFIX}/`);
+  return SKIP_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
+
+// Both sessionStorage (not localStorage): scoped to this tab's session
+// only - closing the tab and opening the site fresh clears both, so the
+// popup is allowed to auto-open again. A refresh does NOT clear them, so
+// reloading mid-visit won't re-show it. A submission isn't remembered past
+// the session either, since a future visit may be about a different trip
+// and is worth asking about again.
+//
+// SHOWN_PATHS_KEY is a JSON array of pathnames the popup has already
+// auto-opened on this session - each eligible page (landing, destinations,
+// packages, contact, about, ...) gets shown once independently, not just
+// once for the whole site.
+const SHOWN_PATHS_KEY = "snapingo-trip-planner-shown-paths";
+// SUBMITTED_KEY overrides the per-path allowance above: once the visitor
+// has actually sent a request, don't ask again on any other page for the
+// rest of this session - they've already been asked once, repeating it on
+// the next page they browse to would be nagging.
+const SUBMITTED_KEY = "snapingo-trip-planner-submitted";
 
 type DateFixed = "yes" | "not-yet";
 type OthersType = "domestic" | "international";
@@ -86,15 +106,46 @@ export default function TripPlannerModal({ destinations }: { destinations: Desti
   const [month, setMonth] = useState("");
   const [days, setDays] = useState("");
   const [email, setEmail] = useState("");
+  const [sending, setSending] = useState(false);
 
   useScrollLock(open);
 
-  // Fires fresh on every page visit (not just once per browser session) -
-  // landing on any page outside Services, waiting 5s, or coming right back
-  // to a page already seen this session, all re-arm this timer.
+  // Auto-opens once per eligible pathname per browser tab session (see the
+  // storage keys above) - landing, destinations, packages, contact, about,
+  // etc. each get their own one-time popup; navigating back to a page that
+  // already showed it, or refreshing, won't repeat it there. Submitting the
+  // form anywhere suppresses it everywhere else for the rest of the
+  // session.
+  //
+  // If the mobile nav menu or another modal is open when the timer would
+  // fire, this popup (z-[60]) would render on top of it, covering the nav
+  // bar/hamburger button entirely - it retries once a second until nothing
+  // else has scroll locked instead.
   useEffect(() => {
     if (isSkippedPath(pathname)) return;
-    const timeoutId = setTimeout(() => setOpen(true), 5000);
+    if (sessionStorage.getItem(SUBMITTED_KEY)) return;
+    const shownPaths: unknown = JSON.parse(sessionStorage.getItem(SHOWN_PATHS_KEY) ?? "[]");
+    if (Array.isArray(shownPaths) && shownPaths.includes(pathname)) return;
+
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const reveal = () => {
+      const current: unknown = JSON.parse(sessionStorage.getItem(SHOWN_PATHS_KEY) ?? "[]");
+      const paths = Array.isArray(current) ? current : [];
+      if (!paths.includes(pathname)) {
+        sessionStorage.setItem(SHOWN_PATHS_KEY, JSON.stringify([...paths, pathname]));
+      }
+      setOpen(true);
+    };
+    const tryOpen = () => {
+      timeoutId = setTimeout(() => {
+        if (isScrollLocked()) tryOpen();
+        else reveal();
+      }, 1000);
+    };
+    timeoutId = setTimeout(() => {
+      if (isScrollLocked()) tryOpen();
+      else reveal();
+    }, 5000);
     return () => clearTimeout(timeoutId);
   }, [pathname]);
 
@@ -142,10 +193,16 @@ export default function TripPlannerModal({ destinations }: { destinations: Desti
     setMonth("");
     setDays("");
     setEmail("");
+    setSending(false);
   };
 
   const goNext = () => {
     if (step === "email") {
+      // A fast double-tap can fire this twice before the step-"done"
+      // re-render unmounts the button - guard explicitly instead of relying
+      // on that.
+      if (sending) return;
+      setSending(true);
       const purposeOption = tripPurposeOptions.find((o) => o.value === purpose);
       const purposeLabel = purposeOption?.label ?? purpose;
       const purposeQuoteLabel = purposeOption?.quoteLabel ?? purposeLabel;
@@ -172,6 +229,7 @@ export default function TripPlannerModal({ destinations }: { destinations: Desti
       const waHref = `https://wa.me/918700368575?text=${encodeURIComponent(lines.join("\n"))}`;
       window.open(waHref, "_blank", "noopener,noreferrer");
       setStep("done");
+      sessionStorage.setItem(SUBMITTED_KEY, "1");
 
       createLeadAction({
         source: "TRIP_PLANNER",
@@ -475,7 +533,7 @@ export default function TripPlannerModal({ destinations }: { destinations: Desti
                 )}
                 <button
                   type="button"
-                  disabled={!canProceed}
+                  disabled={!canProceed || sending}
                   onClick={goNext}
                   className="flex items-center gap-1.5 rounded-full bg-brand-600 px-6 py-3 text-sm font-semibold text-white shadow-brand transition hover:bg-brand-700 disabled:pointer-events-none disabled:opacity-40"
                 >

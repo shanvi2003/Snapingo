@@ -7,6 +7,7 @@ import DeleteButton from "@/components/admin/cms/DeleteButton";
 import { deleteBookingAction } from "@/lib/actions/bookings";
 import FilterSelect from "@/components/admin/FilterSelect";
 import { formatBalance } from "@/lib/money";
+import Pagination, { PAGE_SIZE } from "@/components/admin/Pagination";
 
 export default async function BookingsListPage({
   title,
@@ -18,24 +19,35 @@ export default async function BookingsListPage({
   title: string;
   subtitle: string;
   fixedStatus?: BookingStatus;
-  searchParams?: Promise<{ status?: string; q?: string }>;
+  searchParams?: Promise<{ status?: string; q?: string; page?: string }>;
   basePath?: string;
 }) {
   const params = searchParams ? await searchParams : {};
   const status = fixedStatus ?? (params.status as BookingStatus | undefined);
   const q = params.q?.trim();
+  const page = Math.max(1, Number(params.page) || 1);
+  // Trips is just the bookings list filtered to COMPLETED - its detail
+  // links still point at the shared /bookings/[id] route below, but the
+  // list itself (filters, pagination) lives at its own /trips path.
+  const listPath = `${basePath}/${fixedStatus ? "trips" : "bookings"}`;
 
-  const bookings = await db.booking.findMany({
-    where: {
-      ...(status ? { status } : {}),
-      ...(q
-        ? { OR: [{ travelerName: { contains: q, mode: "insensitive" } }, { phone: { contains: q, mode: "insensitive" } }] }
-        : {}),
-    },
-    orderBy: { createdAt: "desc" },
-    include: { payments: true },
-    take: 200,
-  });
+  const where = {
+    ...(status ? { status } : {}),
+    ...(q
+      ? { OR: [{ travelerName: { contains: q, mode: "insensitive" as const } }, { phone: { contains: q, mode: "insensitive" as const } }] }
+      : {}),
+  };
+
+  const [total, bookings] = await Promise.all([
+    db.booking.count({ where }),
+    db.booking.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      include: { payments: true },
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+  ]);
 
   return (
     <div>
@@ -53,7 +65,7 @@ export default async function BookingsListPage({
         </Link>
       </div>
 
-      <form className="mt-6 flex flex-wrap gap-3" action={fixedStatus ? undefined : `${basePath}/bookings`} method="get">
+      <form className="mt-6 flex flex-wrap gap-3" action={listPath} method="get">
         <input
           type="text"
           name="q"
@@ -142,6 +154,8 @@ export default async function BookingsListPage({
           </tbody>
         </table>
       </div>
+
+      <Pagination basePath={listPath} params={{ status: fixedStatus ? undefined : params.status, q }} page={page} total={total} />
     </div>
   );
 }

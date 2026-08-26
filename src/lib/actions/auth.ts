@@ -10,6 +10,14 @@ export type LoginState = { error: string } | undefined;
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_MS = 15 * 60 * 1000; // 15 minutes
 
+// A bcrypt hash of an arbitrary, unknown password - not any real user's
+// hash. Compared against on a nonexistent email so verifyPassword still
+// does a full bcrypt comparison either way; skipping it entirely when
+// `user` is null would make "no such account" respond measurably faster
+// than "wrong password for a real account", letting a caller enumerate
+// which emails have staff accounts.
+const DUMMY_HASH = "$2b$12$0MLFGGTcw4y8.ivrYPmmLeCQTfW3dCNeCxkmKD5Ko/C4FR99mhCM2";
+
 export async function loginAction(_prevState: LoginState, formData: FormData): Promise<LoginState> {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
@@ -25,7 +33,7 @@ export async function loginAction(_prevState: LoginState, formData: FormData): P
     return { error: `Too many failed attempts. Try again in ${minutes} minute${minutes === 1 ? "" : "s"}.` };
   }
 
-  const passwordOk = user ? await verifyPassword(password, user.passwordHash) : false;
+  const passwordOk = await verifyPassword(password, user?.passwordHash ?? DUMMY_HASH);
 
   // Same generic message whether the email doesn't exist or the password is
   // wrong — never confirm which one to an unauthenticated caller.

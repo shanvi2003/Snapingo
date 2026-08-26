@@ -16,6 +16,15 @@ import { staffCan, type StaffFeature } from "@/lib/permissions";
 // still independently re-verify in every layout and every gated Server
 // Action - those stay authoritative for mutations and catch a jobRole
 // change made mid-session (the JWT only refreshes on next login).
+
+// The only hostnames this app should ever be reached at in production. A
+// mismatch (e.g. a third-party clone/mirror whose DNS or reverse proxy
+// happens to point at this deployment) gets bounced to the canonical
+// domain instead of being served. Scoped to VERCEL_ENV === "production" so
+// it never interferes with Vercel's own per-branch/PR preview URLs (those
+// are *.vercel.app aliases outside this exact list) or local dev.
+const allowedProductionHosts = new Set(["snapingo.com", "www.snapingo.com", "snapingo.vercel.app"]);
+
 const protectedPrefixes = ["/admin", "/staff", "/api/admin"];
 
 // Staff-panel route prefix -> the feature it requires (src/lib/permissions.ts).
@@ -39,6 +48,12 @@ const staffFeatureRoutes: { prefix: string; feature: StaffFeature }[] = [
 
 export default async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
+
+  if (process.env.VERCEL_ENV === "production" && !allowedProductionHosts.has(req.nextUrl.hostname)) {
+    const canonical = new URL(req.nextUrl.pathname + req.nextUrl.search, "https://snapingo.com");
+    return NextResponse.redirect(canonical, 308);
+  }
+
   // /staff/login is itself under the "/staff" prefix but must stay reachable
   // while signed out - it's staff's own dedicated entry URL (see below).
   if (pathname === "/staff/login") return NextResponse.next();
@@ -77,5 +92,9 @@ export default async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/staff/:path*", "/api/admin/:path*"],
+  // Broad on purpose: the host check up top must run for every page, not
+  // just the protected admin/staff prefixes. Static assets and the image
+  // optimizer are excluded so this never adds latency to CSS/JS/image
+  // requests (see the proxy docs' warning about unscoped matchers).
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)"],
 };
