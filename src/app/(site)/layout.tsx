@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import OfferBar from "@/components/OfferBar";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -24,7 +24,13 @@ export default async function SiteLayout({ children }: { children: ReactNode }) 
       </main>
       <Footer />
       <FloatingButtons />
-      <TripPlannerModal destinations={destinations} />
+      {/* TripPlannerModal reads the ?type= query param via useSearchParams
+          to tell the Domestic/International destinations listing apart -
+          that hook requires a Suspense boundary, or Next.js would bail the
+          entire site out of static rendering to accommodate it. */}
+      <Suspense fallback={null}>
+        <TripPlannerModal destinations={destinations} />
+      </Suspense>
     </>
   );
 }

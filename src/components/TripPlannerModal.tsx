@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { CheckCircle2, ChevronLeft, ChevronRight, X } from "lucide-react";
 import type { Destination } from "@/data/destinations";
@@ -94,6 +94,14 @@ export default function TripPlannerModal({ destinations }: { destinations: Desti
   const getDestinationBySlug = (slug: string) => destinations.find((d) => d.slug === slug);
 
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  // /destinations?type=domestic and ?type=international are two distinct
+  // listings, not just a filter tweak on one page - track them as separate
+  // "pages" for the once-per-page popup instead of collapsing both under
+  // the bare "/destinations" pathname (which usePathname() alone would do,
+  // since it drops the query string).
+  const destinationType = pathname === "/destinations" ? searchParams.get("type") : null;
+  const pageKey = destinationType ? `${pathname}?type=${destinationType}` : pathname;
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<StepId>("purpose");
   const [purpose, setPurpose] = useState("");
@@ -125,14 +133,14 @@ export default function TripPlannerModal({ destinations }: { destinations: Desti
     if (isSkippedPath(pathname)) return;
     if (sessionStorage.getItem(SUBMITTED_KEY)) return;
     const shownPaths: unknown = JSON.parse(sessionStorage.getItem(SHOWN_PATHS_KEY) ?? "[]");
-    if (Array.isArray(shownPaths) && shownPaths.includes(pathname)) return;
+    if (Array.isArray(shownPaths) && shownPaths.includes(pageKey)) return;
 
     let timeoutId: ReturnType<typeof setTimeout>;
     const reveal = () => {
       const current: unknown = JSON.parse(sessionStorage.getItem(SHOWN_PATHS_KEY) ?? "[]");
       const paths = Array.isArray(current) ? current : [];
-      if (!paths.includes(pathname)) {
-        sessionStorage.setItem(SHOWN_PATHS_KEY, JSON.stringify([...paths, pathname]));
+      if (!paths.includes(pageKey)) {
+        sessionStorage.setItem(SHOWN_PATHS_KEY, JSON.stringify([...paths, pageKey]));
       }
       setOpen(true);
     };
@@ -147,7 +155,7 @@ export default function TripPlannerModal({ destinations }: { destinations: Desti
       else reveal();
     }, 5000);
     return () => clearTimeout(timeoutId);
-  }, [pathname]);
+  }, [pageKey, pathname]);
 
   useEffect(() => {
     if (!open) return;
