@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   title: "Our Services | Snapingo",
   description:
     "Flights, hotels and cabs & transfers booked through Snapingo's trusted partners, plus a self-guided way to plan your trip on our website.",
+  alternates: { canonical: "/services" },
 };
 
 export default async function ServicesPage() {

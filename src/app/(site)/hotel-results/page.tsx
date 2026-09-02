@@ -14,6 +14,7 @@ import HotelResultsList from "@/components/HotelResultsList";
 export const metadata: Metadata = {
   title: "Hotel Search Results | Snapingo",
   description: "Hotels matching your destination, budget and travel dates.",
+  alternates: { canonical: "/hotel-results" },
 };
 
 const VALID_CATEGORIES: HotelCategory[] = ["3-star", "4-star", "5-star", "luxury"];

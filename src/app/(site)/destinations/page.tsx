@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   title: "Domestic & International Destinations | Snapingo",
   description:
     "Browse Snapingo's handpicked domestic and international destinations, each with curated, all-inclusive holiday packages.",
+  alternates: { canonical: "/destinations" },
 };
 
 export default async function DestinationsPage({

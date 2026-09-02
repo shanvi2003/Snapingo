@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   title: "Holiday Packages | Snapingo",
   description:
     "Browse all-inclusive domestic and international holiday packages from Snapingo: flights, stay, meals & transfers bundled at one transparent price.",
+  alternates: { canonical: "/packages" },
 };
 
 const VALID_CATEGORIES: PackageCategory[] = [

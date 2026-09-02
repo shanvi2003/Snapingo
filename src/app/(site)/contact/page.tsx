@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   title: "Contact Us | Snapingo",
   description:
     "Get in touch with Snapingo to plan your next trip. Tell us your destination and travel dates, our team replies within a few hours.",
+  alternates: { canonical: "/contact" },
 };
 
 const address = "NX One, Plot No. 17, Tech Zone 4, Greater Noida West, Uttar Pradesh 201318";

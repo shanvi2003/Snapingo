@@ -11,6 +11,7 @@ export const metadata: Metadata = {
   title: "FAQs | Snapingo",
   description:
     "Answers to common questions about booking, payments, cancellations, refunds, visas and support for Snapingo holiday packages.",
+  alternates: { canonical: "/faq" },
 };
 
 const waMessage = encodeURIComponent(

@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   title: "Cancellation & Refund Policy | Snapingo",
   description:
     "Snapingo's cancellation, rescheduling and refund policy for holiday packages, flights, hotels and cab bookings.",
+  alternates: { canonical: "/cancellation-refund" },
 };
 
 const toc = [

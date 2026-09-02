@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   title: "Travel Stories & Guides | Snapingo",
   description:
     "Guides, itineraries and tips from the Snapingo travel desk, for your next domestic or international trip.",
+  alternates: { canonical: "/blog" },
 };
 
 export default async function BlogListingPage() {

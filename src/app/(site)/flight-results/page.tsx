@@ -9,6 +9,7 @@ import FlightResultsList from "@/components/FlightResultsList";
 export const metadata: Metadata = {
   title: "Flight Search Results | Snapingo",
   description: "Flights matching your route, class and travel dates.",
+  alternates: { canonical: "/flight-results" },
 };
 
 const VALID_CLASSES: FlightClass[] = ["economy", "premium-economy", "business", "first"];

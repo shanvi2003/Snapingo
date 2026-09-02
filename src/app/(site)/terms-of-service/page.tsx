@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   title: "Terms of Service | Snapingo",
   description:
     "The terms and conditions that govern your use of Snapingo's travel booking and concierge services.",
+  alternates: { canonical: "/terms-of-service" },
 };
 
 const toc = [

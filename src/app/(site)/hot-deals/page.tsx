@@ -10,6 +10,7 @@ export const metadata: Metadata = {
   title: "Hot Deals | Snapingo",
   description:
     "Limited-time holiday package deals, flat discounts and exclusive offers from Snapingo.",
+  alternates: { canonical: "/hot-deals" },
 };
 
 const waMessage = encodeURIComponent(

@@ -15,6 +15,7 @@ export const metadata: Metadata = {
   title: "About Us | Snapingo",
   description:
     "Snapingo is a premium travel venture and unit of Snap Tours and Travel Pvt. Ltd., curating seamless, enriching travel experiences across India and around the globe.",
+  alternates: { canonical: "/about" },
 };
 
 const pillars = [

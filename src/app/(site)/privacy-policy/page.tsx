@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   title: "Privacy Policy | Snapingo",
   description:
     "How Snapingo collects, uses, stores, and protects your personal data when you use our travel booking and concierge services.",
+  alternates: { canonical: "/privacy-policy" },
 };
 
 const toc = [
