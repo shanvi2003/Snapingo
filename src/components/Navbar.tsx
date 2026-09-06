@@ -10,7 +10,7 @@ import { hotDealsLink, navLinks } from "@/data/site";
 import NavMegaMenu from "@/components/NavMegaMenu";
 import type { Destination } from "@/data/destinations";
 import type { Service } from "@/data/services";
-import { useScrollLock } from "@/hooks/useScrollLock";
+import { acquireLock } from "@/hooks/useScrollLock";
 
 const menuLinks = ["Domestic", "International", "Packages", "Services"];
 
@@ -39,8 +39,34 @@ export default function Navbar({
   // body-only locking left <html> as its own independently-scrollable
   // container (globals.css gives both overflow-x:hidden, which per spec
   // forces overflow-y:auto on each), so the page kept scrolling behind
-  // the open mobile menu - this hook locks both.
-  useScrollLock(open);
+  // the open mobile menu - this locks both. Held via acquireLock() (not
+  // the useScrollLock hook) specifically so releaseLockRef below can
+  // release it synchronously from a nav Link's onClick - see that ref for
+  // why the effect-cleanup timing this hook normally relies on isn't
+  // enough here.
+  const releaseLockRef = useRef<(() => void) | null>(null);
+  useEffect(() => {
+    if (!open) return;
+    releaseLockRef.current = acquireLock();
+    return () => {
+      releaseLockRef.current?.();
+      releaseLockRef.current = null;
+    };
+  }, [open]);
+
+  // A mobile nav Link's onClick both closes the menu (setOpen(false)) and
+  // triggers Next.js navigation, in the same event - React can bundle that
+  // setOpen(false) into the same transition as the route change and never
+  // actually commit it, so the effect above never re-runs its cleanup and
+  // the page is left permanently unscrollable even though the URL (and the
+  // menu, visually, once the transition does land) has already moved on.
+  // Releasing the lock here, synchronously, before any of that happens,
+  // means it can't get lost in whatever the router does afterward.
+  const closeMenuForNavigation = () => {
+    releaseLockRef.current?.();
+    releaseLockRef.current = null;
+    setOpen(false);
+  };
 
   const openMenu = (label: string) => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
@@ -78,7 +104,7 @@ export default function Navbar({
       )}
 
       <nav className="relative z-20 flex h-18 w-full items-center justify-between py-3 pl-4 pr-4 sm:pl-6 sm:pr-6 xl:pl-8 xl:pr-8">
-        <Link href="/" className="flex items-center gap-2.5 shrink-0">
+        <Link href="/" onClick={closeMenuForNavigation} className="flex items-center gap-2.5 shrink-0">
           <span className="relative block h-11 w-11">
             <Image
               src="/snapingo-icon.png"
@@ -225,7 +251,7 @@ export default function Navbar({
                 <Link
                   key={link.label}
                   href={link.href}
-                  onClick={() => setOpen(false)}
+                  onClick={closeMenuForNavigation}
                   className="rounded-lg px-3 py-3 font-heading text-lg font-bold tracking-wide text-brand-700 transition hover:bg-brand-50 hover:text-brand-800"
                 >
                   {link.label}

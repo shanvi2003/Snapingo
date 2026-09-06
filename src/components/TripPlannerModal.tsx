@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { CheckCircle2, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { CheckCircle2, ChevronLeft, ChevronRight, Sparkles, X } from "lucide-react";
 import type { Destination } from "@/data/destinations";
 import {
   destinationsByType,
@@ -28,6 +28,13 @@ function isSkippedPath(pathname: string): boolean {
   return SKIP_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
 
+// Package detail pages show their own fixed booking bar at the bottom on
+// mobile (StickyBookingCard) - lift this button above it there, same as
+// FloatingButtons does, so the two fixed bars don't overlap.
+function hasStickyBookingBar(pathname: string): boolean {
+  return /^\/packages\/[^/]+$/.test(pathname);
+}
+
 // Both sessionStorage (not localStorage): scoped to this tab's session
 // only - closing the tab and opening the site fresh clears both, so the
 // popup is allowed to auto-open again. A refresh does NOT clear them, so
@@ -36,15 +43,19 @@ function isSkippedPath(pathname: string): boolean {
 // and is worth asking about again.
 //
 // SHOWN_PATHS_KEY is a JSON array of pathnames the popup has already
-// auto-opened on this session - each eligible page (landing, destinations,
-// packages, contact, about, ...) gets shown once independently, not just
-// once for the whole site.
+// auto-opened on this session - kept so a page it already showed on won't
+// schedule a second timer if the visitor navigates back to it.
 const SHOWN_PATHS_KEY = "snapingo-trip-planner-shown-paths";
-// SUBMITTED_KEY overrides the per-path allowance above: once the visitor
-// has actually sent a request, don't ask again on any other page for the
-// rest of this session - they've already been asked once, repeating it on
-// the next page they browse to would be nagging.
+// SUBMITTED_KEY and DISMISSED_KEY both suppress every future auto-open for
+// the rest of this session, on any page - the popup is meant to ask once per
+// visit, not once per page. Without DISMISSED_KEY, closing it on the
+// homepage just meant it came back on the very next destination/package the
+// visitor tapped into: on mobile that re-open re-engages the scroll lock
+// (useScrollLock below) right as a navigation is landing, which is what was
+// actually behind the repeated "page freezes after I close the popup and
+// tap something" reports - not a lock bug, a popup that never stayed closed.
 const SUBMITTED_KEY = "snapingo-trip-planner-submitted";
+const DISMISSED_KEY = "snapingo-trip-planner-dismissed";
 
 type DateFixed = "yes" | "not-yet";
 type OthersType = "domestic" | "international";
@@ -118,12 +129,11 @@ export default function TripPlannerModal({ destinations }: { destinations: Desti
 
   useScrollLock(open);
 
-  // Auto-opens once per eligible pathname per browser tab session (see the
-  // storage keys above) - landing, destinations, packages, contact, about,
-  // etc. each get their own one-time popup; navigating back to a page that
-  // already showed it, or refreshing, won't repeat it there. Submitting the
-  // form anywhere suppresses it everywhere else for the rest of the
-  // session.
+  // Auto-opens at most once per browser tab session (see the storage keys
+  // above) - whichever eligible page the visitor happens to be on 5 seconds
+  // after landing. Closing it (or submitting it) anywhere suppresses it on
+  // every other page for the rest of the session; it does not come back the
+  // next time they navigate.
   //
   // If the mobile nav menu or another modal is open when the timer would
   // fire, this popup (z-[60]) would render on top of it, covering the nav
@@ -132,6 +142,7 @@ export default function TripPlannerModal({ destinations }: { destinations: Desti
   useEffect(() => {
     if (isSkippedPath(pathname)) return;
     if (sessionStorage.getItem(SUBMITTED_KEY)) return;
+    if (sessionStorage.getItem(DISMISSED_KEY)) return;
     const shownPaths: unknown = JSON.parse(sessionStorage.getItem(SHOWN_PATHS_KEY) ?? "[]");
     if (Array.isArray(shownPaths) && shownPaths.includes(pageKey)) return;
 
@@ -189,6 +200,11 @@ export default function TripPlannerModal({ destinations }: { destinations: Desti
   const othersDestinationOptions = othersDestinationList.map((d) => ({ value: d.slug, label: d.name }));
 
   const resetAndClose = () => {
+    try {
+      sessionStorage.setItem(DISMISSED_KEY, "1");
+    } catch {
+      // ignore - storage unavailable, worst case it can reopen on another page
+    }
     setOpen(false);
     setStep("purpose");
     setPurpose("");
@@ -282,7 +298,26 @@ export default function TripPlannerModal({ destinations }: { destinations: Desti
                 : true;
 
   return (
-    <AnimatePresence>
+    <>
+      {/* Manual re-open, same pattern as the Hotel/Flight/Cab/Travel Guide
+          pop-ups on their own service pages - this one is site-wide (every
+          page except /services and /blog), so once the auto-open has been
+          seen and dismissed for the session (see DISMISSED_KEY above), this
+          is the only way to bring it back without a refresh. */}
+      {!open && (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className={`print-hide fixed left-5 z-40 flex items-center gap-2 rounded-full bg-ink-900 px-5 py-3 text-sm font-semibold text-white shadow-soft transition hover:-translate-y-0.5 hover:bg-ink-800 sm:left-8 ${
+            hasStickyBookingBar(pathname) ? "bottom-24 lg:bottom-6" : "bottom-6 sm:bottom-8"
+          }`}
+        >
+          <Sparkles className="h-4.5 w-4.5 text-brand-300" />
+          Trip Planner
+        </button>
+      )}
+
+      <AnimatePresence>
       {open && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -565,6 +600,7 @@ export default function TripPlannerModal({ destinations }: { destinations: Desti
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+      </AnimatePresence>
+    </>
   );
 }
