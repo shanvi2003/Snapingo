@@ -4,6 +4,7 @@ import { MotionConfig } from "framer-motion";
 import "./globals.css";
 import { siteConfig } from "@/lib/siteConfig";
 import { JsonLd, organizationJsonLd } from "@/lib/structuredData";
+import SuppressInstallPrompt from "@/components/SuppressInstallPrompt";
 
 const baloo = Baloo_2({
   variable: "--font-display",
@@ -86,6 +87,19 @@ export const viewport: Viewport = {
   themeColor: "#ec1278",
   width: "device-width",
   initialScale: 1,
+  // Default mobile Chrome behavior on keyboard-open is "resizes-visual": the
+  // layout viewport (what position:fixed/absolute measure against) stays
+  // full-height while only the visible area shrinks under the keyboard.
+  // Combined with useScrollLock's position:fixed body-pin (needed for iOS
+  // touch-scroll locking - see that hook's own comment), focusing an input
+  // inside a locked modal (e.g. the trip planner's email/date fields) can
+  // leave the page's real scroll position and the layout's fixed frame out
+  // of sync once the keyboard closes - showing as a frozen page with the
+  // nav bar shifted out of view until a full reload re-syncs everything.
+  // "resizes-content" makes the browser shrink the layout viewport itself
+  // to match the visible area, which keeps fixed-position elements aligned
+  // with what's actually on screen while the keyboard is up.
+  interactiveWidget: "resizes-content",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -96,6 +110,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col bg-white font-sans text-ink-900">
         <JsonLd data={organizationJsonLd()} />
+        <SuppressInstallPrompt />
         <MotionConfig reducedMotion="never">{children}</MotionConfig>
       </body>
     </html>

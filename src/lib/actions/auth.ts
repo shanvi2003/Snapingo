@@ -1,14 +1,23 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { verifyPassword } from "@/lib/password";
 import { createSession, deleteSession, getSessionPayload } from "@/lib/session";
+import { checkRateLimit, clientIpFrom } from "@/lib/rateLimit";
 
 export type LoginState = { error: string } | undefined;
 
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_MS = 15 * 60 * 1000; // 15 minutes
+
+// Per-IP throttle in front of the per-account lockout above: the lockout
+// only kicks in once one *account* has failed 5 times, so without this an
+// attacker spraying one guess per email across many staff accounts (or just
+// hammering the DB with lookups) pays no cost at all.
+const LOGIN_LIMIT = 10;
+const LOGIN_WINDOW_MS = 60_000;
 
 // A bcrypt hash of an arbitrary, unknown password - not any real user's
 // hash. Compared against on a nonexistent email so verifyPassword still
@@ -24,6 +33,11 @@ export async function loginAction(_prevState: LoginState, formData: FormData): P
 
   if (!email || !password) {
     return { error: "Enter your email and password." };
+  }
+
+  const ip = clientIpFrom(await headers());
+  if (!checkRateLimit(`login:${ip}`, LOGIN_LIMIT, LOGIN_WINDOW_MS)) {
+    return { error: "Too many login attempts. Please wait a minute and try again." };
   }
 
   const user = await db.staffUser.findUnique({ where: { email } });
@@ -62,5 +76,5 @@ export async function loginAction(_prevState: LoginState, formData: FormData): P
 export async function logoutAction(): Promise<void> {
   const session = await getSessionPayload();
   await deleteSession();
-  redirect(session?.role === "ADMIN" ? "/login" : "/staff/login");
+  redirect(session?.role === "ADMIN" ? "/admin/login" : "/staff/login");
 }

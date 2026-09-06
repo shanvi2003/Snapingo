@@ -4,6 +4,7 @@ import { LogOut } from "lucide-react";
 import { logoutAction } from "@/lib/actions/auth";
 import PanelNav from "@/components/admin/PanelNav";
 import MobilePanelNav from "@/components/admin/MobilePanelNav";
+import AutoRefresh from "@/components/admin/AutoRefresh";
 
 export type PanelNavItem = {
   href: string;
@@ -30,6 +31,7 @@ export default function PanelShell({
 }) {
   return (
     <div className="flex h-screen overflow-hidden bg-ink-50/60 print:h-auto print:overflow-visible">
+      <AutoRefresh />
       <aside className="print-hide hidden h-full w-64 shrink-0 flex-col border-r border-ink-100 bg-white lg:flex">
         <div className="flex shrink-0 items-center gap-2.5 border-b border-ink-100 px-6 py-5">
           <span className="relative block h-9 w-9">

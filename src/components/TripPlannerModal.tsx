@@ -298,9 +298,9 @@ export default function TripPlannerModal({ destinations }: { destinations: Desti
             exit={{ opacity: 0, y: 16, scale: 0.97 }}
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
             onClick={(e) => e.stopPropagation()}
-            className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-3xl bg-white shadow-2xl"
+            className="flex max-h-[85vh] w-full max-w-sm flex-col overflow-hidden rounded-2xl bg-white shadow-2xl sm:max-h-[90vh] sm:max-w-lg sm:rounded-3xl"
           >
-            <div className="flex items-start justify-end px-6 pt-6">
+            <div className="flex items-start justify-end px-4 pt-4 sm:px-6 sm:pt-6">
               <button
                 type="button"
                 aria-label="Close"
@@ -311,10 +311,10 @@ export default function TripPlannerModal({ destinations }: { destinations: Desti
               </button>
             </div>
 
-            <div className="overflow-y-auto px-6 pb-6 pt-3">
+            <div className="overflow-y-auto px-4 pb-4 pt-2 sm:px-6 sm:pb-6 sm:pt-3">
               {step === "purpose" && (
                 <div>
-                  <h2 className="font-heading text-lg font-bold text-ink-900">
+                  <h2 className="font-heading text-base font-bold text-ink-900 sm:text-lg">
                     Hey! Are you looking for help in planning your trip?
                   </h2>
                   <div className="mt-4 space-y-2.5">
@@ -332,7 +332,7 @@ export default function TripPlannerModal({ destinations }: { destinations: Desti
 
               {step === "destType" && (
                 <div>
-                  <h2 className="font-heading text-lg font-bold text-ink-900">
+                  <h2 className="font-heading text-base font-bold text-ink-900 sm:text-lg">
                     May I know what kind of destination you are looking for?
                   </h2>
                   <div className="mt-4 space-y-2.5">
@@ -353,7 +353,7 @@ export default function TripPlannerModal({ destinations }: { destinations: Desti
 
               {step === "suggestion" && (
                 <div>
-                  <h2 className="font-heading text-lg font-bold text-ink-900">
+                  <h2 className="font-heading text-base font-bold text-ink-900 sm:text-lg">
                     Based on your requirements, here are some suggested destinations.
                   </h2>
                   <p className="mt-1 text-sm text-ink-600">You may select from below</p>
@@ -380,7 +380,7 @@ export default function TripPlannerModal({ destinations }: { destinations: Desti
 
               {step === "othersType" && (
                 <div>
-                  <h2 className="font-heading text-lg font-bold text-ink-900">
+                  <h2 className="font-heading text-base font-bold text-ink-900 sm:text-lg">
                     Is it a domestic or international destination?
                   </h2>
                   <div className="mt-4 space-y-2.5">
@@ -406,7 +406,7 @@ export default function TripPlannerModal({ destinations }: { destinations: Desti
 
               {step === "othersDestination" && (
                 <div>
-                  <h2 className="font-heading text-lg font-bold text-ink-900">
+                  <h2 className="font-heading text-base font-bold text-ink-900 sm:text-lg">
                     Which destination are you looking for?
                   </h2>
                   <p className="mt-1 text-sm text-ink-600">
@@ -425,7 +425,7 @@ export default function TripPlannerModal({ destinations }: { destinations: Desti
 
               {step === "dateFixed" && (
                 <div>
-                  <h2 className="font-heading text-lg font-bold text-ink-900">
+                  <h2 className="font-heading text-base font-bold text-ink-900 sm:text-lg">
                     Is your travel date fixed?
                   </h2>
                   <div className="mt-4 space-y-2.5">
@@ -445,7 +445,7 @@ export default function TripPlannerModal({ destinations }: { destinations: Desti
 
               {step === "exactDate" && (
                 <div>
-                  <h2 className="font-heading text-lg font-bold text-ink-900">
+                  <h2 className="font-heading text-base font-bold text-ink-900 sm:text-lg">
                     What&apos;s your travel date?
                   </h2>
                   <input
@@ -459,7 +459,7 @@ export default function TripPlannerModal({ destinations }: { destinations: Desti
 
               {step === "month" && (
                 <div>
-                  <h2 className="font-heading text-lg font-bold text-ink-900">
+                  <h2 className="font-heading text-base font-bold text-ink-900 sm:text-lg">
                     In which month are you planning to go?
                   </h2>
                   <div className="mt-4">
@@ -475,7 +475,7 @@ export default function TripPlannerModal({ destinations }: { destinations: Desti
 
               {step === "days" && (
                 <div>
-                  <h2 className="font-heading text-lg font-bold text-ink-900">
+                  <h2 className="font-heading text-base font-bold text-ink-900 sm:text-lg">
                     For how many days will your trip be?
                   </h2>
                   <div className="mt-4">
@@ -491,7 +491,7 @@ export default function TripPlannerModal({ destinations }: { destinations: Desti
 
               {step === "email" && (
                 <div>
-                  <h2 className="font-heading text-lg font-bold text-ink-900">Your Email ID</h2>
+                  <h2 className="font-heading text-base font-bold text-ink-900 sm:text-lg">Your Email ID</h2>
                   <p className="mt-1 text-sm text-ink-600">
                     We&apos;ll pass this on so our travel expert can send you the best quotes
                     (optional).
@@ -526,7 +526,7 @@ export default function TripPlannerModal({ destinations }: { destinations: Desti
             </div>
 
             {step !== "done" && (
-              <div className="flex items-center justify-between border-t border-ink-100 px-6 py-4">
+              <div className="flex items-center justify-between border-t border-ink-100 px-4 py-3 sm:px-6 sm:py-4">
                 {stepIndex > 0 ? (
                   <button
                     type="button"
@@ -543,7 +543,7 @@ export default function TripPlannerModal({ destinations }: { destinations: Desti
                   type="button"
                   disabled={!canProceed || sending}
                   onClick={goNext}
-                  className="flex items-center gap-1.5 rounded-full bg-brand-600 px-6 py-3 text-sm font-semibold text-white shadow-brand transition hover:bg-brand-700 disabled:pointer-events-none disabled:opacity-40"
+                  className="flex items-center gap-1.5 rounded-full bg-brand-600 px-6 py-2.5 text-sm font-semibold text-white shadow-brand transition hover:bg-brand-700 disabled:pointer-events-none disabled:opacity-40 sm:py-3"
                 >
                   {step === "email" ? "Get My Quote" : "Next"}
                   <ChevronRight className="h-4 w-4" />
@@ -552,11 +552,11 @@ export default function TripPlannerModal({ destinations }: { destinations: Desti
             )}
 
             {step === "done" && (
-              <div className="border-t border-ink-100 px-6 py-4">
+              <div className="border-t border-ink-100 px-4 py-3 sm:px-6 sm:py-4">
                 <button
                   type="button"
                   onClick={resetAndClose}
-                  className="flex w-full items-center justify-center gap-2 rounded-full bg-brand-600 px-6 py-3.5 text-sm font-semibold text-white shadow-brand transition hover:-translate-y-0.5 hover:bg-brand-700"
+                  className="flex w-full items-center justify-center gap-2 rounded-full bg-brand-600 px-6 py-3 text-sm font-semibold text-white shadow-brand transition hover:-translate-y-0.5 hover:bg-brand-700 sm:py-3.5"
                 >
                   Done
                 </button>

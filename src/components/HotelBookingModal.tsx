@@ -108,9 +108,9 @@ export default function HotelBookingModal({ destinations }: { destinations: Dest
               exit={{ opacity: 0, y: 16, scale: 0.97 }}
               transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
               onClick={(e) => e.stopPropagation()}
-              className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-3xl bg-white shadow-2xl"
+              className="flex max-h-[85vh] w-full max-w-sm flex-col overflow-hidden rounded-2xl bg-white shadow-2xl sm:max-h-[90vh] sm:max-w-lg sm:rounded-3xl"
             >
-              <div className="flex items-center justify-between border-b border-ink-100 px-6 py-4">
+              <div className="flex items-center justify-between border-b border-ink-100 px-4 py-3 sm:px-6 sm:py-4">
                 <div className="flex items-center gap-2">
                   {step > 1 && (
                     <button
@@ -126,7 +126,7 @@ export default function HotelBookingModal({ destinations }: { destinations: Dest
                     <p className="text-[11px] font-bold uppercase tracking-wide text-brand-500">
                       Plan Your Stay
                     </p>
-                    <h2 className="font-heading text-lg font-bold text-ink-900">
+                    <h2 className="font-heading text-base font-bold text-ink-900 sm:text-lg">
                       {STEP_LABELS[step]}
                     </h2>
                   </div>
@@ -152,7 +152,7 @@ export default function HotelBookingModal({ destinations }: { destinations: Dest
                 ))}
               </div>
 
-              <div className="overflow-y-auto px-6 py-6">
+              <div className="overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
                 {step === 1 && (
                   <div>
                     <p className="text-sm text-ink-900">Where would you like to stay?</p>
@@ -287,14 +287,14 @@ export default function HotelBookingModal({ destinations }: { destinations: Dest
                 )}
               </div>
 
-              <div className="border-t border-ink-100 px-6 py-4">
+              <div className="border-t border-ink-100 px-4 py-3 sm:px-6 sm:py-4">
                 <button
                   type="button"
                   disabled={
                     step === 1 ? !canProceedStep1 : step === 2 ? !canProceedStep2 : !canProceedStep3
                   }
                   onClick={() => (step === 3 ? handleSearch() : setStep((s) => (s + 1) as Step))}
-                  className="flex w-full items-center justify-center gap-2 rounded-full bg-brand-600 px-6 py-3.5 text-sm font-semibold text-white shadow-brand transition hover:-translate-y-0.5 hover:bg-brand-700 disabled:pointer-events-none disabled:opacity-40 disabled:hover:translate-y-0"
+                  className="flex w-full items-center justify-center gap-2 rounded-full bg-brand-600 px-6 py-3 text-sm font-semibold text-white shadow-brand transition hover:-translate-y-0.5 hover:bg-brand-700 disabled:pointer-events-none disabled:opacity-40 disabled:hover:translate-y-0 sm:py-3.5"
                 >
                   {step === 3 ? "Show Hotels" : "Continue"}
                 </button>

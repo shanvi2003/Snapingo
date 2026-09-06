@@ -21,6 +21,17 @@ const nextConfig: NextConfig = {
         headers: [
           { key: "X-Frame-Options", value: "DENY" },
           { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
+          // Force HTTPS on every future visit for a year, including subdomains -
+          // safe here since the site has no legitimate plain-HTTP use.
+          { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+          // Stops a browser from guessing a response's MIME type from its
+          // content (e.g. treating an uploaded "image" as executable script).
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          // Never leak the full referring URL (which can carry lead IDs/query
+          // params) to third-party links; still allow it same-origin.
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          // Explicitly deny browser features this site never uses.
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
         ],
       },
     ];

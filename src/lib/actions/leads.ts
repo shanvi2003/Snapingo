@@ -6,6 +6,14 @@ import type { Prisma } from "@/generated/prisma/client";
 import { createLeadSchema, type CreateLeadInput } from "@/lib/validation/lead";
 import { logLeadActivity } from "@/lib/leadActivity";
 import { sourceLabels } from "@/components/admin/leads/statusStyles";
+import { checkRateLimit, clientIpFrom } from "@/lib/rateLimit";
+
+// Public form spam/DoS guard: this is a single anonymous action shared by
+// every lead touchpoint (contact form, trip planner, hotel/flight/cab
+// modals), so the limit is generous enough for someone genuinely filling out
+// several of those in one visit while still stopping a scripted flood.
+const LEAD_LIMIT = 8;
+const LEAD_WINDOW_MS = 60_000;
 
 // The one Server Action every form/booking touchpoint on the public site
 // calls. Public and unauthenticated on purpose (lead forms are meant to be
@@ -22,6 +30,13 @@ export async function createLeadAction(input: CreateLeadInput): Promise<{ ok: bo
 
   try {
     const headerList = await headers();
+
+    const ip = clientIpFrom(headerList);
+    if (!checkRateLimit(`lead:${ip}`, LEAD_LIMIT, LEAD_WINDOW_MS)) {
+      console.warn("createLeadAction: rate limited", { ip });
+      return { ok: false };
+    }
+
     const lead = await db.lead.create({
       data: {
         ...parsed.data,

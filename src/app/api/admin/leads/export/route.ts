@@ -5,7 +5,12 @@ import { LeadSource, LeadStatus } from "@/generated/prisma/client";
 import { sourceLabels, statusLabels } from "@/components/admin/leads/statusStyles";
 
 function csvEscape(value: unknown): string {
-  const s = value === null || value === undefined ? "" : String(value);
+  let s = value === null || value === undefined ? "" : String(value);
+  // Formula-injection guard: a lead field like `=cmd|'/c calc'!A1` is stored
+  // as plain text but Excel/Sheets will execute it as a formula on open if
+  // the cell starts with =, +, -, or @. Prefixing a tab neutralizes it while
+  // staying invisible in the rendered cell.
+  if (/^[=+\-@]/.test(s)) s = `\t${s}`;
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 

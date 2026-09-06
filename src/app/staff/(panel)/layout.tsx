@@ -30,7 +30,7 @@ export const metadata: Metadata = {
 };
 
 export default async function StaffLayout({ children }: { children: ReactNode }) {
-  const session = await requireSession(["ADMIN", "STAFF"]);
+  const session = await requireSession(["ADMIN", "STAFF"], "/staff/login");
   const user = await db.staffUser.findUniqueOrThrow({ where: { id: session.userId } });
 
   // ADMIN accounts landing on /staff (e.g. testing) see everything; a real

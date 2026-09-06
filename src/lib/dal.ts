@@ -17,11 +17,14 @@ export const getSession = cache(async (): Promise<SessionPayload | null> => {
 // For pages, proxy.ts's route-based redirect is what's actually guaranteed
 // to reach non-JS clients (see the comment there) - this is still called in
 // every admin/staff layout as defense in depth for the browser case.
-export async function requireSession(allowedRoles?: StaffRole[]): Promise<SessionPayload> {
+export async function requireSession(
+  allowedRoles?: StaffRole[],
+  loginPath: "/admin/login" | "/staff/login" = "/admin/login"
+): Promise<SessionPayload> {
   const session = await getSession();
 
   if (!session) {
-    redirect("/login");
+    redirect(loginPath);
   }
 
   if (allowedRoles && !allowedRoles.includes(session.role)) {
@@ -39,7 +42,7 @@ export async function requireSession(allowedRoles?: StaffRole[]): Promise<Sessio
 // this is what every gated Server Action calls to actually enforce a
 // mutation; see proxy.ts for why the page-level story is different.
 export async function requireStaffFeature(feature: StaffFeature): Promise<SessionPayload> {
-  const session = await requireSession(["ADMIN", "STAFF"]);
+  const session = await requireSession(["ADMIN", "STAFF"], "/staff/login");
   if (session.role === "ADMIN") return session;
 
   const user = await db.staffUser.findUnique({ where: { id: session.userId }, select: { jobRole: true } });

@@ -54,9 +54,17 @@ export default async function proxy(req: NextRequest) {
     return NextResponse.redirect(canonical, 308);
   }
 
-  // /staff/login is itself under the "/staff" prefix but must stay reachable
-  // while signed out - it's staff's own dedicated entry URL (see below).
-  if (pathname === "/staff/login") return NextResponse.next();
+  // Legacy bookmark for the old admin login URL. A page-level redirect()
+  // here would suffer the exact same streaming problem described above (curl
+  // /login only gets a "Loading..." shell, never the redirect) since
+  // root loading.tsx wraps it in a Suspense boundary too - issuing it here
+  // instead is what makes it actually reach every client.
+  if (pathname === "/login") return NextResponse.redirect(new URL("/admin/login", req.nextUrl), 308);
+
+  // /staff/login and /admin/login are each under their own protected prefix
+  // but must stay reachable while signed out - they're the dedicated entry
+  // URLs for each panel (see below).
+  if (pathname === "/staff/login" || pathname === "/admin/login") return NextResponse.next();
 
   const isProtected = protectedPrefixes.some((p) => pathname.startsWith(p));
   if (!isProtected) return NextResponse.next();
@@ -65,9 +73,8 @@ export default async function proxy(req: NextRequest) {
   const session = await decrypt(token);
 
   if (!session) {
-    // Staff have their own login URL, separate from the admin one, so a
-    // staff link never routes through /login.
-    const loginUrl = new URL(pathname.startsWith("/staff") ? "/staff/login" : "/login", req.nextUrl);
+    // Staff have their own login URL, separate from the admin one.
+    const loginUrl = new URL(pathname.startsWith("/staff") ? "/staff/login" : "/admin/login", req.nextUrl);
     loginUrl.searchParams.set("from", pathname);
     return NextResponse.redirect(loginUrl);
   }

@@ -142,17 +142,17 @@ export default function Hero() {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.1 }}
-          className="max-w-3xl font-heading font-bold leading-[1.05] text-white 3xl:max-w-4xl"
+          className="max-w-3xl font-heading font-bold leading-[1.05] text-white xl:max-w-4xl 3xl:max-w-5xl"
         >
           <span
             ref={line1Ref}
-            className="block whitespace-nowrap text-3xl sm:text-4xl md:text-5xl lg:text-6xl 3xl:text-7xl"
+            className="block whitespace-nowrap text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 3xl:text-8xl"
           >
             Your whole trip,
           </span>
           <span
             ref={line2Ref}
-            className="block whitespace-nowrap text-gradient-brand text-3xl sm:text-4xl md:text-5xl lg:text-6xl 3xl:text-7xl"
+            className="block whitespace-nowrap text-gradient-brand text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 3xl:text-8xl"
           >
             packed into one snap.
           </span>
@@ -162,7 +162,7 @@ export default function Hero() {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.2 }}
-          className="mt-5 hidden max-w-xl text-base text-white sm:block sm:text-lg lg:text-xl 3xl:max-w-2xl 3xl:text-2xl"
+          className="mt-5 hidden max-w-xl text-base text-white sm:block sm:text-lg lg:text-xl xl:max-w-2xl xl:text-2xl 3xl:max-w-3xl 3xl:text-3xl"
         >
           Flights, stays, transfers & sightseeing, bundled into one package,
           for destinations across India and the world.
