@@ -40,24 +40,25 @@ enum StaffJobRole {
 }
 
 model StaffUser {
-  id                  String        @id @default(cuid())
+  id                  String         @id @default(cuid())
   name                String
-  email               String        @unique
+  email               String         @unique
   passwordHash        String
-  role                StaffRole     @default(STAFF)
+  role                StaffRole      @default(STAFF)
   jobRole             StaffJobRole?
-  isActive            Boolean       @default(true)
+  isActive            Boolean        @default(true)
   // Brute-force lockout: failedLoginAttempts resets to 0 on any successful
   // login; hitting the threshold in src/lib/actions/auth.ts sets lockedUntil
   // instead of letting the counter grow unbounded.
-  failedLoginAttempts Int           @default(0)
+  failedLoginAttempts Int            @default(0)
   lockedUntil         DateTime?
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
-  assignedLeads       Lead[]        @relation("AssignedTo")
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  assignedLeads       Lead[]         @relation("AssignedTo")
   leadNotes           LeadNote[]
-  bookings            Booking[]     @relation("BookingCreatedBy")
-  payments            Payment[]     @relation("PaymentRecordedBy")
+  bookings            Booking[]      @relation("BookingCreatedBy")
+  payments            Payment[]      @relation("PaymentRecordedBy")
+  notifications       Notification[]
 }
 
 // ---------------------------------------------------------------------------
@@ -126,17 +127,49 @@ model Lead {
   pageUrl   String?
   userAgent String?
 
-  assignedTo   StaffUser? @relation("AssignedTo", fields: [assignedToId], references: [id])
-  assignedToId String?
-  notes        LeadNote[]
-  activities   LeadActivity[]
-  bookings     Booking[]
+  assignedTo    StaffUser?     @relation("AssignedTo", fields: [assignedToId], references: [id])
+  assignedToId  String?
+  notes         LeadNote[]
+  activities    LeadActivity[]
+  bookings      Booking[]
+  notifications Notification[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([source])
   @@index([status])
+  @@index([createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// In-panel notification bell (admin + staff) - no email/SMS provider needed
+// since this only has to reach someone already looking at the site's own
+// admin/staff panel. NEW_LEAD fans out to every active admin at lead
+// creation; LEAD_ASSIGNED goes to whichever single staff member a lead gets
+// (auto- or manually) assigned to; LEAD_FOLLOWUP goes to a lead's current
+// assignee when the same visitor submits another enquiry (see the duplicate
+// check in createLeadAction) instead of spawning a second lead.
+// ---------------------------------------------------------------------------
+
+enum NotificationType {
+  NEW_LEAD
+  LEAD_ASSIGNED
+  LEAD_FOLLOWUP
+}
+
+model Notification {
+  id          String           @id @default(cuid())
+  recipient   StaffUser        @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+  recipientId String
+  type        NotificationType
+  lead        Lead?            @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  leadId      String?
+  message     String
+  read        Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+
+  @@index([recipientId, read])
   @@index([createdAt])
 }
 
@@ -211,16 +244,16 @@ model Booking {
 }
 
 model Payment {
-  id          String    @id @default(cuid())
-  booking     Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  bookingId   String
-  amount      Int
-  mode        String
-  paidAt      DateTime  @default(now())
-  notes       String?
-  recordedBy  StaffUser @relation("PaymentRecordedBy", fields: [recordedById], references: [id])
+  id           String    @id @default(cuid())
+  booking      Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  bookingId    String
+  amount       Int
+  mode         String
+  paidAt       DateTime  @default(now())
+  notes        String?
+  recordedBy   StaffUser @relation("PaymentRecordedBy", fields: [recordedById], references: [id])
   recordedById String
-  createdAt   DateTime  @default(now())
+  createdAt    DateTime  @default(now())
 }
 
 // ---------------------------------------------------------------------------
@@ -228,7 +261,7 @@ model Payment {
 // ---------------------------------------------------------------------------
 
 model Package {
-  id              String   @id
+  id              String         @id
   title           String
   destination     String
   destinationSlug String
@@ -243,12 +276,12 @@ model Package {
   exclusions      String[]
   highlights      String[]
   badge           String?
-  featured        Boolean  @default(false)
-  hotDeal         Boolean  @default(false)
+  featured        Boolean        @default(false)
+  hotDeal         Boolean        @default(false)
   categories      String[]
   itinerary       ItineraryDay[]
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 }
 
 model ItineraryDay {
@@ -261,7 +294,7 @@ model ItineraryDay {
 }
 
 model Destination {
-  slug            String   @id
+  slug            String                 @id
   name            String
   tagline         String
   image           String
@@ -273,8 +306,8 @@ model Destination {
   bestTimeToVisit String
   idealDuration   String
   highlights      DestinationHighlight[]
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
 }
 
 model DestinationHighlight {
@@ -287,14 +320,14 @@ model DestinationHighlight {
 }
 
 model Service {
-  slug       String   @id
+  slug       String             @id
   name       String
   tagline    String
   image      String
   overview   String
   highlights ServiceHighlight[]
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
 }
 
 model ServiceHighlight {
@@ -307,7 +340,7 @@ model ServiceHighlight {
 }
 
 model BlogPost {
-  id        String   @id
+  id        String        @id
   title     String
   excerpt   String
   image     String
@@ -316,8 +349,8 @@ model BlogPost {
   author    String
   date      DateTime
   content   BlogSection[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 }
 
 model BlogSection {

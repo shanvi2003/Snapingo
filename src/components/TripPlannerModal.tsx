@@ -16,6 +16,7 @@ import {
 import { isScrollLocked, useScrollLock } from "@/hooks/useScrollLock";
 import CustomSelect from "@/components/CustomSelect";
 import { createLeadAction } from "@/lib/actions/leads";
+import LeadContactFields, { emptyContactValues, isContactValid, type ContactValues } from "@/components/LeadContactFields";
 
 // The whole Services section already funnels visitors into its own
 // dedicated planning popups (flights/hotels/travel-guide) or is itself just
@@ -69,7 +70,7 @@ type StepId =
   | "exactDate"
   | "month"
   | "days"
-  | "email"
+  | "contact"
   | "done";
 
 function RadioRow({
@@ -124,7 +125,8 @@ export default function TripPlannerModal({ destinations }: { destinations: Desti
   const [exactDate, setExactDate] = useState("");
   const [month, setMonth] = useState("");
   const [days, setDays] = useState("");
-  const [email, setEmail] = useState("");
+  const [contact, setContact] = useState<ContactValues>(emptyContactValues);
+  const [contactTouched, setContactTouched] = useState(false);
   const [sending, setSending] = useState(false);
 
   useScrollLock(open);
@@ -184,7 +186,7 @@ export default function TripPlannerModal({ destinations }: { destinations: Desti
   baseSteps.push("dateFixed");
   if (dateFixed === "yes") baseSteps.push("exactDate");
   else if (dateFixed === "not-yet") baseSteps.push("month");
-  baseSteps.push("days", "email");
+  baseSteps.push("days", "contact");
   const steps = baseSteps;
   const stepIndex = steps.indexOf(step);
 
@@ -216,12 +218,17 @@ export default function TripPlannerModal({ destinations }: { destinations: Desti
     setExactDate("");
     setMonth("");
     setDays("");
-    setEmail("");
+    setContact(emptyContactValues);
+    setContactTouched(false);
     setSending(false);
   };
 
   const goNext = () => {
-    if (step === "email") {
+    if (step === "contact") {
+      if (!isContactValid(contact)) {
+        setContactTouched(true);
+        return;
+      }
       // A fast double-tap can fire this twice before the step-"done"
       // re-render unmounts the button - guard explicitly instead of relying
       // on that.
@@ -239,13 +246,15 @@ export default function TripPlannerModal({ destinations }: { destinations: Desti
       const lines = [
         "Hi Snapingo! I'd like help planning my trip.",
         "",
+        `Name: ${contact.name}`,
+        `Phone: ${contact.phone}`,
+        `Email: ${contact.email}`,
         `Looking for: ${purposeQuoteLabel}`,
         `Destination type: ${destTypeLabel}`,
         `Suggested destination: ${suggestionName}`,
         `Travel date fixed: ${dateFixed === "yes" ? "Yes" : "Not yet"}`,
         dateFixed === "yes" ? `Travel date: ${exactDate}` : `Preferred month: ${month}`,
         `Trip duration: ${days}`,
-        email ? `Email: ${email}` : null,
         "",
         "Please share the best options and quotes.",
       ].filter((line): line is string => Boolean(line));
@@ -257,13 +266,15 @@ export default function TripPlannerModal({ destinations }: { destinations: Desti
 
       createLeadAction({
         source: "TRIP_PLANNER",
+        name: contact.name,
+        phone: contact.phone,
+        email: contact.email,
         destinationSlug: suggestionSlug === "others" ? customDestinationSlug : suggestionSlug,
         destinationName: suggestionName,
         dateMode: dateFixed === "yes" ? "fixed" : "not-yet",
         startDate: dateFixed === "yes" ? exactDate || undefined : undefined,
         month: dateFixed === "not-yet" ? month : undefined,
         days,
-        email: email || undefined,
         pageUrl: window.location.pathname,
         raw: { purpose, purposeLabel, destType, destTypeLabel, othersType, suggestionSlug },
       }).catch((err) => console.warn("Lead save failed", err));
@@ -524,20 +535,15 @@ export default function TripPlannerModal({ destinations }: { destinations: Desti
                 </div>
               )}
 
-              {step === "email" && (
+              {step === "contact" && (
                 <div>
-                  <h2 className="font-heading text-base font-bold text-ink-900 sm:text-lg">Your Email ID</h2>
+                  <h2 className="font-heading text-base font-bold text-ink-900 sm:text-lg">Your Contact Details</h2>
                   <p className="mt-1 text-sm text-ink-600">
-                    We&apos;ll pass this on so our travel expert can send you the best quotes
-                    (optional).
+                    So our travel expert can send you the best quotes on WhatsApp.
                   </p>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Please mention your Email Id"
-                    className="mt-4 w-full rounded-lg border border-ink-200 bg-white px-4 py-3 text-sm text-ink-900 placeholder:text-ink-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
-                  />
+                  <div className="mt-4">
+                    <LeadContactFields values={contact} onChange={setContact} touched={contactTouched} />
+                  </div>
                 </div>
               )}
 
@@ -580,7 +586,7 @@ export default function TripPlannerModal({ destinations }: { destinations: Desti
                   onClick={goNext}
                   className="flex items-center gap-1.5 rounded-full bg-brand-600 px-6 py-2.5 text-sm font-semibold text-white shadow-brand transition hover:bg-brand-700 disabled:pointer-events-none disabled:opacity-40 sm:py-3"
                 >
-                  {step === "email" ? "Get My Quote" : "Next"}
+                  {step === "contact" ? "Get My Quote" : "Next"}
                   <ChevronRight className="h-4 w-4" />
                 </button>
               </div>

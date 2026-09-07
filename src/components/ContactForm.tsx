@@ -14,6 +14,7 @@ import {
 import type { Destination } from "@/data/destinations";
 import CustomSelect from "@/components/CustomSelect";
 import { createLeadAction } from "@/lib/actions/leads";
+import { isValidEmail, isValidName, isValidPhone } from "@/lib/validation/contact";
 
 type DateMode = "fixed" | "flexible";
 type TripType = "domestic" | "international";
@@ -31,6 +32,7 @@ export default function ContactForm({ destinations }: { destinations: Destinatio
   const [destination, setDestination] = useState("");
   const [dateMode, setDateMode] = useState<DateMode>("fixed");
   const [submitted, setSubmitted] = useState(false);
+  const [contactErrors, setContactErrors] = useState<{ name?: boolean; phone?: boolean; email?: boolean }>({});
 
   const destinationOptions = [
     { value: NOT_SURE, label: NOT_SURE },
@@ -47,6 +49,15 @@ export default function ContactForm({ destinations }: { destinations: Destinatio
     const phone = form.get("phone")?.toString().trim() ?? "";
     const email = form.get("email")?.toString().trim() ?? "";
     const message = form.get("message")?.toString().trim() ?? "";
+
+    const nameInvalid = !isValidName(name);
+    const phoneInvalid = !isValidPhone(phone);
+    const emailInvalid = !isValidEmail(email);
+    if (nameInvalid || phoneInvalid || emailInvalid) {
+      setContactErrors({ name: nameInvalid, phone: phoneInvalid, email: emailInvalid });
+      return;
+    }
+    setContactErrors({});
 
     let tripLine: string;
     if (dateMode === "fixed") {
@@ -79,7 +90,7 @@ export default function ContactForm({ destinations }: { destinations: Destinatio
       source: "CONTACT_FORM",
       name,
       phone,
-      email: email || undefined,
+      email,
       tripType,
       destinationName: destination,
       dateMode,
@@ -122,6 +133,7 @@ export default function ContactForm({ destinations }: { destinations: Destinatio
             Full Name
           </label>
           <input id="name" name="name" required type="text" placeholder="Your full name" className={inputClass} />
+          {contactErrors.name && <p className="mt-1 text-xs text-red-500">Please enter your name.</p>}
         </div>
         <div>
           <label htmlFor="phone" className={labelClass}>
@@ -129,6 +141,7 @@ export default function ContactForm({ destinations }: { destinations: Destinatio
             Phone
           </label>
           <input id="phone" name="phone" required type="tel" placeholder="98XXXXXXXX" className={inputClass} />
+          {contactErrors.phone && <p className="mt-1 text-xs text-red-500">Please enter a valid phone number.</p>}
         </div>
       </div>
 
@@ -137,7 +150,8 @@ export default function ContactForm({ destinations }: { destinations: Destinatio
           <Mail className="h-3.5 w-3.5" />
           Email
         </label>
-        <input id="email" name="email" type="email" placeholder="you@example.com" className={inputClass} />
+        <input id="email" name="email" required type="email" placeholder="you@example.com" className={inputClass} />
+        {contactErrors.email && <p className="mt-1 text-xs text-red-500">Please enter a valid email address.</p>}
       </div>
 
       <div className="mt-5">

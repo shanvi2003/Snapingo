@@ -1,12 +1,12 @@
-"use client";
-
 import type { ReactNode } from "react";
-import { createLeadAction } from "@/lib/actions/leads";
 
-// Wraps the site's static "Chat With Us" WhatsApp anchors (no form fields to
-// capture) so a lightweight GENERAL_ENQUIRY lead — just which page it came
-// from — still lands in the admin panel, without converting the whole
-// Server Component page it lives on into a client component.
+// Wraps the site's static "Chat With Us" WhatsApp anchors. This is a direct,
+// no-friction chat channel (not a lead form) - it intentionally does NOT
+// create a Lead record, since every lead in the CRM must carry a name/phone/
+// email a salesperson can act on (see createLeadSchema), and a bare chat
+// click has none of those to offer. Structured intent (trip planner, cab/
+// hotel/flight/package enquiries) goes through the dedicated popups that do
+// collect contact details before handing off to WhatsApp.
 export default function WhatsAppCta({
   href,
   className,
@@ -19,18 +19,7 @@ export default function WhatsAppCta({
   ariaLabel?: string;
 }) {
   return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      aria-label={ariaLabel}
-      className={className}
-      onClick={() =>
-        createLeadAction({ source: "GENERAL_ENQUIRY", pageUrl: window.location.pathname }).catch((err) =>
-          console.warn("Lead save failed", err)
-        )
-      }
-    >
+    <a href={href} target="_blank" rel="noopener noreferrer" aria-label={ariaLabel} className={className}>
       {children}
     </a>
   );

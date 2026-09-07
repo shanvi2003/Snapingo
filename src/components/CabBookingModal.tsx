@@ -8,14 +8,16 @@ import CustomSelect from "@/components/CustomSelect";
 import { useAutoOpenOnce } from "@/hooks/useAutoOpenOnce";
 import { useScrollLock } from "@/hooks/useScrollLock";
 import { createLeadAction } from "@/lib/actions/leads";
+import LeadContactFields, { emptyContactValues, isContactValid, type ContactValues } from "@/components/LeadContactFields";
 
 type TripType = "domestic" | "international";
-type Step = 1 | 2 | 3;
+type Step = 1 | 2 | 3 | 4;
 
 const STEP_LABELS: Record<Step, string> = {
   1: "Destination",
   2: "Pickup Date",
-  3: "Request Sent",
+  3: "Your Details",
+  4: "Request Sent",
 };
 
 export default function CabBookingModal({ destinations }: { destinations: Destination[] }) {
@@ -25,6 +27,8 @@ export default function CabBookingModal({ destinations }: { destinations: Destin
   const [tripType, setTripType] = useState<TripType>("domestic");
   const [destinationSlug, setDestinationSlug] = useState("");
   const [pickupDate, setPickupDate] = useState("");
+  const [contact, setContact] = useState<ContactValues>(emptyContactValues);
+  const [contactTouched, setContactTouched] = useState(false);
   const [sending, setSending] = useState(false);
 
   useScrollLock(open);
@@ -48,17 +52,26 @@ export default function CabBookingModal({ destinations }: { destinations: Destin
     setTripType("domestic");
     setDestinationSlug("");
     setPickupDate("");
+    setContact(emptyContactValues);
+    setContactTouched(false);
     setSending(false);
   };
 
   const handleSend = () => {
-    // A fast double-tap can fire this twice before the step-3 re-render
+    if (!isContactValid(contact)) {
+      setContactTouched(true);
+      return;
+    }
+    // A fast double-tap can fire this twice before the step-4 re-render
     // unmounts the button - guard explicitly instead of relying on that.
     if (sending) return;
     setSending(true);
     const lines = [
       "Hi Snapingo! I'd like to book a cab / transfer.",
       "",
+      `Name: ${contact.name}`,
+      `Phone: ${contact.phone}`,
+      `Email: ${contact.email}`,
       `Destination: ${selectedDestination?.name ?? ""}`,
       `Pickup date: ${pickupDate || "TBD"}`,
       "",
@@ -66,11 +79,14 @@ export default function CabBookingModal({ destinations }: { destinations: Destin
     ];
     const waHref = `https://wa.me/918700368575?text=${encodeURIComponent(lines.join("\n"))}`;
     window.open(waHref, "_blank", "noopener,noreferrer");
-    setStep(3);
+    setStep(4);
 
     // Fire-and-forget: never let a DB hiccup affect the WhatsApp redirect above.
     createLeadAction({
       source: "CAB_BOOKING",
+      name: contact.name,
+      phone: contact.phone,
+      email: contact.email,
       tripType,
       destinationSlug,
       destinationName: selectedDestination?.name,
@@ -115,7 +131,7 @@ export default function CabBookingModal({ destinations }: { destinations: Destin
             >
               <div className="flex items-center justify-between border-b border-ink-100 px-4 py-3 sm:px-6 sm:py-4">
                 <div className="flex items-center gap-2">
-                  {step > 1 && step < 3 && (
+                  {step > 1 && step < 4 && (
                     <button
                       type="button"
                       aria-label="Go back"
@@ -144,9 +160,9 @@ export default function CabBookingModal({ destinations }: { destinations: Destin
                 </button>
               </div>
 
-              {step < 3 && (
+              {step < 4 && (
                 <div className="flex gap-1.5 px-6 pt-4">
-                  {([1, 2] as const).map((s) => (
+                  {([1, 2, 3] as const).map((s) => (
                     <span
                       key={s}
                       className={`h-1.5 flex-1 rounded-full transition-colors ${
@@ -223,6 +239,15 @@ export default function CabBookingModal({ destinations }: { destinations: Destin
                 )}
 
                 {step === 3 && (
+                  <div>
+                    <p className="text-sm text-ink-900">Almost done - who should we confirm this with?</p>
+                    <div className="mt-4">
+                      <LeadContactFields values={contact} onChange={setContact} touched={contactTouched} />
+                    </div>
+                  </div>
+                )}
+
+                {step === 4 && (
                   <div className="flex flex-col items-center gap-3 py-6 text-center">
                     <motion.span
                       initial={{ scale: 0.5, opacity: 0 }}
@@ -242,20 +267,20 @@ export default function CabBookingModal({ destinations }: { destinations: Destin
                 )}
               </div>
 
-              {step < 3 && (
+              {step < 4 && (
                 <div className="border-t border-ink-100 px-4 py-3 sm:px-6 sm:py-4">
                   <button
                     type="button"
-                    disabled={step === 1 ? !canProceedStep1 : !canProceedStep2 || sending}
-                    onClick={() => (step === 2 ? handleSend() : setStep((s) => (s + 1) as Step))}
+                    disabled={step === 1 ? !canProceedStep1 : step === 2 ? !canProceedStep2 : sending}
+                    onClick={() => (step === 3 ? handleSend() : setStep((s) => (s + 1) as Step))}
                     className="flex w-full items-center justify-center gap-2 rounded-full bg-brand-600 px-6 py-3 text-sm font-semibold text-white shadow-brand transition hover:-translate-y-0.5 hover:bg-brand-700 disabled:pointer-events-none disabled:opacity-40 disabled:hover:translate-y-0 sm:py-3.5"
                   >
-                    {step === 2 ? "Send Request" : "Continue"}
+                    {step === 3 ? "Send Request" : "Continue"}
                   </button>
                 </div>
               )}
 
-              {step === 3 && (
+              {step === 4 && (
                 <div className="border-t border-ink-100 px-4 py-3 sm:px-6 sm:py-4">
                   <button
                     type="button"

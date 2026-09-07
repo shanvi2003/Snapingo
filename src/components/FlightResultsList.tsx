@@ -6,6 +6,8 @@ import { motion } from "framer-motion";
 import { CheckCircle2, Plane, Search } from "lucide-react";
 import type { Flight } from "@/data/flights";
 import { createLeadAction } from "@/lib/actions/leads";
+import LeadContactModal from "@/components/LeadContactModal";
+import type { ContactValues } from "@/components/LeadContactFields";
 
 export type FlightSearchSummary = {
   tripTypeLabel: string;
@@ -24,11 +26,21 @@ export default function FlightResultsList({
   summary: FlightSearchSummary;
 }) {
   const [sentFor, setSentFor] = useState<string | null>(null);
+  const [pending, setPending] = useState<string | null>(null);
 
   const handlePickFlight = (label: string) => {
+    setPending(label);
+  };
+
+  const handleConfirm = (contact: ContactValues) => {
+    if (!pending) return;
+    const label = pending;
     const lines = [
       "Hi Snapingo! I'd like to book a flight.",
       "",
+      `Name: ${contact.name}`,
+      `Phone: ${contact.phone}`,
+      `Email: ${contact.email}`,
       `Trip type: ${summary.tripTypeLabel}`,
       `From: ${summary.fromCityName}`,
       `To: ${summary.destinationName}`,
@@ -42,9 +54,13 @@ export default function FlightResultsList({
     const waHref = `https://wa.me/918700368575?text=${encodeURIComponent(lines.join("\n"))}`;
     window.open(waHref, "_blank", "noopener,noreferrer");
     setSentFor(label);
+    setPending(null);
 
     createLeadAction({
       source: "FLIGHT_BOOKING",
+      name: contact.name,
+      phone: contact.phone,
+      email: contact.email,
       tripType: summary.tripTypeLabel,
       fromCityName: summary.fromCityName,
       destinationName: summary.destinationName,
@@ -80,55 +96,72 @@ export default function FlightResultsList({
     );
   }
 
+  const contactModal = (
+    <LeadContactModal
+      open={pending !== null}
+      title="Your Contact Details"
+      subtitle="So our travel expert can confirm pricing and availability on WhatsApp"
+      submitLabel="Send Request"
+      onClose={() => setPending(null)}
+      onSubmit={handleConfirm}
+    />
+  );
+
   if (flights.length === 0) {
     return (
-      <div className="mx-auto flex max-w-md flex-col items-center gap-3 px-6 py-14 text-center">
-        <Search className="h-7 w-7 text-ink-400" />
-        <h2 className="font-heading text-xl font-bold text-ink-900">No exact matches yet</h2>
-        <p className="text-sm leading-relaxed text-ink-900">
-          We don&apos;t have a listed match for this route yet, but our team can still find you
-          the right flight to {summary.destinationName}.
-        </p>
-        <button
-          type="button"
-          onClick={() => handlePickFlight("Custom request (no listed match)")}
-          className="mt-1 rounded-full bg-brand-600 px-6 py-3 text-sm font-semibold text-white shadow-brand transition hover:bg-brand-700"
-        >
-          Ask Our Team Instead
-        </button>
-      </div>
+      <>
+        <div className="mx-auto flex max-w-md flex-col items-center gap-3 px-6 py-14 text-center">
+          <Search className="h-7 w-7 text-ink-400" />
+          <h2 className="font-heading text-xl font-bold text-ink-900">No exact matches yet</h2>
+          <p className="text-sm leading-relaxed text-ink-900">
+            We don&apos;t have a listed match for this route yet, but our team can still find you
+            the right flight to {summary.destinationName}.
+          </p>
+          <button
+            type="button"
+            onClick={() => handlePickFlight("Custom request (no listed match)")}
+            className="mt-1 rounded-full bg-brand-600 px-6 py-3 text-sm font-semibold text-white shadow-brand transition hover:bg-brand-700"
+          >
+            Ask Our Team Instead
+          </button>
+        </div>
+        {contactModal}
+      </>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-      {flights.map((flight) => (
-        <div
-          key={flight.id}
-          className="flex flex-col gap-3 rounded-2xl border border-ink-100 bg-white px-5 py-4 shadow-sm"
-        >
-          <div className="min-w-0">
-            <p className="truncate font-heading text-base font-bold text-ink-900">
-              {flight.airline}
-            </p>
-            <p className="mt-1.5 flex items-center gap-2 text-xs text-ink-900">
-              <span className="flex items-center gap-1 rounded-full bg-ink-50 px-2 py-0.5 font-semibold">
-                <Plane className="h-3 w-3" />
-                {flight.duration}
-              </span>
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() =>
-              handlePickFlight(`${flight.airline} (${summary.fromCityName} to ${summary.destinationName})`)
-            }
-            className="rounded-full bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-brand transition hover:bg-brand-700"
+    <>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {flights.map((flight) => (
+          <div
+            key={flight.id}
+            className="flex flex-col gap-3 rounded-2xl border border-ink-100 bg-white px-5 py-4 shadow-sm"
           >
-            Book Now
-          </button>
-        </div>
-      ))}
-    </div>
+            <div className="min-w-0">
+              <p className="truncate font-heading text-base font-bold text-ink-900">
+                {flight.airline}
+              </p>
+              <p className="mt-1.5 flex items-center gap-2 text-xs text-ink-900">
+                <span className="flex items-center gap-1 rounded-full bg-ink-50 px-2 py-0.5 font-semibold">
+                  <Plane className="h-3 w-3" />
+                  {flight.duration}
+                </span>
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() =>
+                handlePickFlight(`${flight.airline} (${summary.fromCityName} to ${summary.destinationName})`)
+              }
+              className="rounded-full bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-brand transition hover:bg-brand-700"
+            >
+              Book Now
+            </button>
+          </div>
+        ))}
+      </div>
+      {contactModal}
+    </>
   );
 }

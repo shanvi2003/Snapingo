@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowUp } from "lucide-react";
 import { WhatsappIcon } from "@/components/SocialIcons";
-import { createLeadAction } from "@/lib/actions/leads";
 
 const whatsappMessage = encodeURIComponent(
   "Hi Snapingo! I'd like to plan a trip. Can you help me with the packages?"
@@ -56,11 +55,6 @@ export default function FloatingButtons() {
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Chat with Snapingo on WhatsApp"
-        onClick={() =>
-          createLeadAction({ source: "GENERAL_ENQUIRY", pageUrl: pathname }).catch((err) =>
-            console.warn("Lead save failed", err)
-          )
-        }
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 1 }}

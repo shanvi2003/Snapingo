@@ -1,9 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { Download, Phone, ShieldCheck, Star } from "lucide-react";
 import DownloadPdfButton from "@/components/DownloadPdfButton";
 import { WhatsappIcon } from "@/components/SocialIcons";
 import { createLeadAction } from "@/lib/actions/leads";
+import LeadContactModal from "@/components/LeadContactModal";
+import type { ContactValues } from "@/components/LeadContactFields";
 
 export default function StickyBookingCard({
   packageId,
@@ -22,15 +25,28 @@ export default function StickyBookingCard({
   reviews: number;
   duration: string;
 }) {
+  const [showContact, setShowContact] = useState(false);
   const discount = Math.round(((originalPrice - price) / originalPrice) * 100);
-  const waMessage = encodeURIComponent(
-    `Hi Snapingo! I'm interested in the "${title}" package (${duration}). Can you share more details?`
-  );
-  const waHref = `https://wa.me/918700368575?text=${waMessage}`;
 
-  const logInterest = () => {
+  const handleConfirm = (contact: ContactValues) => {
+    const waMessage = encodeURIComponent(
+      [
+        `Hi Snapingo! I'm interested in the "${title}" package (${duration}). Can you share more details?`,
+        "",
+        `Name: ${contact.name}`,
+        `Phone: ${contact.phone}`,
+        `Email: ${contact.email}`,
+      ].join("\n")
+    );
+    const waHref = `https://wa.me/918700368575?text=${waMessage}`;
+    window.open(waHref, "_blank", "noopener,noreferrer");
+    setShowContact(false);
+
     createLeadAction({
       source: "PACKAGE_INTEREST",
+      name: contact.name,
+      phone: contact.phone,
+      email: contact.email,
       packageId,
       packageTitle: title,
       days: duration,
@@ -64,16 +80,14 @@ export default function StickyBookingCard({
             <span className="text-xs text-ink-900">per person</span>
           </div>
 
-          <a
-            href={waHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={logInterest}
+          <button
+            type="button"
+            onClick={() => setShowContact(true)}
             className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-brand-600 px-5 py-3.5 text-sm font-semibold text-white shadow-brand transition hover:-translate-y-0.5 hover:bg-brand-700 active:translate-y-0"
           >
             <WhatsappIcon className="h-4.5 w-4.5" />
             Book on WhatsApp
-          </a>
+          </button>
           <a
             href="tel:+918700368575"
             className="mt-3 flex w-full items-center justify-center gap-2 rounded-full border border-ink-200 px-5 py-3 text-sm font-semibold text-ink-800 transition hover:border-brand-400 hover:text-brand-600"
@@ -112,19 +126,26 @@ export default function StickyBookingCard({
             >
               <Download className="h-4.5 w-4.5" />
             </button>
-            <a
-              href={waHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={logInterest}
+            <button
+              type="button"
+              onClick={() => setShowContact(true)}
               className="flex items-center gap-2 rounded-full bg-brand-600 px-5 py-3 text-sm font-semibold text-white shadow-brand"
             >
               <WhatsappIcon className="h-4 w-4" />
               Book Now
-            </a>
+            </button>
           </div>
         </div>
       </div>
+
+      <LeadContactModal
+        open={showContact}
+        title="Your Contact Details"
+        subtitle="So our travel expert can confirm details and pricing on WhatsApp"
+        submitLabel="Continue on WhatsApp"
+        onClose={() => setShowContact(false)}
+        onSubmit={handleConfirm}
+      />
     </>
   );
 }

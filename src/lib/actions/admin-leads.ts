@@ -5,7 +5,8 @@ import { db } from "@/lib/db";
 import { requireStaffFeature } from "@/lib/dal";
 import type { LeadStatus } from "@/generated/prisma/client";
 import { logLeadActivity } from "@/lib/leadActivity";
-import { statusLabels } from "@/components/admin/leads/statusStyles";
+import { statusLabels, sourceLabels } from "@/components/admin/leads/statusStyles";
+import { notifyLeadAssigned } from "@/lib/notifications";
 
 // Admin plus staff whose jobRole grants the "leads" feature (Travel
 // Executive, BDE) — see src/lib/permissions.ts.
@@ -21,7 +22,7 @@ export async function updateLeadStatusAction(leadId: string, status: LeadStatus)
 
 export async function assignLeadAction(leadId: string, staffId: string | null): Promise<void> {
   const session = await requireStaffFeature("leads");
-  await db.lead.update({ where: { id: leadId }, data: { assignedToId: staffId } });
+  const lead = await db.lead.update({ where: { id: leadId }, data: { assignedToId: staffId } });
   const [actor, assignee] = await Promise.all([
     db.staffUser.findUnique({ where: { id: session.userId }, select: { name: true } }),
     staffId ? db.staffUser.findUnique({ where: { id: staffId }, select: { name: true } }) : null,
@@ -33,6 +34,15 @@ export async function assignLeadAction(leadId: string, staffId: string | null): 
       ? `${actor?.name ?? "Someone"} assigned this lead to ${assignee.name}`
       : `${actor?.name ?? "Someone"} unassigned this lead`
   );
+  if (staffId && assignee) {
+    await notifyLeadAssigned({
+      leadId,
+      staffId,
+      who: lead.name ?? "Someone",
+      sourceLabel: sourceLabels[lead.source],
+      destinationName: lead.destinationName,
+    });
+  }
   revalidatePath("/admin/leads");
   revalidatePath("/staff/leads");
   revalidatePath("/admin/activities");
