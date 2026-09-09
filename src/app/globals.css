@@ -223,6 +223,14 @@ body {
 
 @media print {
   @page {
+    /* Without an explicit size, the page defaults to whatever paper size
+       is selected in the browser's print dialog / OS print settings - on
+       Windows that's commonly Letter (612x792pt), not A4 (595.9x841.9pt).
+       Letter is ~51pt shorter, so the exact same content needs an extra
+       page under it. Forcing A4 here is what makes the itinerary PDF's
+       page count and layout deterministic regardless of the printing
+       device's default paper size. */
+    size: A4;
     margin: 1.5cm;
   }
 
@@ -236,6 +244,23 @@ body {
 
   .print-hide {
     display: none !important;
+  }
+
+  /* useScrollLock (src/hooks/useScrollLock.ts) pins <html>/<body> with
+     `position: fixed` + `overflow: hidden` inline styles whenever any
+     overlay is open - including the trip-planner popup, which auto-opens 5s
+     after landing on a package page. Chromium's print pagination treats a
+     fixed, clipped body as a single viewport-sized page instead of flowing
+     content across pages, so printing/saving the itinerary PDF while that
+     lock is active silently truncated it to page 1 only. A stylesheet
+     `!important` rule beats a plain (non-!important) inline style, so this
+     unconditionally restores normal flow for print regardless of whatever
+     overlay happens to be open when the user clicks print. */
+  html,
+  body {
+    position: static !important;
+    top: auto !important;
+    overflow: visible !important;
   }
 
   /* Framer Motion leaves scroll-triggered elements at opacity:0 via inline

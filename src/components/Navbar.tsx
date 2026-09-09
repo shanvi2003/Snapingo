@@ -94,12 +94,18 @@ export default function Navbar({
           elements always get their own stacking layer above plain in-flow
           content regardless of DOM order or z-index:auto, so this needs an
           explicit z-index - and nav/the dropdown panel below need a higher
-          one, or this backdrop paints over them instead of behind them. */}
+          one, or this backdrop paints over them instead of behind them.
+          No backdrop-blur here on purpose - stacking it with the header's
+          own backdrop-blur-lg (both fixed, both active while the menu is
+          open) was overloading the compositor on mid/low-end phones and
+          tablets, which is what was actually behind the "tap hamburger,
+          navbar disappears, page freezes" reports - a solid tint costs the
+          GPU far less than a second blurred layer on top of the first. */}
       {open && (
         <div
           onClick={() => setOpen(false)}
           aria-hidden
-          className="fixed inset-0 z-10 bg-ink-950/25 backdrop-blur-[2px] lg:hidden"
+          className="fixed inset-0 z-10 bg-ink-950/40 lg:hidden"
         />
       )}
 
@@ -237,14 +243,21 @@ export default function Navbar({
         )}
       </AnimatePresence>
 
+      {/* Was animating `height: 0 -> "auto"` - framer-motion has to measure
+          the panel's full height every frame to do that, which is a layout
+          (not compositor) cost, right as the backdrop above and the header's
+          own backdrop-blur-lg are also repainting. Opacity + a small
+          translateY are GPU-compositable and don't touch layout at all, so
+          this panel no longer adds to that per-frame cost - see the tap-outside
+          backdrop above for the other half of this fix. */}
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.28, ease: "easeInOut" }}
-            className="relative z-20 overflow-hidden border-t border-ink-100 bg-white lg:hidden"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.18, ease: "easeOut" }}
+            className="relative z-20 border-t border-ink-100 bg-white lg:hidden"
           >
             <div className="container-app flex flex-col gap-1 py-4">
               {navLinks.map((link) => (

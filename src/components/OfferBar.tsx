@@ -16,8 +16,8 @@ export default function OfferBar() {
   if (!visible) return null;
 
   return (
-    <div className="print-hide relative overflow-hidden bg-ink-900 text-white text-xs sm:text-sm lg:text-base xl:text-lg">
-      <div className="flex w-full items-center justify-between gap-4 py-2 pl-4 pr-4 sm:pl-6 sm:pr-6 lg:pl-8 lg:pr-8 lg:py-2.5">
+    <div className="print-hide relative overflow-hidden bg-ink-900 text-white text-xs sm:text-sm">
+      <div className="flex w-full items-center justify-between gap-4 py-2 pl-4 pr-4 sm:pl-6 sm:pr-6 lg:pl-8 lg:pr-8">
         <div className="flex-1 overflow-hidden mask-fade-x">
           <div className="flex w-max animate-marquee gap-16 whitespace-nowrap hover:[animation-play-state:paused]">
             {[...messages, ...messages].map((msg, i) => (

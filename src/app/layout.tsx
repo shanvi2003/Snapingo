@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Baloo_2, Inter } from "next/font/google";
+import { Baloo_2, Inter, Lexend } from "next/font/google";
 import { MotionConfig } from "framer-motion";
 import "./globals.css";
 import { siteConfig } from "@/lib/siteConfig";
@@ -15,6 +15,18 @@ const baloo = Baloo_2({
 const inter = Inter({
   variable: "--font-body",
   subsets: ["latin"],
+});
+
+// The itinerary PDF (src/components/ItineraryPrintView.tsx) is a
+// pixel-matched clone of a reference PDF whose every text run - headings
+// and body alike, just at different weights - embeds Lexend (confirmed by
+// reading the PDF's actual font dictionaries, not eyeballed). The site's
+// own display font (Baloo 2 above) stays untouched everywhere else; this
+// is scoped to that one component only.
+const lexend = Lexend({
+  variable: "--font-itinerary",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 export const metadata: Metadata = {
@@ -106,7 +118,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${baloo.variable} ${inter.variable} h-full antialiased`}
+      className={`${baloo.variable} ${inter.variable} ${lexend.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-white font-sans text-ink-900">
         <JsonLd data={organizationJsonLd()} />
