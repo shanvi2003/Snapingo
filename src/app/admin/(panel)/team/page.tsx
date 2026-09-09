@@ -22,10 +22,10 @@ export default async function AdminTeamPage() {
       <div className="mt-6 overflow-x-auto rounded-2xl border border-ink-100 bg-white shadow-sm">
         <table className="w-full min-w-[640px] table-fixed text-left text-sm">
           <colgroup>
-            <col className="w-[34%]" />
-            <col className="w-[24%]" />
-            <col className="w-[14%]" />
-            <col className="w-[28%]" />
+            <col className="w-[26%]" />
+            <col className="w-[36%]" />
+            <col className="w-[12%]" />
+            <col className="w-[26%]" />
           </colgroup>
           <thead>
             <tr className="border-b border-ink-100 text-xs font-bold uppercase tracking-wide text-ink-500">

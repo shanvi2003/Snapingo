@@ -9,15 +9,18 @@ import { flightClassOptions, majorIndianCities, type FlightClass } from "@/data/
 import CustomSelect from "@/components/CustomSelect";
 import { useAutoOpenOnce } from "@/hooks/useAutoOpenOnce";
 import { useScrollLock } from "@/hooks/useScrollLock";
+import { createLeadAction } from "@/lib/actions/leads";
+import LeadContactFields, { emptyContactValues, isContactValid, type ContactValues } from "@/components/LeadContactFields";
 
 type ArrivalType = "domestic" | "international";
 type TripType = "one-way" | "round-trip";
-type Step = 1 | 2 | 3;
+type Step = 1 | 2 | 3 | 4;
 
 const STEP_LABELS: Record<Step, string> = {
   1: "Route",
   2: "Class",
   3: "Dates",
+  4: "Your Details",
 };
 
 export default function FlightBookingModal({ destinations }: { destinations: Destination[] }) {
@@ -32,6 +35,9 @@ export default function FlightBookingModal({ destinations }: { destinations: Des
   const [flightClass, setFlightClass] = useState<FlightClass | null>(null);
   const [departDate, setDepartDate] = useState("");
   const [returnDate, setReturnDate] = useState("");
+  const [contact, setContact] = useState<ContactValues>(emptyContactValues);
+  const [contactTouched, setContactTouched] = useState(false);
+  const [sending, setSending] = useState(false);
 
   useScrollLock(open);
 
@@ -58,10 +64,41 @@ export default function FlightBookingModal({ destinations }: { destinations: Des
     setFlightClass(null);
     setDepartDate("");
     setReturnDate("");
+    setContact(emptyContactValues);
+    setContactTouched(false);
+    setSending(false);
   };
 
   const handleSearch = () => {
     if (!flightClass) return;
+    if (!isContactValid(contact)) {
+      setContactTouched(true);
+      return;
+    }
+    // A fast double-tap can fire this twice before the button unmounts on
+    // navigation - guard explicitly instead of relying on that.
+    if (sending) return;
+    setSending(true);
+
+    const fromCityName = majorIndianCities.find((c) => c.slug === departureCitySlug)?.name;
+    const destinationName = arrivalList.find((d) => d.slug === destinationSlug)?.name;
+    // Fire-and-forget: never let a DB hiccup delay/break the results
+    // navigation below.
+    createLeadAction({
+      source: "FLIGHT_BOOKING",
+      name: contact.name,
+      phone: contact.phone,
+      email: contact.email,
+      tripType,
+      destinationSlug,
+      destinationName,
+      fromCityName,
+      classLabel: flightClassOptions.find((o) => o.value === flightClass)?.label,
+      startDate: departDate || undefined,
+      endDate: tripType === "round-trip" ? returnDate || undefined : undefined,
+      pageUrl: window.location.pathname,
+    }).catch((err) => console.warn("Lead save failed", err));
+
     const params = new URLSearchParams({
       tripType,
       from: departureCitySlug,
@@ -143,7 +180,7 @@ export default function FlightBookingModal({ destinations }: { destinations: Des
               </div>
 
               <div className="flex gap-1.5 px-6 pt-4">
-                {([1, 2, 3] as const).map((s) => (
+                {([1, 2, 3, 4] as const).map((s) => (
                   <span
                     key={s}
                     className={`h-1.5 flex-1 rounded-full transition-colors ${
@@ -296,18 +333,33 @@ export default function FlightBookingModal({ destinations }: { destinations: Des
                     )}
                   </div>
                 )}
+
+                {step === 4 && (
+                  <div>
+                    <p className="text-sm text-ink-900">Almost done - who should we send the options to?</p>
+                    <div className="mt-4">
+                      <LeadContactFields values={contact} onChange={setContact} touched={contactTouched} />
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="border-t border-ink-100 px-4 py-3 sm:px-6 sm:py-4">
                 <button
                   type="button"
                   disabled={
-                    step === 1 ? !canProceedStep1 : step === 2 ? !canProceedStep2 : !canProceedStep3
+                    step === 1
+                      ? !canProceedStep1
+                      : step === 2
+                        ? !canProceedStep2
+                        : step === 3
+                          ? !canProceedStep3
+                          : sending
                   }
-                  onClick={() => (step === 3 ? handleSearch() : setStep((s) => (s + 1) as Step))}
+                  onClick={() => (step === 4 ? handleSearch() : setStep((s) => (s + 1) as Step))}
                   className="flex w-full items-center justify-center gap-2 rounded-full bg-brand-600 px-6 py-3 text-sm font-semibold text-white shadow-brand transition hover:-translate-y-0.5 hover:bg-brand-700 disabled:pointer-events-none disabled:opacity-40 disabled:hover:translate-y-0 sm:py-3.5"
                 >
-                  {step === 3 ? "Show Flights" : "Continue"}
+                  {step === 4 ? "Show Flights" : "Continue"}
                 </button>
               </div>
             </motion.div>

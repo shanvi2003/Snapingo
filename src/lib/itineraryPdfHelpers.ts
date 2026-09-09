@@ -84,16 +84,26 @@ export function getNightStayBreakdown(pkg: TourPackage): NightStayBlock[] {
     currentCity = detected;
   }
 
-  if (blocks.length <= 1) return [];
+  // A city can appear in more than one *non-consecutive* block if the
+  // itinerary revisits it later (e.g. Manali -> Kasol -> Manali) - merge
+  // those into a single combined-nights row instead of listing the same
+  // city twice, which also left two rows sharing that city as their React
+  // key (a "two children with the same key" warning) once rendered.
+  const nightsByCity = new Map<string, number>();
+  for (const b of blocks) {
+    nightsByCity.set(b.city, (nightsByCity.get(b.city) ?? 0) + b.nights);
+  }
+
+  if (nightsByCity.size <= 1) return [];
 
   const category = inferHotelCategory(pkg);
   const regionMatches = hotels.filter((h) => h.destinationSlug === pkg.destinationSlug);
 
-  return blocks.map((b) => {
+  return [...nightsByCity].map(([city, nights]) => {
     const cityMatches = regionMatches.filter((h) =>
-      h.name.toLowerCase().includes(b.city.toLowerCase())
+      h.name.toLowerCase().includes(city.toLowerCase())
     );
     const hotel = cityMatches.find((h) => h.category === category) ?? cityMatches[0] ?? null;
-    return { city: b.city, nights: b.nights, hotel, categoryLabel: hotelCategoryLabels[category] };
+    return { city, nights, hotel, categoryLabel: hotelCategoryLabels[category] };
   });
 }

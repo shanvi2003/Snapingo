@@ -18,7 +18,7 @@ export default async function AdminDashboardPage() {
       db.package.count(),
       db.destination.count(),
       db.blogPost.count(),
-      db.staffUser.count({ where: { isActive: true } }),
+      db.staffUser.count({ where: { isActive: true, role: "STAFF" } }),
       db.booking.findMany({
         where: { travelStartDate: { gte: now, lte: in14Days }, status: { in: ["CONFIRMED", "PENDING"] } },
         orderBy: { travelStartDate: "asc" },

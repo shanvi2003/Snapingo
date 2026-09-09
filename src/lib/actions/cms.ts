@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { requireSession, requireStaffFeature } from "@/lib/dal";
+import { requireStaffFeature } from "@/lib/dal";
 import type { SessionPayload } from "@/lib/session";
 import {
   packageSchema,
@@ -17,21 +17,34 @@ import {
 
 export type FormState = { error: string } | undefined;
 
-// Hotels/Flights stay Admin-only - no staff jobRole grants edit access to
-// them (see src/lib/permissions.ts), only the read-only /staff/hotels and
-// /staff/flights browse pages.
-async function requireAdmin() {
-  return requireSession(["ADMIN"]);
+// Packages: Admin + Social Media Executive + Digital Marketing (packagesEdit).
+async function requirePackageEditor() {
+  return requireStaffFeature("packagesEdit");
 }
 
-// Packages/Destinations/Services/FAQ: Admin + Digital Marketing (contentEdit).
+// Destinations: Admin + Social Media Executive + Digital Marketing (destinationsEdit).
+async function requireDestinationEditor() {
+  return requireStaffFeature("destinationsEdit");
+}
+
+// Services/FAQ/Homepage Categories/Trust Logos/USPs: Admin + Digital Marketing (contentEdit).
 async function requireContentEditor() {
   return requireStaffFeature("contentEdit");
 }
 
-// Blog: Admin + Social Media Executive (blogEdit).
+// Blog: Admin + Social Media Executive + Digital Marketing (blogEdit).
 async function requireBlogEditor() {
   return requireStaffFeature("blogEdit");
+}
+
+// Hotels: Admin + Social Media Executive + Digital Marketing (hotelsEdit).
+async function requireHotelEditor() {
+  return requireStaffFeature("hotelsEdit");
+}
+
+// Flights: Admin + Social Media Executive + Digital Marketing (flightsEdit).
+async function requireFlightEditor() {
+  return requireStaffFeature("flightsEdit");
 }
 
 function basePathFor(session: SessionPayload): string {
@@ -48,7 +61,7 @@ function parse(formData: FormData) {
 // ---------------------------------------------------------------------------
 
 export async function savePackageAction(isNew: boolean, _prevState: FormState, formData: FormData): Promise<FormState> {
-  const session = await requireContentEditor();
+  const session = await requirePackageEditor();
   const parsed = packageSchema.safeParse(parse(formData));
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Please check the form." };
   const { id, itinerary, ...data } = parsed.data;
@@ -72,7 +85,7 @@ export async function savePackageAction(isNew: boolean, _prevState: FormState, f
 }
 
 export async function deletePackageAction(id: string): Promise<void> {
-  await requireContentEditor();
+  await requirePackageEditor();
   await db.package.delete({ where: { id } });
   revalidatePath("/admin/cms/packages");
   revalidatePath("/staff/cms/packages");
@@ -84,7 +97,7 @@ export async function deletePackageAction(id: string): Promise<void> {
 // ---------------------------------------------------------------------------
 
 export async function saveDestinationAction(isNew: boolean, _prevState: FormState, formData: FormData): Promise<FormState> {
-  const session = await requireContentEditor();
+  const session = await requireDestinationEditor();
   const parsed = destinationSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Please check the form." };
   const { slug, highlights, ...data } = parsed.data;
@@ -108,7 +121,7 @@ export async function saveDestinationAction(isNew: boolean, _prevState: FormStat
 }
 
 export async function deleteDestinationAction(slug: string): Promise<void> {
-  await requireContentEditor();
+  await requireDestinationEditor();
   await db.destination.delete({ where: { slug } });
   revalidatePath("/admin/cms/destinations");
   revalidatePath("/staff/cms/destinations");
@@ -180,11 +193,11 @@ export async function deleteBlogPostAction(id: string): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Hotels (Admin only)
+// Hotels
 // ---------------------------------------------------------------------------
 
 export async function saveHotelAction(isNew: boolean, _prevState: FormState, formData: FormData): Promise<FormState> {
-  await requireAdmin();
+  const session = await requireHotelEditor();
   const parsed = hotelSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Please check the form." };
   const { id, ...data } = parsed.data;
@@ -198,23 +211,25 @@ export async function saveHotelAction(isNew: boolean, _prevState: FormState, for
   }
 
   revalidatePath("/admin/cms/hotels");
+  revalidatePath("/staff/cms/hotels");
   revalidatePath("/staff/hotels");
-  redirect("/admin/cms/hotels");
+  redirect(`${basePathFor(session)}/cms/hotels`);
 }
 
 export async function deleteHotelAction(id: string): Promise<void> {
-  await requireAdmin();
+  await requireHotelEditor();
   await db.hotel.delete({ where: { id } });
   revalidatePath("/admin/cms/hotels");
+  revalidatePath("/staff/cms/hotels");
   revalidatePath("/staff/hotels");
 }
 
 // ---------------------------------------------------------------------------
-// Flights (Admin only)
+// Flights
 // ---------------------------------------------------------------------------
 
 export async function saveFlightAction(isNew: boolean, _prevState: FormState, formData: FormData): Promise<FormState> {
-  await requireAdmin();
+  const session = await requireFlightEditor();
   const parsed = flightSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Please check the form." };
   const { id, ...data } = parsed.data;
@@ -228,14 +243,16 @@ export async function saveFlightAction(isNew: boolean, _prevState: FormState, fo
   }
 
   revalidatePath("/admin/cms/flights");
+  revalidatePath("/staff/cms/flights");
   revalidatePath("/staff/flights");
-  redirect("/admin/cms/flights");
+  redirect(`${basePathFor(session)}/cms/flights`);
 }
 
 export async function deleteFlightAction(id: string): Promise<void> {
-  await requireAdmin();
+  await requireFlightEditor();
   await db.flight.delete({ where: { id } });
   revalidatePath("/admin/cms/flights");
+  revalidatePath("/staff/cms/flights");
   revalidatePath("/staff/flights");
 }
 

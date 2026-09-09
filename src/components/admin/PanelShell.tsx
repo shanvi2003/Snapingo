@@ -1,9 +1,8 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
-import { LogOut } from "lucide-react";
+import { LogOut, MonitorSmartphone } from "lucide-react";
 import { logoutAction } from "@/lib/actions/auth";
 import PanelNav from "@/components/admin/PanelNav";
-import MobilePanelNav from "@/components/admin/MobilePanelNav";
 import AutoRefresh from "@/components/admin/AutoRefresh";
 import NotificationBell from "@/components/admin/NotificationBell";
 import { NotificationProvider } from "@/components/admin/NotificationCenter";
@@ -66,26 +65,37 @@ export default function PanelShell({
           </div>
         </aside>
 
-        <div className="flex flex-1 flex-col overflow-hidden print:overflow-visible">
-          <header className="print-hide flex shrink-0 items-center justify-between border-b border-ink-100 bg-white px-4 py-4 lg:hidden">
-            <div className="flex items-center gap-2">
-              <span className="relative block h-8 w-8">
-                <Image src="/snapingo-icon.png" alt="Snapingo" fill sizes="32px" className="object-contain" unoptimized />
-              </span>
-              <p className="font-heading text-sm font-bold text-ink-900">{title}</p>
-            </div>
-            <div className="flex items-center gap-1">
-              <NotificationBell leadsBasePath={leadsBasePath} />
-              <form action={logoutAction}>
-                <button type="submit" aria-label="Sign out" className="grid h-9 w-9 place-items-center rounded-full text-ink-700 hover:bg-ink-100">
-                  <LogOut className="h-4 w-4" />
-                </button>
-              </form>
-              <MobilePanelNav sections={sections} rootHref={rootHref} />
-            </div>
-          </header>
-
+        {/* Below lg: the panel's dense nav (20+ links across sections) and
+            data-heavy tables/forms are built for a laptop/desktop's room,
+            not a phone screen - rather than maintain a second, cut-down
+            responsive layout for every panel page, this asks the visitor to
+            switch devices instead. print:flex overrides this at print time
+            regardless of the rendering window's width, since printing (an
+            invoice, itinerary, etc.) should never be blocked by it. */}
+        <div className="hidden flex-1 flex-col overflow-hidden lg:flex print:flex print:overflow-visible">
           <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 print:h-auto print:overflow-visible">{children}</main>
+        </div>
+
+        <div className="print-hide flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center lg:hidden">
+          <span className="relative block h-11 w-11">
+            <Image src="/snapingo-icon.png" alt="Snapingo" fill sizes="44px" className="object-contain" unoptimized />
+          </span>
+          <MonitorSmartphone className="h-10 w-10 text-ink-300" aria-hidden />
+          <div>
+            <h1 className="font-heading text-lg font-bold text-ink-900">Desktop Only</h1>
+            <p className="mt-1.5 max-w-xs text-sm text-ink-500">
+              Please use a desktop to access the {title}.
+            </p>
+          </div>
+          <form action={logoutAction}>
+            <button
+              type="submit"
+              className="flex items-center gap-1.5 text-sm font-semibold text-ink-500 transition hover:text-ink-700"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              Sign out
+            </button>
+          </form>
         </div>
       </div>
     </NotificationProvider>

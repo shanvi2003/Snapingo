@@ -30,11 +30,26 @@ export default function Navbar({
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    // acquireLock() (below) pins <body> with `position: fixed` to stop
+    // background scroll while the mobile menu is open - on Chromium/WebKit,
+    // switching an already-scrolled body to `position: fixed` itself fires
+    // a native `scroll` event reporting `scrollY: 0` (the page's scrollable
+    // extent just collapsed). Without this guard, that spurious event
+    // flipped `scrolled` to false, which flips the header from `fixed` to
+    // `absolute` while <body> is still shifted up by the lock's negative
+    // `top` offset - so the header (hamburger/close button included)
+    // rendered hundreds of pixels above the viewport, invisible, with
+    // scroll still locked: the exact "tap the hamburger and the whole page
+    // freezes" reports. `scrolled` only needs to reflect real page scroll,
+    // which can't happen anyway while the menu's lock is active - re-running
+    // this effect on every open/close (via the `open` dep below) keeps
+    // `onScroll` reading the current value with no ref needed.
+    if (open) return;
     const onScroll = () => setScrolled(window.scrollY > 24);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, [pathname]);
+  }, [pathname, open]);
 
   // body-only locking left <html> as its own independently-scrollable
   // container (globals.css gives both overflow-x:hidden, which per spec

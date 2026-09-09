@@ -1,8 +1,18 @@
 import Link from "next/link";
-import { Search, User } from "lucide-react";
+import { Search } from "lucide-react";
 import { db } from "@/lib/db";
-import { sourceLabels, statusLabels, statusStyles } from "@/components/admin/leads/statusStyles";
-import { bookingStatusLabels, bookingStatusStyles } from "@/components/admin/bookingStyles";
+
+// One row per matching lead or booking - `type` is kept (not just for
+// display) since it's what decides which detail page this row's link
+// actually points to.
+type CustomerRow = {
+  key: string;
+  type: "Lead" | "Booking";
+  name: string;
+  email: string;
+  phone: string;
+  href: string;
+};
 
 export default async function CustomerSearchPage({
   searchParams,
@@ -41,6 +51,25 @@ export default async function CustomerSearchPage({
       ])
     : [[], []];
 
+  const rows: CustomerRow[] = [
+    ...leads.map((l): CustomerRow => ({
+      key: `lead-${l.id}`,
+      type: "Lead",
+      name: l.name || "—",
+      email: l.email || "—",
+      phone: l.phone || "—",
+      href: `${basePath}/leads/${l.id}`,
+    })),
+    ...bookings.map((b): CustomerRow => ({
+      key: `booking-${b.id}`,
+      type: "Booking",
+      name: b.travelerName,
+      email: b.email || "—",
+      phone: b.phone,
+      href: `${basePath}/bookings/${b.id}`,
+    })),
+  ];
+
   return (
     <div>
       <h1 className="font-heading text-2xl font-bold text-ink-900">Customer Search</h1>
@@ -54,7 +83,7 @@ export default async function CustomerSearchPage({
             name="q"
             defaultValue={q}
             autoFocus
-            placeholder="Search by name, phone or email..."
+            placeholder="Search customer..."
             className="w-full rounded-xl border border-ink-200 bg-white py-2.5 pl-11 pr-4 text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
           />
         </div>
@@ -64,60 +93,46 @@ export default async function CustomerSearchPage({
       </form>
 
       {query && (
-        <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <div>
-            <h2 className="flex items-center gap-2 font-heading text-base font-bold text-ink-900">
-              <User className="h-4 w-4 text-brand-600" />
-              Leads ({leads.length})
-            </h2>
-            <div className="mt-3 space-y-2">
-              {leads.map((l) => (
-                <Link
-                  key={l.id}
-                  href={`${basePath}/leads/${l.id}`}
-                  className="block rounded-xl border border-ink-100 bg-white p-4 shadow-sm transition hover:border-brand-200"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="font-semibold text-ink-900">{l.name || l.phone || l.email || "Anonymous"}</p>
-                    <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${statusStyles[l.status]}`}>
-                      {statusLabels[l.status]}
+        <div className="mt-8 overflow-x-auto rounded-2xl border border-ink-100 bg-white shadow-sm">
+          <table className="w-full min-w-[640px] text-left text-sm">
+            <thead>
+              <tr className="border-b border-ink-100 text-xs font-bold uppercase tracking-wide text-ink-500">
+                <th className="px-4 py-3">Customer Name</th>
+                <th className="px-4 py-3">Email</th>
+                <th className="px-4 py-3">Mobile Number</th>
+                <th className="px-4 py-3">Type</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.key} className="border-b border-ink-50 last:border-0 hover:bg-ink-50/60">
+                  <td className="px-4 py-3">
+                    <Link href={row.href} className="font-semibold text-ink-900 hover:text-brand-600">
+                      {row.name}
+                    </Link>
+                  </td>
+                  <td className="px-4 py-3 text-ink-700">{row.email}</td>
+                  <td className="px-4 py-3 text-ink-700">{row.phone}</td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                        row.type === "Lead" ? "bg-brand-50 text-brand-700" : "bg-emerald-50 text-emerald-700"
+                      }`}
+                    >
+                      {row.type}
                     </span>
-                  </div>
-                  <p className="mt-1 text-xs text-ink-500">
-                    {l.phone} · {sourceLabels[l.source]}
-                  </p>
-                </Link>
+                  </td>
+                </tr>
               ))}
-              {leads.length === 0 && <p className="text-sm text-ink-500">No matching leads.</p>}
-            </div>
-          </div>
-
-          <div>
-            <h2 className="flex items-center gap-2 font-heading text-base font-bold text-ink-900">
-              <User className="h-4 w-4 text-brand-600" />
-              Bookings ({bookings.length})
-            </h2>
-            <div className="mt-3 space-y-2">
-              {bookings.map((b) => (
-                <Link
-                  key={b.id}
-                  href={`${basePath}/bookings/${b.id}`}
-                  className="block rounded-xl border border-ink-100 bg-white p-4 shadow-sm transition hover:border-brand-200"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="font-semibold text-ink-900">{b.travelerName}</p>
-                    <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${bookingStatusStyles[b.status]}`}>
-                      {bookingStatusLabels[b.status]}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-xs text-ink-500">
-                    {b.phone} · ₹{(b.totalAmount + b.taxAmount).toLocaleString("en-IN")}
-                  </p>
-                </Link>
-              ))}
-              {bookings.length === 0 && <p className="text-sm text-ink-500">No matching bookings.</p>}
-            </div>
-          </div>
+              {rows.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="px-4 py-10 text-center text-sm text-ink-500">
+                    No matching customers.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       )}
     </div>

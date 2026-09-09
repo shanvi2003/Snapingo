@@ -40,7 +40,7 @@ export default function Destinations({ destinations }: { destinations: Destinati
 
         <div className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {list.slice(0, 10).map((d, i) => (
-            <DestinationCard key={d.slug + tab} destination={d} index={i} />
+            <DestinationCard key={d.slug + tab} destination={d} index={i} aspect="3/4" />
           ))}
         </div>
 

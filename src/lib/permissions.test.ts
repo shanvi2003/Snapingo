@@ -4,11 +4,16 @@ import { staffCan, jobRoleLabels, jobRoleOptions, type StaffFeature } from "./pe
 
 const allFeatures: StaffFeature[] = [
   "leads",
+  "leadActivities",
   "customerSearch",
   "bookings",
   "completeTrips",
   "blogEdit",
   "reviewsEdit",
+  "packagesEdit",
+  "destinationsEdit",
+  "hotelsEdit",
+  "flightsEdit",
   "contentEdit",
 ];
 
@@ -16,10 +21,30 @@ const allFeatures: StaffFeature[] = [
 // exists specifically so an accidental edit to the permission map in
 // permissions.ts gets caught instead of silently shipping.
 const expectedMatrix: Record<StaffJobRole, StaffFeature[]> = {
-  TRAVEL_EXECUTIVE: ["leads", "customerSearch", "bookings", "completeTrips"],
-  BDE: ["leads", "customerSearch"],
-  SOCIAL_MEDIA_EXECUTIVE: ["blogEdit", "reviewsEdit"],
-  DIGITAL_MARKETING: ["contentEdit"],
+  TRAVEL_EXECUTIVE: ["leads", "leadActivities", "customerSearch", "bookings", "completeTrips"],
+  BDE: ["leads", "leadActivities", "customerSearch"],
+  SOCIAL_MEDIA_EXECUTIVE: [
+    "leads",
+    "leadActivities",
+    "customerSearch",
+    "blogEdit",
+    "reviewsEdit",
+    "packagesEdit",
+    "destinationsEdit",
+    "hotelsEdit",
+    "flightsEdit",
+  ],
+  DIGITAL_MARKETING: [
+    "leads",
+    "leadActivities",
+    "customerSearch",
+    "packagesEdit",
+    "destinationsEdit",
+    "contentEdit",
+    "blogEdit",
+    "hotelsEdit",
+    "flightsEdit",
+  ],
 };
 
 describe("staffCan", () => {

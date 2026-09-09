@@ -7,7 +7,7 @@ import CustomSelect from "@/components/CustomSelect";
 const inputClass =
   "w-full rounded-xl border border-ink-200 bg-white px-4 py-2.5 text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100";
 const labelClass = "mb-1.5 block text-xs font-bold uppercase tracking-wide text-ink-900";
-const sectionTitleClass = "font-heading text-sm font-bold text-ink-900";
+const sectionTitleClass = "font-heading text-lg font-bold text-ink-900";
 
 export type BookingDefaults = {
   leadId?: string;
@@ -72,8 +72,8 @@ export default function BookingForm({
         <p className={sectionTitleClass}>Trip Details</p>
         <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <label className={labelClass} htmlFor="packageTitle">Package (optional)</label>
-            <input id="packageTitle" name="packageTitle" defaultValue={defaults?.packageTitle} className={inputClass} />
+            <label className={labelClass} htmlFor="packageTitle">Package</label>
+            <input id="packageTitle" name="packageTitle" required defaultValue={defaults?.packageTitle} className={inputClass} />
             {defaults?.packageId && <input type="hidden" name="packageId" value={defaults.packageId} />}
           </div>
           <div>

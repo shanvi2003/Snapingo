@@ -10,5 +10,3 @@ export const testimonialSchema = z.object({
   quote: z.string().trim().min(1).max(1000),
   order: z.coerce.number().int().default(0),
 });
-
-export type TestimonialInput = z.input<typeof testimonialSchema>;

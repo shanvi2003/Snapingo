@@ -8,6 +8,11 @@ import CustomSelect from "@/components/CustomSelect";
 
 const inputClass =
   "w-full rounded-xl border border-ink-200 bg-white px-4 py-2.5 text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100";
+// Single-value fields (a slug, a price, a duration...) never need to be
+// wider than this to show their whole value - see PackageForm for the
+// same pattern. Multi-line fields (overview, gallery URLs) keep the plain
+// w-full `inputClass` since those benefit from the extra width.
+const shortInputClass = `${inputClass} max-w-sm`;
 const labelClass = "mb-1.5 block text-xs font-bold uppercase tracking-wide text-ink-900";
 
 // Matches the icon set rendered on the public destination page
@@ -40,24 +45,26 @@ export default function DestinationForm({ isNew, defaults }: { isNew: boolean; d
   const [type, setType] = useState(defaults?.type ?? "domestic");
 
   return (
-    <form action={formAction} className="mt-6 max-w-3xl space-y-6 rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
+    <form action={formAction} className="mt-6 w-full space-y-6 rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div>
           <label className={labelClass} htmlFor="slug">Slug (URL)</label>
-          <input id="slug" name="slug" required disabled={!isNew} defaultValue={defaults?.slug} placeholder="goa" className={`${inputClass} disabled:bg-ink-50 disabled:text-ink-400`} />
+          <input id="slug" name="slug" required readOnly={!isNew} defaultValue={defaults?.slug} placeholder="goa" className={`${shortInputClass} ${!isNew ? "bg-ink-50 text-ink-400" : ""}`} />
         </div>
         <div>
           <label className={labelClass} htmlFor="name">Name</label>
-          <input id="name" name="name" required defaultValue={defaults?.name} className={inputClass} />
+          <input id="name" name="name" required defaultValue={defaults?.name} className={shortInputClass} />
         </div>
       </div>
 
       <div>
         <label className={labelClass} htmlFor="tagline">Tagline</label>
-        <input id="tagline" name="tagline" required defaultValue={defaults?.tagline} className={inputClass} />
+        <input id="tagline" name="tagline" required defaultValue={defaults?.tagline} className={shortInputClass} />
       </div>
 
-      <ImageUrlField name="image" label="Hero Image URL" defaultValue={defaults?.image} required />
+      <div className="max-w-xl">
+        <ImageUrlField name="image" label="Hero Image URL" defaultValue={defaults?.image} required />
+      </div>
 
       <div>
         <label className={labelClass} htmlFor="gallery">Gallery Image URLs (one per line)</label>
@@ -65,7 +72,7 @@ export default function DestinationForm({ isNew, defaults }: { isNew: boolean; d
       </div>
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-4">
-        <div>
+        <div className="max-w-sm">
           <label className={labelClass} htmlFor="type">Type</label>
           <CustomSelect
             name="type"
@@ -79,21 +86,21 @@ export default function DestinationForm({ isNew, defaults }: { isNew: boolean; d
         </div>
         <div>
           <label className={labelClass} htmlFor="packagesCount">Packages Count</label>
-          <input id="packagesCount" name="packagesCount" type="number" min={0} required defaultValue={defaults?.packagesCount} className={inputClass} />
+          <input id="packagesCount" name="packagesCount" type="number" min={0} required defaultValue={defaults?.packagesCount} className={shortInputClass} />
         </div>
         <div>
           <label className={labelClass} htmlFor="startingPrice">Starting Price (₹)</label>
-          <input id="startingPrice" name="startingPrice" type="number" min={0} required defaultValue={defaults?.startingPrice} className={inputClass} />
+          <input id="startingPrice" name="startingPrice" type="number" min={0} required defaultValue={defaults?.startingPrice} className={shortInputClass} />
         </div>
         <div>
           <label className={labelClass} htmlFor="idealDuration">Ideal Duration</label>
-          <input id="idealDuration" name="idealDuration" required placeholder="5-6 days" defaultValue={defaults?.idealDuration} className={inputClass} />
+          <input id="idealDuration" name="idealDuration" required placeholder="5-6 days" defaultValue={defaults?.idealDuration} className={shortInputClass} />
         </div>
       </div>
 
       <div>
         <label className={labelClass} htmlFor="bestTimeToVisit">Best Time to Visit</label>
-        <input id="bestTimeToVisit" name="bestTimeToVisit" required defaultValue={defaults?.bestTimeToVisit} className={inputClass} />
+        <input id="bestTimeToVisit" name="bestTimeToVisit" required defaultValue={defaults?.bestTimeToVisit} className={shortInputClass} />
       </div>
 
       <div>

@@ -97,10 +97,17 @@ export default function ItineraryPrintView({ pkg }: { pkg: TourPackage }) {
           color where it overlaps plain white background there
           (rgb(253,231,242) against brand-500 #ec1278 on white) solves to
           ~7% alpha - the same opacity already used for the icon mark
-          above, not a separate guessed value. */}
+          above, not a separate guessed value.
+          `bottom` is offset past -43px (the raw page-edge-relative value
+          from the measurement above) by the @page margin (1.5cm ≈ 57px,
+          see globals.css) - Chromium positions a `fixed` element during
+          print relative to the page's margin box, not the physical sheet,
+          so without this extra offset the mark renders ~57px above where
+          it should bleed off the actual page bottom, verified against a
+          real headless-Chrome print-to-pdf render of this component. */}
       <div
         aria-hidden
-        className="pointer-events-none fixed bottom-[-43px] right-[-184px] h-[398px] w-[596px] overflow-hidden"
+        className="pointer-events-none fixed bottom-[-100px] right-[-184px] h-[398px] w-[596px] overflow-hidden"
         style={{ zIndex: -1 }}
       >
         <img
@@ -363,12 +370,13 @@ export default function ItineraryPrintView({ pkg }: { pkg: TourPackage }) {
         </ul>
       </section>
 
-      {/* Forced page break: Payment Policy was landing half on one page and
-          half on the next (its bullet list is short enough that natural
-          flow doesn't reliably keep it together once the preceding
-          sections' length varies) - start it fresh on its own page instead
-          of letting the list split across the boundary. */}
-      <section className="break-before-page">
+      {/* break-inside-avoid (not break-before-page): Payment Policy's bullet
+          list is short enough to jump to the next page as one whole block
+          if it doesn't fit the room left on the current one, the same way
+          Accommodation/Vehicle-Transport above do - forcing it onto its own
+          page regardless of how much room was actually left was what
+          stranded a large blank gap under Terms & Conditions. */}
+      <section className="mt-6 break-inside-avoid">
         <SectionHeading>Payment Policy</SectionHeading>
         <ul className="mt-2 space-y-1 text-[19px] text-ink-800">
           <li className="break-inside-avoid">&bull; Standard packages: 75% advance at booking, 25% on arrival.</li>

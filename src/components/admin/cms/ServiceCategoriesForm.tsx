@@ -14,7 +14,7 @@ export default function ServiceCategoriesForm({ initialRows }: { initialRows: Se
   const [state, formAction, pending] = useActionState<FormState, FormData>(saveServiceCategoriesAction, undefined);
 
   return (
-    <form action={formAction} className="mt-6 max-w-3xl space-y-6 rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
+    <form action={formAction} className="mt-6 w-full space-y-6 rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
       <p className="text-xs text-ink-500">
         Image must be a URL from {ALLOWED_IMAGE_HOSTS.join(" / ")} (e.g. an Unsplash photo link) or a path under /public — other image hosts aren&rsquo;t allowed and will fail to save.
       </p>

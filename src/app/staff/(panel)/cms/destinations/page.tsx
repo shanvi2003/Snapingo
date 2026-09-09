@@ -2,6 +2,6 @@ import { requireStaffFeature } from "@/lib/dal";
 import DestinationsListPage from "@/components/admin/cms/DestinationsListPage";
 
 export default async function StaffDestinationsEditPage() {
-  await requireStaffFeature("contentEdit");
+  await requireStaffFeature("destinationsEdit");
   return <DestinationsListPage basePath="/staff" />;
 }

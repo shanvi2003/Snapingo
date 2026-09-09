@@ -74,6 +74,7 @@ enum LeadSource {
   CAB_BOOKING
   PACKAGE_INTEREST
   GENERAL_ENQUIRY
+  META_ADS
 }
 
 enum LeadStatus {

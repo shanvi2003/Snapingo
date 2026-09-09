@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { WhatsappIcon } from "@/components/SocialIcons";
 import WhatsAppCta from "@/components/WhatsAppCta";
+import IrisRevealImage from "@/components/IrisRevealImage";
 
 export const metadata: Metadata = {
   title: "About Us | Snapingo",
@@ -49,15 +50,10 @@ export default function AboutPage() {
   return (
     <>
       <section className="relative flex h-[calc(35vh+4.5rem)] min-h-[340px] items-end overflow-hidden bg-ink-950 lg:h-[70vh] lg:min-h-[480px]">
-        <Image
-          src="/images/unsplash/1573843981267-be1999ff37cd.jpg"
-          alt="Overwater villas in the Maldives at golden hour"
-          fill
-          loading="eager"
-          fetchPriority="high"
-          quality={85}
-          sizes="100vw"
-          className="object-cover"
+        <IrisRevealImage
+          src="/images/unsplash/1701957494338-95527b753a7f.jpg"
+          alt="A vivid green valley meadow below snow-capped mountains in Kashmir"
+          priority
         />
         <div className="absolute inset-0 bg-gradient-to-t from-ink-950 via-ink-950/60 to-ink-950/20" />
 

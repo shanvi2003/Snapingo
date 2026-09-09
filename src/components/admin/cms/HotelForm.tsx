@@ -28,7 +28,7 @@ export default function HotelForm({ isNew, defaults }: { isNew: boolean; default
     <form action={formAction} className="mt-6 max-w-xl space-y-5 rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
       <div>
         <label className={labelClass} htmlFor="id">Hotel ID</label>
-        <input id="id" name="id" required disabled={!isNew} defaultValue={defaults?.id} placeholder="goa-sea-breeze-inn" className={`${inputClass} disabled:bg-ink-50 disabled:text-ink-400`} />
+        <input id="id" name="id" required readOnly={!isNew} defaultValue={defaults?.id} placeholder="goa-sea-breeze-inn" className={`${inputClass} ${!isNew ? "bg-ink-50 text-ink-400" : ""}`} />
       </div>
       <div>
         <label className={labelClass} htmlFor="name">Name</label>

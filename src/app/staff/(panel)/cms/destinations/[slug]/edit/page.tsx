@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import DestinationForm from "@/components/admin/cms/DestinationForm";
 
 export default async function StaffEditDestinationPage({ params }: { params: Promise<{ slug: string }> }) {
-  await requireStaffFeature("contentEdit");
+  await requireStaffFeature("destinationsEdit");
   const { slug } = await params;
   const destination = await db.destination.findUnique({ where: { slug }, include: { highlights: true } });
   if (!destination) notFound();

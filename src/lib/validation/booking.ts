@@ -6,7 +6,7 @@ export const createBookingSchema = z.object({
   phone: z.string().trim().min(1).max(40),
   email: z.email().max(200).optional().or(z.literal("")),
   packageId: z.string().max(120).optional(),
-  packageTitle: z.string().max(200).optional(),
+  packageTitle: z.string().trim().min(1).max(200),
   destinationName: z.string().max(200).optional(),
   travelStartDate: z.coerce.date().optional(),
   travelEndDate: z.coerce.date().optional(),
@@ -15,8 +15,6 @@ export const createBookingSchema = z.object({
   notes: z.string().max(2000).optional(),
 });
 
-export type CreateBookingInput = z.input<typeof createBookingSchema>;
-
 export const addPaymentSchema = z.object({
   bookingId: z.string(),
   amount: z.coerce.number().int().positive(),
@@ -24,5 +22,3 @@ export const addPaymentSchema = z.object({
   paidAt: z.coerce.date().optional(),
   notes: z.string().max(500).optional(),
 });
-
-export type AddPaymentInput = z.input<typeof addPaymentSchema>;

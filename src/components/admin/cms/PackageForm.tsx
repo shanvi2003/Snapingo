@@ -9,6 +9,13 @@ import CustomSelect from "@/components/CustomSelect";
 
 const inputClass =
   "w-full rounded-xl border border-ink-200 bg-white px-4 py-2.5 text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100";
+// Single-value fields (a title, a price, a star rating...) never need to be
+// wider than this to show their whole value - letting them stretch to fill
+// a wide grid column on a big screen just leaves the input looking
+// stranded in a mostly-empty cell. Multi-line fields (highlights, the
+// itinerary, image URLs) keep the plain w-full `inputClass` instead, since
+// those genuinely benefit from the extra width.
+const shortInputClass = `${inputClass} max-w-sm`;
 const labelClass = "mb-1.5 block text-xs font-bold uppercase tracking-wide text-ink-900";
 
 const inclusionOptions: { value: string; label: string }[] = [
@@ -49,33 +56,38 @@ export default function PackageForm({ isNew, defaults }: { isNew: boolean; defau
   const [type, setType] = useState(defaults?.type ?? "domestic");
 
   return (
-    <form action={formAction} className="mt-6 max-w-3xl space-y-6 rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
+    <form action={formAction} className="mt-6 w-full space-y-6 rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div>
           <label className={labelClass} htmlFor="id">Package ID (URL slug)</label>
-          <input id="id" name="id" required disabled={!isNew} defaultValue={defaults?.id} placeholder="goa-beach-bliss" className={`${inputClass} disabled:bg-ink-50 disabled:text-ink-400`} />
+          {/* readOnly, not disabled: a disabled input is excluded from FormData
+              on submit, which was silently dropping the id from every edit
+              and failing validation server-side with no visible change. */}
+          <input id="id" name="id" required readOnly={!isNew} defaultValue={defaults?.id} placeholder="goa-beach-bliss" className={`${shortInputClass} ${!isNew ? "bg-ink-50 text-ink-400" : ""}`} />
         </div>
         <div>
           <label className={labelClass} htmlFor="title">Title</label>
-          <input id="title" name="title" required defaultValue={defaults?.title} className={inputClass} />
+          <input id="title" name="title" required defaultValue={defaults?.title} className={shortInputClass} />
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div>
           <label className={labelClass} htmlFor="destination">Destination Name</label>
-          <input id="destination" name="destination" required defaultValue={defaults?.destination} className={inputClass} />
+          <input id="destination" name="destination" required defaultValue={defaults?.destination} className={shortInputClass} />
         </div>
         <div>
           <label className={labelClass} htmlFor="destinationSlug">Destination Slug</label>
-          <input id="destinationSlug" name="destinationSlug" required defaultValue={defaults?.destinationSlug} className={inputClass} />
+          <input id="destinationSlug" name="destinationSlug" required defaultValue={defaults?.destinationSlug} className={shortInputClass} />
         </div>
       </div>
 
-      <ImageUrlField name="image" label="Cover Image URL" defaultValue={defaults?.image} required />
+      <div className="max-w-xl">
+        <ImageUrlField name="image" label="Cover Image URL" defaultValue={defaults?.image} required />
+      </div>
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-        <div>
+        <div className="max-w-sm">
           <label className={labelClass} htmlFor="type">Type</label>
           <CustomSelect
             name="type"
@@ -89,40 +101,40 @@ export default function PackageForm({ isNew, defaults }: { isNew: boolean; defau
         </div>
         <div>
           <label className={labelClass} htmlFor="duration">Duration</label>
-          <input id="duration" name="duration" required placeholder="4N/5D" defaultValue={defaults?.duration} className={inputClass} />
+          <input id="duration" name="duration" required placeholder="4N/5D" defaultValue={defaults?.duration} className={shortInputClass} />
         </div>
         <div>
           <label className={labelClass} htmlFor="badge">Badge (optional)</label>
-          <input id="badge" name="badge" defaultValue={defaults?.badge} placeholder="Bestseller" className={inputClass} />
+          <input id="badge" name="badge" defaultValue={defaults?.badge} placeholder="Bestseller" className={shortInputClass} />
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-4">
         <div>
           <label className={labelClass} htmlFor="price">Price (₹)</label>
-          <input id="price" name="price" type="number" min={0} required defaultValue={defaults?.price} className={inputClass} />
+          <input id="price" name="price" type="number" min={0} required defaultValue={defaults?.price} className={shortInputClass} />
         </div>
         <div>
           <label className={labelClass} htmlFor="originalPrice">Original Price (₹)</label>
-          <input id="originalPrice" name="originalPrice" type="number" min={0} required defaultValue={defaults?.originalPrice} className={inputClass} />
+          <input id="originalPrice" name="originalPrice" type="number" min={0} required defaultValue={defaults?.originalPrice} className={shortInputClass} />
         </div>
         <div>
           <label className={labelClass} htmlFor="rating">Rating</label>
-          <input id="rating" name="rating" type="number" step="0.1" min={0} max={5} required defaultValue={defaults?.rating} className={inputClass} />
+          <input id="rating" name="rating" type="number" step="0.1" min={0} max={5} required defaultValue={defaults?.rating} className={shortInputClass} />
         </div>
         <div>
           <label className={labelClass} htmlFor="reviews">Reviews Count</label>
-          <input id="reviews" name="reviews" type="number" min={0} required defaultValue={defaults?.reviews} className={inputClass} />
+          <input id="reviews" name="reviews" type="number" min={0} required defaultValue={defaults?.reviews} className={shortInputClass} />
         </div>
       </div>
 
       <div className="flex flex-wrap gap-6">
         <label className="flex items-center gap-2 text-sm font-semibold text-ink-900">
-          <input type="checkbox" name="featured" defaultChecked={defaults?.featured} className="h-4 w-4 rounded border-ink-300" />
+          <input type="checkbox" name="featured" defaultChecked={defaults?.featured} className="h-4 w-4 rounded border-ink-300 accent-brand-600" />
           Featured
         </label>
         <label className="flex items-center gap-2 text-sm font-semibold text-ink-900">
-          <input type="checkbox" name="hotDeal" defaultChecked={defaults?.hotDeal} className="h-4 w-4 rounded border-ink-300" />
+          <input type="checkbox" name="hotDeal" defaultChecked={defaults?.hotDeal} className="h-4 w-4 rounded border-ink-300 accent-brand-600" />
           Hot Deal
         </label>
       </div>
@@ -137,7 +149,7 @@ export default function PackageForm({ isNew, defaults }: { isNew: boolean; defau
                 name="inclusions"
                 value={opt.value}
                 defaultChecked={defaults?.inclusions?.includes(opt.value)}
-                className="h-4 w-4 rounded border-ink-300"
+                className="h-4 w-4 rounded border-ink-300 accent-brand-600"
               />
               {opt.label}
             </label>
@@ -155,7 +167,7 @@ export default function PackageForm({ isNew, defaults }: { isNew: boolean; defau
                 name="categories"
                 value={opt.value}
                 defaultChecked={defaults?.categories?.includes(opt.value)}
-                className="h-4 w-4 rounded border-ink-300"
+                className="h-4 w-4 rounded border-ink-300 accent-brand-600"
               />
               {opt.label}
             </label>

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { CheckCircle2, ChevronLeft, ChevronRight, Sparkles, X } from "lucide-react";
+import { CheckCircle2, ChevronLeft, ChevronRight, X } from "lucide-react";
 import type { Destination } from "@/data/destinations";
 import {
   destinationsByType,
@@ -18,22 +18,21 @@ import CustomSelect from "@/components/CustomSelect";
 import { createLeadAction } from "@/lib/actions/leads";
 import LeadContactFields, { emptyContactValues, isContactValid, type ContactValues } from "@/components/LeadContactFields";
 
-// The whole Services section already funnels visitors into its own
-// dedicated planning popups (flights/hotels/travel-guide) or is itself just
-// a hub of links to those - skip the generic popup anywhere under it so
-// visitors aren't shown two competing popups at once. Blog is skipped too -
+// /services itself (the plain hub page, just a list of links) has no
+// dedicated popup of its own, so this one is still useful there. Its
+// sub-pages (hotels/flights/travel-guide/cabs-transfers) each already
+// auto-open their own dedicated planning popup - skip this generic one on
+// those specifically, so visitors aren't shown two competing popups at
+// once. Individual package pages are skipped for the same reason: they
+// already have their own enquiry flow (the Book Now/Enquire button ->
+// contact form on the sticky booking bar). Blog is skipped in full -
 // readers there are researching, not ready to be interrupted with a lead
 // form.
-const SKIP_PREFIXES = ["/services", "/blog"];
 function isSkippedPath(pathname: string): boolean {
-  return SKIP_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
-}
-
-// Package detail pages show their own fixed booking bar at the bottom on
-// mobile (StickyBookingCard) - lift this button above it there, same as
-// FloatingButtons does, so the two fixed bars don't overlap.
-function hasStickyBookingBar(pathname: string): boolean {
-  return /^\/packages\/[^/]+$/.test(pathname);
+  if (pathname === "/blog" || pathname.startsWith("/blog/")) return true;
+  if (pathname.startsWith("/services/")) return true;
+  if (/^\/packages\/[^/]+$/.test(pathname)) return true;
+  return false;
 }
 
 // Both sessionStorage (not localStorage): scoped to this tab's session
@@ -45,18 +44,20 @@ function hasStickyBookingBar(pathname: string): boolean {
 //
 // SHOWN_PATHS_KEY is a JSON array of pathnames the popup has already
 // auto-opened on this session - kept so a page it already showed on won't
-// schedule a second timer if the visitor navigates back to it.
+// schedule a second timer if the visitor navigates back to it. Closing the
+// popup (the X button) only marks the current page as shown via this list -
+// it does NOT suppress it on other pages, so it comes back once per new
+// page the visitor lands on for the rest of the session.
 const SHOWN_PATHS_KEY = "snapingo-trip-planner-shown-paths";
-// SUBMITTED_KEY and DISMISSED_KEY both suppress every future auto-open for
-// the rest of this session, on any page - the popup is meant to ask once per
-// visit, not once per page. Without DISMISSED_KEY, closing it on the
-// homepage just meant it came back on the very next destination/package the
-// visitor tapped into: on mobile that re-open re-engages the scroll lock
-// (useScrollLock below) right as a navigation is landing, which is what was
-// actually behind the repeated "page freezes after I close the popup and
-// tap something" reports - not a lock bug, a popup that never stayed closed.
+// SUBMITTED_KEY suppresses every future auto-open for the rest of this
+// session, on any page - once a visitor has actually asked for a quote, the
+// popup has done its job and shouldn't ask again this visit.
 const SUBMITTED_KEY = "snapingo-trip-planner-submitted";
-const DISMISSED_KEY = "snapingo-trip-planner-dismissed";
+// The homepage is most visitors' first stop and shows the popup a little
+// sooner (5s); every other eligible page waits longer (10s) since the
+// visitor is already mid-browse there.
+const HOME_DELAY_MS = 5000;
+const OTHER_PAGE_DELAY_MS = 10000;
 
 type DateFixed = "yes" | "not-yet";
 type OthersType = "domestic" | "international";
@@ -131,11 +132,12 @@ export default function TripPlannerModal({ destinations }: { destinations: Desti
 
   useScrollLock(open);
 
-  // Auto-opens at most once per browser tab session (see the storage keys
-  // above) - whichever eligible page the visitor happens to be on 5 seconds
-  // after landing. Closing it (or submitting it) anywhere suppresses it on
-  // every other page for the rest of the session; it does not come back the
-  // next time they navigate.
+  // Auto-opens once per eligible page per session (see the storage keys
+  // above): 5 seconds after landing on the homepage, 10 seconds on every
+  // other eligible page. Submitting it suppresses it everywhere for the
+  // rest of the session; closing it only marks the current page as shown,
+  // so it comes back on the next different eligible page the visitor
+  // navigates to.
   //
   // If the mobile nav menu or another modal is open when the timer would
   // fire, this popup (z-[60]) would render on top of it, covering the nav
@@ -144,7 +146,6 @@ export default function TripPlannerModal({ destinations }: { destinations: Desti
   useEffect(() => {
     if (isSkippedPath(pathname)) return;
     if (sessionStorage.getItem(SUBMITTED_KEY)) return;
-    if (sessionStorage.getItem(DISMISSED_KEY)) return;
     const shownPaths: unknown = JSON.parse(sessionStorage.getItem(SHOWN_PATHS_KEY) ?? "[]");
     if (Array.isArray(shownPaths) && shownPaths.includes(pageKey)) return;
 
@@ -163,10 +164,11 @@ export default function TripPlannerModal({ destinations }: { destinations: Desti
         else reveal();
       }, 1000);
     };
+    const initialDelay = pathname === "/" ? HOME_DELAY_MS : OTHER_PAGE_DELAY_MS;
     timeoutId = setTimeout(() => {
       if (isScrollLocked()) tryOpen();
       else reveal();
-    }, 5000);
+    }, initialDelay);
     return () => clearTimeout(timeoutId);
   }, [pageKey, pathname]);
 
@@ -202,11 +204,6 @@ export default function TripPlannerModal({ destinations }: { destinations: Desti
   const othersDestinationOptions = othersDestinationList.map((d) => ({ value: d.slug, label: d.name }));
 
   const resetAndClose = () => {
-    try {
-      sessionStorage.setItem(DISMISSED_KEY, "1");
-    } catch {
-      // ignore - storage unavailable, worst case it can reopen on another page
-    }
     setOpen(false);
     setStep("purpose");
     setPurpose("");
@@ -310,24 +307,6 @@ export default function TripPlannerModal({ destinations }: { destinations: Desti
 
   return (
     <>
-      {/* Manual re-open, same pattern as the Hotel/Flight/Cab/Travel Guide
-          pop-ups on their own service pages - this one is site-wide (every
-          page except /services and /blog), so once the auto-open has been
-          seen and dismissed for the session (see DISMISSED_KEY above), this
-          is the only way to bring it back without a refresh. */}
-      {!open && (
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className={`print-hide fixed left-5 z-40 flex items-center gap-2 rounded-full bg-ink-900 px-5 py-3 text-sm font-semibold text-white shadow-soft transition hover:-translate-y-0.5 hover:bg-ink-800 sm:left-8 ${
-            hasStickyBookingBar(pathname) ? "bottom-24 lg:bottom-6" : "bottom-6 sm:bottom-8"
-          }`}
-        >
-          <Sparkles className="h-4.5 w-4.5 text-brand-300" />
-          Trip Planner
-        </button>
-      )}
-
       <AnimatePresence>
       {open && (
         <motion.div

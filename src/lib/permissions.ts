@@ -5,18 +5,43 @@ import type { StaffJobRole } from "@/generated/prisma/enums";
 // what a STAFF account with a given jobRole can reach.
 export type StaffFeature =
   | "leads"
+  | "leadActivities"
   | "customerSearch"
   | "bookings"
   | "completeTrips"
   | "blogEdit"
   | "reviewsEdit"
-  | "contentEdit"; // Packages / Destinations / Services / FAQ
+  | "packagesEdit"
+  | "destinationsEdit"
+  | "hotelsEdit"
+  | "flightsEdit"
+  | "contentEdit"; // Services / FAQ / Homepage Categories / Trust Logos / USPs
 
 const jobRolePermissions: Record<StaffJobRole, StaffFeature[]> = {
-  TRAVEL_EXECUTIVE: ["leads", "customerSearch", "bookings", "completeTrips"],
-  BDE: ["leads", "customerSearch"],
-  SOCIAL_MEDIA_EXECUTIVE: ["blogEdit", "reviewsEdit"],
-  DIGITAL_MARKETING: ["contentEdit"],
+  TRAVEL_EXECUTIVE: ["leads", "leadActivities", "customerSearch", "bookings", "completeTrips"],
+  BDE: ["leads", "leadActivities", "customerSearch"],
+  SOCIAL_MEDIA_EXECUTIVE: [
+    "leads",
+    "leadActivities",
+    "customerSearch",
+    "blogEdit",
+    "reviewsEdit",
+    "packagesEdit",
+    "destinationsEdit",
+    "hotelsEdit",
+    "flightsEdit",
+  ],
+  DIGITAL_MARKETING: [
+    "leads",
+    "leadActivities",
+    "customerSearch",
+    "packagesEdit",
+    "destinationsEdit",
+    "contentEdit",
+    "blogEdit",
+    "hotelsEdit",
+    "flightsEdit",
+  ],
 };
 
 export function staffCan(jobRole: StaffJobRole | null | undefined, feature: StaffFeature): boolean {

@@ -9,9 +9,16 @@ import { useRevealOnView } from "@/hooks/useRevealOnView";
 export default function DestinationCard({
   destination,
   index = 0,
+  aspect = "4/3",
 }: {
   destination: Destination;
   index?: number;
+  // The /destinations listing (DestinationsGrid) wants the shorter, more
+  // square 4/3 card; the homepage's "Popular destinations" section
+  // (Destinations.tsx) keeps the original taller 3/4 card - same component,
+  // different section, so this is a prop rather than a second copy of the
+  // card.
+  aspect?: "4/3" | "3/4";
 }) {
   const { ref, style } = useRevealOnView<HTMLDivElement>({
     y: 24,
@@ -24,7 +31,9 @@ export default function DestinationCard({
     <div ref={ref} style={style}>
       <Link
         href={`/destinations/${destination.slug}`}
-        className="group relative block aspect-[3/4] overflow-hidden rounded-2xl shadow-sm"
+        className={`group relative block overflow-hidden rounded-2xl shadow-sm ${
+          aspect === "3/4" ? "aspect-[3/4]" : "aspect-[4/3]"
+        }`}
       >
         <Image
           src={destination.image}

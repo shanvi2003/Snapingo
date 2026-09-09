@@ -39,19 +39,6 @@ export function FacebookIcon({ className }: IconProps) {
   );
 }
 
-export function TwitterIcon({ className }: IconProps) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className={className}>
-      <path
-        d="M20 5.8c-.7.3-1.4.5-2.2.6.8-.5 1.4-1.2 1.6-2.1-.7.4-1.6.8-2.4 1a3.8 3.8 0 0 0-6.5 3.5A10.8 10.8 0 0 1 3 4.9a3.9 3.9 0 0 0 1.2 5.2c-.6 0-1.2-.2-1.7-.4v.1c0 1.9 1.3 3.4 3.1 3.8-.6.1-1.1.2-1.7.1.5 1.5 1.9 2.6 3.6 2.7A7.7 7.7 0 0 1 2 18.4a10.8 10.8 0 0 0 5.9 1.7c7 0 10.9-6 10.9-11.1v-.5c.8-.5 1.4-1.2 1.9-2Z"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 export function YoutubeIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" className={className}>

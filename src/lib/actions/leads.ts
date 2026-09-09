@@ -70,7 +70,17 @@ async function pickLeastLoadedStaffId(): Promise<string | null> {
 // boundary, not a session check. Called fire-and-forget from client
 // components alongside the existing WhatsApp `window.open`, so a bad
 // input here must never throw past the caller and break that redirect.
-export async function createLeadAction(input: CreateLeadInput): Promise<{ ok: boolean }> {
+//
+// `skipRateLimit` is for trusted server-to-server callers only (e.g. the
+// Meta Lead Ads webhook, which already verifies Meta's HMAC signature
+// before ever reaching this function) - never derive it from anything a
+// client can influence. A real ad campaign can legitimately produce more
+// than LEAD_LIMIT leads a minute from the same handful of Meta IPs, and
+// none of those calls are the public-form spam this limiter exists for.
+export async function createLeadAction(
+  input: CreateLeadInput,
+  options?: { skipRateLimit?: boolean }
+): Promise<{ ok: boolean }> {
   const parsed = createLeadSchema.safeParse(input);
   if (!parsed.success) {
     console.warn("createLeadAction: invalid input", parsed.error.flatten());
@@ -81,7 +91,7 @@ export async function createLeadAction(input: CreateLeadInput): Promise<{ ok: bo
     const headerList = await headers();
 
     const ip = clientIpFrom(headerList);
-    if (!checkRateLimit(`lead:${ip}`, LEAD_LIMIT, LEAD_WINDOW_MS)) {
+    if (!options?.skipRateLimit && !checkRateLimit(`lead:${ip}`, LEAD_LIMIT, LEAD_WINDOW_MS)) {
       console.warn("createLeadAction: rate limited", { ip });
       return { ok: false };
     }

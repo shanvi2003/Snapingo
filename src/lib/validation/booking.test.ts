@@ -6,6 +6,7 @@ describe("createBookingSchema", () => {
     const result = createBookingSchema.safeParse({
       travelerName: "Priya Verma",
       phone: "9123456780",
+      packageTitle: "Goa Beach Bliss",
       totalAmount: "50000",
     });
     expect(result.success).toBe(true);
@@ -15,6 +16,7 @@ describe("createBookingSchema", () => {
     const result = createBookingSchema.safeParse({
       travelerName: "Priya Verma",
       phone: "9123456780",
+      packageTitle: "Goa Beach Bliss",
       totalAmount: "50000",
     });
     expect(result.success).toBe(true);
@@ -27,6 +29,7 @@ describe("createBookingSchema", () => {
     const result = createBookingSchema.safeParse({
       travelerName: "Priya Verma",
       phone: "9123456780",
+      packageTitle: "Goa Beach Bliss",
       totalAmount: "50000",
       taxAmount: "2500",
     });
@@ -38,7 +41,20 @@ describe("createBookingSchema", () => {
   });
 
   it("rejects a missing traveler name", () => {
-    const result = createBookingSchema.safeParse({ phone: "9123456780", totalAmount: "50000" });
+    const result = createBookingSchema.safeParse({
+      phone: "9123456780",
+      packageTitle: "Goa Beach Bliss",
+      totalAmount: "50000",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a missing package title", () => {
+    const result = createBookingSchema.safeParse({
+      travelerName: "Priya Verma",
+      phone: "9123456780",
+      totalAmount: "50000",
+    });
     expect(result.success).toBe(false);
   });
 
@@ -46,6 +62,7 @@ describe("createBookingSchema", () => {
     const result = createBookingSchema.safeParse({
       travelerName: "Priya Verma",
       phone: "9123456780",
+      packageTitle: "Goa Beach Bliss",
       totalAmount: "-100",
     });
     expect(result.success).toBe(false);
@@ -55,6 +72,7 @@ describe("createBookingSchema", () => {
     const result = createBookingSchema.safeParse({
       travelerName: "Priya Verma",
       phone: "9123456780",
+      packageTitle: "Goa Beach Bliss",
       totalAmount: "50000",
       email: "",
     });

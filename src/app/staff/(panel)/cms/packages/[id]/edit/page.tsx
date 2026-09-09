@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import PackageForm from "@/components/admin/cms/PackageForm";
 
 export default async function StaffEditPackagePage({ params }: { params: Promise<{ id: string }> }) {
-  await requireStaffFeature("contentEdit");
+  await requireStaffFeature("packagesEdit");
   const { id } = await params;
   const pkg = await db.package.findUnique({ where: { id }, include: { itinerary: { orderBy: { day: "asc" } } } });
   if (!pkg) notFound();

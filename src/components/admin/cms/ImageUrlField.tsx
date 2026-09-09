@@ -20,10 +20,15 @@ export default function ImageUrlField({
       <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-ink-900" htmlFor={name}>
         {label}
       </label>
+      {/* type="text", not "url": the browser's native url-input validation
+          requires a full scheme+host and rejects a relative /public path -
+          which is what most images actually are - blocking the whole
+          form's submission with no visible error. isAllowedImageSource in
+          src/lib/validation/cms.ts already validates this server-side. */}
       <input
         id={name}
         name={name}
-        type="url"
+        type="text"
         required={required}
         value={value}
         onChange={(e) => setValue(e.target.value)}

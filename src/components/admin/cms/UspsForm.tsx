@@ -13,7 +13,7 @@ export default function UspsForm({ initialRows }: { initialRows: UspContent[] })
   const [state, formAction, pending] = useActionState<FormState, FormData>(saveUspsAction, undefined);
 
   return (
-    <form action={formAction} className="mt-6 max-w-3xl space-y-6 rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
+    <form action={formAction} className="mt-6 w-full space-y-6 rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
       <RepeatableRows
         name="items"
         addLabel="Add Item"

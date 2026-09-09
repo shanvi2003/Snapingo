@@ -25,4 +25,5 @@ export const sourceLabels: Record<string, string> = {
   CAB_BOOKING: "Cab Booking",
   PACKAGE_INTEREST: "Package Interest",
   GENERAL_ENQUIRY: "General Enquiry",
+  META_ADS: "Meta Ads (FB/Instagram)",
 };

@@ -35,8 +35,12 @@ export const packageSchema = z.object({
   rating: z.coerce.number().min(0).max(5),
   reviews: z.coerce.number().int().nonnegative(),
   badge: z.string().trim().max(60).optional(),
-  featured: z.coerce.boolean(),
-  hotDeal: z.coerce.boolean(),
+  // .default(false), not a bare z.coerce.boolean(): an unchecked checkbox is
+  // omitted from FormData entirely (standard HTML behavior), so the key is
+  // missing rather than "false" - a non-optional schema field rejected that
+  // as invalid on every package/destination/service with the box unchecked.
+  featured: z.coerce.boolean().default(false),
+  hotDeal: z.coerce.boolean().default(false),
   inclusions: z.array(z.enum(["flight", "hotel", "meals", "transfer", "sightseeing"])),
   categories: z.array(z.string()),
   exclusions: z.string().transform(linesToArray),
@@ -45,7 +49,6 @@ export const packageSchema = z.object({
     rows.map((r, i) => ({ day: i + 1, title: r.title ?? "", desc: r.desc ?? "" }))
   ),
 });
-export type PackageFormValues = z.input<typeof packageSchema>;
 
 export const destinationSchema = z.object({
   slug: z.string().trim().min(1).max(120).regex(/^[a-z0-9-]+$/, "Use lowercase letters, numbers and hyphens only."),
@@ -63,7 +66,6 @@ export const destinationSchema = z.object({
     rows.map((r) => ({ icon: r.icon ?? "", title: r.title ?? "", desc: r.desc ?? "" }))
   ),
 });
-export type DestinationFormValues = z.input<typeof destinationSchema>;
 
 export const serviceSchema = z.object({
   slug: z.string().trim().min(1).max(120).regex(/^[a-z0-9-]+$/, "Use lowercase letters, numbers and hyphens only."),
@@ -75,7 +77,6 @@ export const serviceSchema = z.object({
     rows.map((r) => ({ icon: r.icon ?? "", title: r.title ?? "", desc: r.desc ?? "" }))
   ),
 });
-export type ServiceFormValues = z.input<typeof serviceSchema>;
 
 export const blogPostSchema = z.object({
   id: z.string().trim().min(1).max(120).regex(/^[a-z0-9-]+$/, "Use lowercase letters, numbers and hyphens only."),
@@ -90,7 +91,6 @@ export const blogPostSchema = z.object({
     rows.map((r, i) => ({ order: i, heading: r.heading || undefined, body: r.body ?? "" }))
   ),
 });
-export type BlogPostFormValues = z.input<typeof blogPostSchema>;
 
 export const hotelSchema = z.object({
   id: z.string().trim().min(1).max(120).regex(/^[a-z0-9-]+$/, "Use lowercase letters, numbers and hyphens only."),
@@ -100,7 +100,6 @@ export const hotelSchema = z.object({
   pricePerNight: z.coerce.number().int().nonnegative(),
   rating: z.coerce.number().min(0).max(5),
 });
-export type HotelFormValues = z.input<typeof hotelSchema>;
 
 export const flightSchema = z.object({
   id: z.string().trim().min(1).max(120).regex(/^[a-z0-9-]+$/, "Use lowercase letters, numbers and hyphens only."),
@@ -111,7 +110,6 @@ export const flightSchema = z.object({
   price: z.coerce.number().int().nonnegative(),
   duration: z.string().trim().min(1).max(60),
 });
-export type FlightFormValues = z.input<typeof flightSchema>;
 
 export const faqItemSchema = z.object({
   categoryId: z.string(),

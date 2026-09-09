@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { redirect } from "next/navigation";
-import { getSession } from "@/lib/dal";
 import LoginForm from "@/components/admin/LoginForm";
 
 export const metadata: Metadata = {
@@ -9,12 +7,15 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default async function LoginPage() {
-  const session = await getSession();
-  if (session) {
-    redirect(session.role === "ADMIN" ? "/admin" : "/staff");
-  }
-
+// Strictly the admin sign-in form, every time this URL is visited - no
+// "already logged in, bounce to a dashboard" redirect here. That used to
+// fire for ANY existing session regardless of its role, so visiting this
+// page while signed in as staff silently dropped the visitor into the
+// staff panel instead of ever showing this form. Submitting the form below
+// (loginAction) still creates a fresh session and redirects to the right
+// panel for whoever just authenticated - this only removes the bounce that
+// happened before any credentials were even entered.
+export default function LoginPage() {
   return (
     <section className="flex min-h-screen items-center justify-center bg-ink-50/60 px-4 py-16">
       <div className="w-full max-w-sm rounded-3xl border border-ink-100 bg-white p-8 shadow-soft">

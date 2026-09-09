@@ -21,17 +21,6 @@ export const packageCategoryOptions: { value: PackageCategory; label: string }[]
   { value: "corporate", label: "Corporate" },
 ];
 
-export const packageCategoryLabels: Record<PackageCategory, string> = {
-  honeymoon: "Honeymoon",
-  family: "Family",
-  group: "Group Tours",
-  adventure: "Adventure",
-  weekend: "Weekend Getaways",
-  solo: "Solo Trip",
-  religious: "Religious",
-  corporate: "Corporate",
-};
-
 // Destinations conventionally marketed for honeymoon/romantic trips.
 const HONEYMOON_DESTINATIONS = new Set([
   "maldives",

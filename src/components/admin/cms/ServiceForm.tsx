@@ -7,6 +7,9 @@ import RepeatableRows from "@/components/admin/cms/RepeatableRows";
 
 const inputClass =
   "w-full rounded-xl border border-ink-200 bg-white px-4 py-2.5 text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100";
+// Single-value fields never need to be wider than this to show their whole
+// value - see PackageForm for the same pattern.
+const shortInputClass = `${inputClass} max-w-sm`;
 const labelClass = "mb-1.5 block text-xs font-bold uppercase tracking-wide text-ink-900";
 
 // Matches the icon set rendered on the public service page
@@ -32,20 +35,22 @@ export default function ServiceForm({ defaults }: { defaults: ServiceDefaults })
   );
 
   return (
-    <form action={formAction} className="mt-6 max-w-3xl space-y-6 rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
+    <form action={formAction} className="mt-6 w-full space-y-6 rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
       <input type="hidden" name="slug" value={defaults.slug} />
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div>
           <label className={labelClass} htmlFor="name">Name</label>
-          <input id="name" name="name" required defaultValue={defaults.name} className={inputClass} />
+          <input id="name" name="name" required defaultValue={defaults.name} className={shortInputClass} />
         </div>
         <div>
           <label className={labelClass} htmlFor="tagline">Tagline</label>
-          <input id="tagline" name="tagline" required defaultValue={defaults.tagline} className={inputClass} />
+          <input id="tagline" name="tagline" required defaultValue={defaults.tagline} className={shortInputClass} />
         </div>
       </div>
 
-      <ImageUrlField name="image" label="Hero Image URL" defaultValue={defaults.image} required />
+      <div className="max-w-xl">
+        <ImageUrlField name="image" label="Hero Image URL" defaultValue={defaults.image} required />
+      </div>
 
       <div>
         <label className={labelClass} htmlFor="overview">Overview</label>

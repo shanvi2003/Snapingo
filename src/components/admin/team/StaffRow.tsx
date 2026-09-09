@@ -37,10 +37,10 @@ export default function StaffRow({
             {name.charAt(0).toUpperCase()}
           </span>
           <div className="min-w-0">
-            <p className="truncate font-semibold text-ink-900">
+            <p className="truncate font-semibold text-ink-900" title={name}>
               {name} {isSelf && <span className="text-xs font-normal text-ink-400">(you)</span>}
             </p>
-            <p className="truncate text-xs text-ink-500">{email}</p>
+            <p className="truncate text-xs text-ink-500" title={email}>{email}</p>
           </div>
         </div>
       </td>
@@ -53,7 +53,7 @@ export default function StaffRow({
           {role.toLowerCase()}
         </span>
         {role === "STAFF" && (
-          <div className={`mt-2 w-full max-w-44 ${jobRolePending ? "pointer-events-none opacity-60" : ""}`}>
+          <div className={`mt-2 w-full max-w-60 ${jobRolePending ? "pointer-events-none opacity-60" : ""}`}>
             <CustomSelect
               value={jobRole ?? ""}
               onChange={(next) => startJobRoleTransition(() => updateStaffJobRoleAction(id, next as StaffJobRole))}

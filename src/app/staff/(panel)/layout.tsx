@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { Metadata } from "next";
 import {
+  Activity,
   Award,
   BedDouble,
   CalendarCheck,
@@ -48,6 +49,7 @@ export default async function StaffLayout({ children }: { children: ReactNode })
 
   const leadsBookingsItems = [
     can("leads") && { href: "/staff/leads", label: "Leads", icon: <Inbox className="h-full w-full" />, badge: newLeadCount },
+    can("leadActivities") && { href: "/staff/activities", label: "Lead Activities", icon: <Activity className="h-full w-full" /> },
     can("customerSearch") && { href: "/staff/search", label: "Customer Search", icon: <Search className="h-full w-full" /> },
     can("bookings") && { href: "/staff/bookings", label: "Booking Management", icon: <CalendarCheck className="h-full w-full" /> },
     can("completeTrips") && { href: "/staff/trips", label: "Complete Trips", icon: <CheckCircle2 className="h-full w-full" /> },
@@ -57,8 +59,10 @@ export default async function StaffLayout({ children }: { children: ReactNode })
   }
 
   const contentEditItems = [
-    can("contentEdit") && { href: "/staff/cms/packages", label: "Packages", icon: <PackageIcon className="h-full w-full" /> },
-    can("contentEdit") && { href: "/staff/cms/destinations", label: "Destinations", icon: <MapPin className="h-full w-full" /> },
+    can("packagesEdit") && { href: "/staff/cms/packages", label: "Packages", icon: <PackageIcon className="h-full w-full" /> },
+    can("destinationsEdit") && { href: "/staff/cms/destinations", label: "Destinations", icon: <MapPin className="h-full w-full" /> },
+    can("hotelsEdit") && { href: "/staff/cms/hotels", label: "Hotels", icon: <BedDouble className="h-full w-full" /> },
+    can("flightsEdit") && { href: "/staff/cms/flights", label: "Flights", icon: <Plane className="h-full w-full" /> },
     can("contentEdit") && { href: "/staff/cms/services", label: "Services", icon: <Wrench className="h-full w-full" /> },
     can("contentEdit") && { href: "/staff/cms/faq", label: "FAQ", icon: <HelpCircle className="h-full w-full" /> },
     can("blogEdit") && { href: "/staff/cms/blog", label: "Blog", icon: <Newspaper className="h-full w-full" /> },
@@ -71,16 +75,17 @@ export default async function StaffLayout({ children }: { children: ReactNode })
     sections.push({ heading: "Content", items: contentEditItems });
   }
 
-  // Read-only reference browse - available to every staff role. Packages and
-  // Destinations are skipped for Digital Marketing since their editable
-  // versions above already let them view.
+  // Read-only reference browse - available to every staff role. Each entry
+  // is skipped when that role already has the editable CMS version above.
   const referenceItems = [
-    !can("contentEdit") && { href: "/staff/packages", label: "Packages", icon: <PackageIcon className="h-full w-full" /> },
-    !can("contentEdit") && { href: "/staff/destinations", label: "Destinations", icon: <MapPin className="h-full w-full" /> },
-    { href: "/staff/hotels", label: "Hotels", icon: <BedDouble className="h-full w-full" /> },
-    { href: "/staff/flights", label: "Flights", icon: <Plane className="h-full w-full" /> },
+    !can("packagesEdit") && { href: "/staff/packages", label: "Packages", icon: <PackageIcon className="h-full w-full" /> },
+    !can("destinationsEdit") && { href: "/staff/destinations", label: "Destinations", icon: <MapPin className="h-full w-full" /> },
+    !can("hotelsEdit") && { href: "/staff/hotels", label: "Hotels", icon: <BedDouble className="h-full w-full" /> },
+    !can("flightsEdit") && { href: "/staff/flights", label: "Flights", icon: <Plane className="h-full w-full" /> },
   ].filter(Boolean) as PanelNavSection["items"];
-  sections.push({ heading: "Reference", items: referenceItems });
+  if (referenceItems.length > 0) {
+    sections.push({ heading: "Reference", items: referenceItems });
+  }
 
   sections.push({
     items: [{ href: "/staff/settings", label: "Settings", icon: <Settings className="h-full w-full" /> }],

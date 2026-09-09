@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 
 export default async function AdminPerformancePage() {
   const staff = await db.staffUser.findMany({
-    where: { isActive: true },
+    where: { isActive: true, role: "STAFF" },
     orderBy: { name: "asc" },
     include: {
       assignedLeads: { select: { status: true } },

@@ -10,7 +10,7 @@ export default function TrustLogosForm({ initialRows }: { initialRows: TrustLogo
   const [state, formAction, pending] = useActionState<FormState, FormData>(saveTrustLogosAction, undefined);
 
   return (
-    <form action={formAction} className="mt-6 max-w-3xl space-y-6 rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
+    <form action={formAction} className="mt-6 w-full space-y-6 rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
       <p className="text-xs text-ink-500">
         Logo is a path under /public (e.g. /partners/indigo.png), or a URL from {ALLOWED_IMAGE_HOSTS.join(" / ")} — other image hosts aren&rsquo;t allowed and will fail to save. Shown in the scrolling strip near the top of the homepage.
       </p>

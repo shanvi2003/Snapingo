@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { redirect } from "next/navigation";
-import { getSession } from "@/lib/dal";
 import LoginForm from "@/components/admin/LoginForm";
 
 export const metadata: Metadata = {
@@ -9,12 +7,13 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default async function StaffLoginPage() {
-  const session = await getSession();
-  if (session) {
-    redirect(session.role === "ADMIN" ? "/admin" : "/staff");
-  }
-
+// Strictly the staff sign-in form, every time this URL is visited - see
+// the matching comment in admin/login/page.tsx for why the old
+// "already logged in, bounce to a dashboard" redirect was removed (it
+// fired for ANY session regardless of role, so visiting this page while
+// signed in as admin silently dropped the visitor into the admin panel
+// instead of ever showing this form).
+export default function StaffLoginPage() {
   return (
     <section className="flex min-h-screen items-center justify-center bg-ink-50/60 px-4 py-16">
       <div className="w-full max-w-sm rounded-3xl border border-ink-100 bg-white p-8 shadow-soft">
