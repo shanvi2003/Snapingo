@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 import { getSessionPayload, type SessionPayload } from "@/lib/session";
 import type { StaffRole } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
-import { staffCan, type StaffFeature } from "@/lib/permissions";
+import { hasFeature, type StaffFeature } from "@/lib/permissions";
+import { getRolePermissions } from "@/lib/rolePermissions";
 
 // Memoized per request so multiple calls (layout + page + nested components)
 // only decrypt the cookie once. Returns null rather than redirecting — use
@@ -36,17 +37,20 @@ export async function requireSession(
 
 // Feature-level gate for the staff panel's role-restricted sections (leads,
 // bookings, CMS edit screens, etc). ADMIN always passes - only STAFF accounts
-// are checked against their jobRole via the permission matrix in
-// src/lib/permissions.ts. Queries the DB directly (not the JWT's cached
-// jobRole) so a role change an admin just made is honored immediately -
-// this is what every gated Server Action calls to actually enforce a
-// mutation; see proxy.ts for why the page-level story is different.
+// are checked against their jobRole's permissions (admin-editable on
+// /admin/permissions, see src/lib/rolePermissions.ts). Queries the DB
+// directly (not the JWT's cached jobRole, and not a cached permission
+// snapshot) so both a role change and a permission grant an admin just made
+// are honored immediately - this is what every gated Server Action calls to
+// actually enforce a mutation; see proxy.ts for why the page-level story is
+// different.
 export async function requireStaffFeature(feature: StaffFeature): Promise<SessionPayload> {
   const session = await requireSession(["ADMIN", "STAFF"], "/staff/login");
   if (session.role === "ADMIN") return session;
 
   const user = await db.staffUser.findUnique({ where: { id: session.userId }, select: { jobRole: true } });
-  if (!staffCan(user?.jobRole, feature)) {
+  const features = user?.jobRole ? await getRolePermissions(user.jobRole) : [];
+  if (!hasFeature(features, feature)) {
     redirect("/staff");
   }
   return session;

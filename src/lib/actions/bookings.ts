@@ -10,8 +10,9 @@ import type { SessionPayload } from "@/lib/session";
 
 export type FormState = { error: string } | undefined;
 
-// Bookings are Admin + Travel Executive only (staffCan(jobRole, "bookings")
-// in src/lib/permissions.ts). Every mutation revalidates both the /admin and
+// Bookings are Admin + whichever staff roles are granted the "bookings"
+// feature on /admin/permissions (defaults to Travel Executive only - see
+// src/lib/permissions.ts). Every mutation revalidates both the /admin and
 // /staff booking routes unconditionally - revalidatePath on a path with no
 // matching route is a harmless no-op, and this keeps whichever panel the
 // caller isn't in from ever showing stale data.

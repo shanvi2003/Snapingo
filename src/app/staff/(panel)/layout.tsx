@@ -22,7 +22,8 @@ import {
 } from "lucide-react";
 import { requireSession } from "@/lib/dal";
 import { db } from "@/lib/db";
-import { staffCan } from "@/lib/permissions";
+import { hasFeature, type StaffFeature } from "@/lib/permissions";
+import { getRolePermissions } from "@/lib/rolePermissions";
 import PanelShell, { type PanelNavSection } from "@/components/admin/PanelShell";
 
 export const metadata: Metadata = {
@@ -35,11 +36,14 @@ export default async function StaffLayout({ children }: { children: ReactNode })
   const user = await db.staffUser.findUniqueOrThrow({ where: { id: session.userId } });
 
   // ADMIN accounts landing on /staff (e.g. testing) see everything; a real
-  // STAFF account's nav is entirely driven by their jobRole permissions -
-  // see src/lib/permissions.ts. This only controls what's *shown*; every
-  // page/action re-checks via requireStaffFeature() regardless.
+  // STAFF account's nav is entirely driven by their jobRole's permissions -
+  // admin-editable on /admin/permissions, see src/lib/rolePermissions.ts.
+  // Read fresh on every request (not cached) so a permission an admin just
+  // granted shows up in the nav immediately. This only controls what's
+  // *shown*; every page/action re-checks via requireStaffFeature() regardless.
   const isAdmin = user.role === "ADMIN";
-  const can = (feature: Parameters<typeof staffCan>[1]) => isAdmin || staffCan(user.jobRole, feature);
+  const grantedFeatures = !isAdmin && user.jobRole ? await getRolePermissions(user.jobRole) : [];
+  const can = (feature: StaffFeature) => isAdmin || hasFeature(grantedFeatures, feature);
 
   const newLeadCount = can("leads") ? await db.lead.count({ where: { status: "NEW" } }) : 0;
 

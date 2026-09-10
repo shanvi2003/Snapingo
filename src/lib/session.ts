@@ -16,15 +16,17 @@ const encodedKey = new TextEncoder().encode(secretKey);
 export type SessionPayload = {
   userId: string;
   role: StaffRole;
-  // Baked into the token (not looked up per-request) so proxy.ts can enforce
-  // staff feature access with a real HTTP redirect before any rendering
-  // starts - a redirect() thrown deep in a page during render only produces
-  // a client-side meta-refresh once streaming has begun (root loading.tsx
-  // wraps every route in a Suspense boundary), which non-JS clients like
-  // curl, bots, or a bookmarked hard-navigation never follow. If an admin
-  // changes a staff member's jobRole, it takes effect on their next login
-  // (or session expiry) - requireStaffFeature() in dal.ts re-checks the DB
-  // directly for Server Actions, which aren't affected by this at all.
+  // Baked into the token (not looked up per-request) so proxy.ts knows which
+  // job role a request belongs to without decoding a DB round-trip just to
+  // find that out. If an admin reassigns a staff member to a different
+  // jobRole, it takes effect on their next login (or session expiry) -
+  // requireStaffFeature() in dal.ts re-checks the DB directly for Server
+  // Actions, which aren't affected by this at all. The *permissions* that
+  // jobRole grants are a separate, always-fresh DB read in both proxy.ts and
+  // dal.ts (see src/lib/rolePermissions.ts) - an admin granting a role new
+  // access on /admin/permissions takes effect immediately, with no re-login
+  // needed, since only the role-to-permissions mapping changed, not this
+  // session's jobRole itself.
   jobRole: StaffJobRole | null;
 };
 

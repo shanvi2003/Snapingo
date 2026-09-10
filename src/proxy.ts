@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { decrypt, SESSION_COOKIE } from "@/lib/session";
-import { staffCan, type StaffFeature } from "@/lib/permissions";
+import { hasFeature, type StaffFeature } from "@/lib/permissions";
+import { getRolePermissions } from "@/lib/rolePermissions";
 
-// Next.js 16 renamed middleware.ts -> proxy.ts (same mechanics, new name).
+// Next.js 16 renamed middleware.ts -> proxy.ts (same mechanics, new name),
+// and Proxy defaults to the Node.js runtime (not Edge) - which is what
+// makes the DB read below safe to do here at all.
 //
 // This is the *real* enforcement point for page-level route access, not just
 // an optimistic pre-check: a redirect() thrown deep inside a page during
@@ -10,12 +13,15 @@ import { staffCan, type StaffFeature } from "@/lib/permissions";
 // started streaming (root loading.tsx wraps every route in an implicit
 // Suspense boundary), and non-JS clients - curl, bots, a bookmarked hard
 // navigation - never follow that. Only a redirect issued here, before any
-// rendering starts, is guaranteed for every client. jobRole is baked into
-// the session JWT (see src/lib/session.ts) specifically so this check needs
-// no DB round-trip. requireSession()/requireStaffFeature() in src/lib/dal.ts
-// still independently re-verify in every layout and every gated Server
-// Action - those stay authoritative for mutations and catch a jobRole
-// change made mid-session (the JWT only refreshes on next login).
+// rendering starts, is guaranteed for every client. The feature check reads
+// the role's current permissions fresh from the DB (see
+// src/lib/rolePermissions.ts) on every request, so an admin granting a role
+// new access on /admin/permissions takes effect immediately, not on next
+// login - jobRole itself still comes from the session JWT (see
+// src/lib/session.ts), so a *role reassignment* still only takes effect on
+// next login. requireSession()/requireStaffFeature() in src/lib/dal.ts still
+// independently re-verify in every layout and every gated Server Action -
+// those stay authoritative for mutations.
 
 // The only hostnames this app should ever be reached at in production. A
 // mismatch (e.g. a third-party clone/mirror whose DNS or reverse proxy
@@ -88,7 +94,8 @@ export default async function proxy(req: NextRequest) {
 
   if (session.role === "STAFF") {
     const match = staffFeatureRoutes.find((r) => pathname.startsWith(r.prefix));
-    if (match && !staffCan(session.jobRole, match.feature)) {
+    const features = match && session.jobRole ? await getRolePermissions(session.jobRole) : [];
+    if (match && !hasFeature(features, match.feature)) {
       // API routes get a plain 403, not a redirect to a webpage - the caller
       // (a download link, an export button) expects a file or an error, not HTML.
       if (pathname.startsWith("/api/")) {

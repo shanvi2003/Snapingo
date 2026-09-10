@@ -19,6 +19,7 @@ import {
   Receipt,
   Search,
   Settings,
+  ShieldCheck,
   Sparkles,
   Star,
   TrendingUp,
@@ -87,6 +88,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
           heading: "Admin",
           items: [
             { href: "/admin/team", label: "Staff Accounts", icon: <Users className="h-full w-full" /> },
+            { href: "/admin/permissions", label: "Staff Access", icon: <ShieldCheck className="h-full w-full" /> },
             { href: "/admin/settings", label: "Settings", icon: <Settings className="h-full w-full" /> },
           ],
         },

@@ -2,12 +2,16 @@
 
 import { useActionState, useState } from "react";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
+import type { StaffRole } from "@/generated/prisma/client";
 import { loginAction, type LoginState } from "@/lib/actions/auth";
 
 const initialState: LoginState = undefined;
 
-export default function LoginForm() {
-  const [state, action, pending] = useActionState(loginAction, initialState);
+export default function LoginForm({ portal }: { portal: StaffRole }) {
+  const [state, action, pending] = useActionState(
+    (prevState: LoginState, formData: FormData) => loginAction(portal, prevState, formData),
+    initialState
+  );
   const [showPassword, setShowPassword] = useState(false);
 
   return (

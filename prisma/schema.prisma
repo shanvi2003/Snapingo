@@ -61,6 +61,18 @@ model StaffUser {
   notifications       Notification[]
 }
 
+// Admin-editable override of which StaffFeature keys (src/lib/permissions.ts)
+// each job role can reach - one row per StaffJobRole. A role with no row
+// here just hasn't been customized yet; src/lib/rolePermissions.ts falls
+// back to the built-in defaultRolePermissions in that case, so this table
+// starts empty and only gains rows once an admin actually changes something
+// on /admin/permissions - no seed step needed.
+model RolePermission {
+  jobRole   StaffJobRole @id
+  features  String[]
+  updatedAt DateTime     @updatedAt
+}
+
 // ---------------------------------------------------------------------------
 // Unified lead / enquiry storage — every form touchpoint writes here
 // ---------------------------------------------------------------------------

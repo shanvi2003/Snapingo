@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
+import type { StaffRole } from "@/generated/prisma/client";
 import { verifyPassword } from "@/lib/password";
 import { createSession, deleteSession, getSessionPayload } from "@/lib/session";
 import { checkRateLimit, clientIpFrom } from "@/lib/rateLimit";
@@ -27,7 +28,7 @@ const LOGIN_WINDOW_MS = 60_000;
 // which emails have staff accounts.
 const DUMMY_HASH = "$2b$12$0MLFGGTcw4y8.ivrYPmmLeCQTfW3dCNeCxkmKD5Ko/C4FR99mhCM2";
 
-export async function loginAction(_prevState: LoginState, formData: FormData): Promise<LoginState> {
+export async function loginAction(portal: StaffRole, _prevState: LoginState, formData: FormData): Promise<LoginState> {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
 
@@ -48,10 +49,15 @@ export async function loginAction(_prevState: LoginState, formData: FormData): P
   }
 
   const passwordOk = await verifyPassword(password, user?.passwordHash ?? DUMMY_HASH);
+  // An admin's own credentials on the staff login form (or the reverse)
+  // must fail exactly like a wrong password - the account is real and the
+  // password is right, but not for the portal that was actually submitted.
+  const portalOk = user ? user.role === portal : true;
 
-  // Same generic message whether the email doesn't exist or the password is
-  // wrong — never confirm which one to an unauthenticated caller.
-  if (!user || !user.isActive || !passwordOk) {
+  // Same generic message whether the email doesn't exist, the password is
+  // wrong, or it's the right password for the other portal — never confirm
+  // which one to an unauthenticated caller.
+  if (!user || !user.isActive || !passwordOk || !portalOk) {
     if (user && user.isActive) {
       const attempts = user.failedLoginAttempts + 1;
       await db.staffUser.update({

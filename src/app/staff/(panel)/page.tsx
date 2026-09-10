@@ -3,13 +3,15 @@ import { ArrowRight } from "lucide-react";
 import { requireSession } from "@/lib/dal";
 import { db } from "@/lib/db";
 import { getLeadStats } from "@/lib/leads";
-import { staffCan, jobRoleLabels } from "@/lib/permissions";
+import { hasFeature, jobRoleLabels } from "@/lib/permissions";
+import { getRolePermissions } from "@/lib/rolePermissions";
 import StatCard from "@/components/admin/StatCard";
 
 export default async function StaffDashboardPage() {
   const session = await requireSession(["ADMIN", "STAFF"]);
   const user = await db.staffUser.findUniqueOrThrow({ where: { id: session.userId } });
-  const canLeads = user.role === "ADMIN" || staffCan(user.jobRole, "leads");
+  const canLeads =
+    user.role === "ADMIN" || (user.jobRole ? hasFeature(await getRolePermissions(user.jobRole), "leads") : false);
 
   if (!canLeads) {
     return (
