@@ -106,3 +106,20 @@ export async function getPackageIds(): Promise<string[]> {
   const rows = await db.package.findMany({ select: { id: true } });
   return rows.map((r) => r.id);
 }
+
+export async function getPackageItinerary(id: string) {
+  const row = await db.package.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      title: true,
+      duration: true,
+      itinerary: {
+        orderBy: { day: "asc" },
+        select: { day: true, title: true, desc: true },
+      },
+    },
+  });
+  if (!row) return undefined;
+  return { packageId: row.id, title: row.title, duration: row.duration, days: row.itinerary };
+}
