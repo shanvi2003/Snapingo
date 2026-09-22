@@ -7,13 +7,22 @@ import BookingStatusSelect from "@/components/admin/bookings/BookingStatusSelect
 import DeleteBookingButton from "@/components/admin/bookings/DeleteBookingButton";
 import { addPaymentAction } from "@/lib/actions/bookings";
 import { formatBalance } from "@/lib/money";
+import { isBlobConfigured } from "@/lib/blob";
+import { isEmailConfigured } from "@/lib/email";
+import VoucherPanel from "@/components/admin/bookings/VoucherPanel";
+import SendEmailPanel from "@/components/admin/SendEmailPanel";
+import { sendInvoiceEmailAction } from "@/lib/actions/email";
 
 const fmtDate = (d: Date) => d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 
 export default async function BookingDetailView({ bookingId, basePath = "/admin" }: { bookingId: string; basePath?: string }) {
   const booking = await db.booking.findUnique({
     where: { id: bookingId },
-    include: { payments: { orderBy: { paidAt: "desc" }, include: { recordedBy: { select: { name: true } } } }, createdBy: { select: { name: true } } },
+    include: {
+      payments: { orderBy: { paidAt: "desc" }, include: { recordedBy: { select: { name: true } } } },
+      createdBy: { select: { name: true } },
+      vouchers: { orderBy: { createdAt: "desc" }, include: { uploadedBy: { select: { name: true } } } },
+    },
   });
   if (!booking) notFound();
 
@@ -161,6 +170,30 @@ export default async function BookingDetailView({ bookingId, basePath = "/admin"
             </button>
           </form>
         </div>
+      </div>
+
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <VoucherPanel
+          bookingId={booking.id}
+          uploadsEnabled={isBlobConfigured()}
+          vouchers={booking.vouchers.map((v) => ({
+            id: v.id,
+            label: v.label,
+            fileName: v.fileName,
+            size: v.size,
+            uploadedBy: v.uploadedBy.name,
+            createdAt: fmtDate(v.createdAt),
+          }))}
+        />
+
+        <SendEmailPanel
+          action={sendInvoiceEmailAction.bind(null, booking.id)}
+          defaultTo={booking.email ?? ""}
+          label="Email invoice to customer"
+          disabledReason={
+            isEmailConfigured() ? undefined : "Email isn't connected yet. Ask an admin to set it up."
+          }
+        />
       </div>
     </div>
   );

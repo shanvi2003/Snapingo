@@ -1,10 +1,16 @@
 import type { NextConfig } from "next";
-import { ALLOWED_IMAGE_HOSTS } from "./src/lib/imageHosts";
+import { ALLOWED_IMAGE_HOSTS, BLOB_IMAGE_HOST_PATTERN } from "./src/lib/imageHosts";
 
 const nextConfig: NextConfig = {
   images: {
     qualities: [85],
-    remotePatterns: ALLOWED_IMAGE_HOSTS.map((hostname) => ({ protocol: "https" as const, hostname })),
+    remotePatterns: [
+      ...ALLOWED_IMAGE_HOSTS.map((hostname) => ({ protocol: "https" as const, hostname })),
+      // Staff uploads. The leading `**` matches the store id subdomain, which
+      // isn't known until the blob store is provisioned. `search: ""` blocks
+      // query strings, so only the plain object URL can be optimized.
+      { protocol: "https" as const, hostname: BLOB_IMAGE_HOST_PATTERN, search: "" },
+    ],
   },
   experimental: {
     optimizePackageImports: ["framer-motion"],

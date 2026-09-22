@@ -6,6 +6,7 @@ import PanelNav from "@/components/admin/PanelNav";
 import AutoRefresh from "@/components/admin/AutoRefresh";
 import NotificationBell from "@/components/admin/NotificationBell";
 import { NotificationProvider } from "@/components/admin/NotificationCenter";
+import { UploadsProvider } from "@/components/admin/UploadsProvider";
 
 export type PanelNavItem = {
   href: string;
@@ -24,16 +25,21 @@ export default function PanelShell({
   rootHref,
   sections,
   children,
+  uploadsEnabled = false,
 }: {
   title: string;
   rootHref: string;
   sections: PanelNavSection[];
   children: ReactNode;
+  // Whether a blob store is wired up, read once in the layout and shared with
+  // every image field below via UploadsProvider.
+  uploadsEnabled?: boolean;
 }) {
   const leadsBasePath = `${rootHref}/leads`;
 
   return (
     <NotificationProvider>
+      <UploadsProvider enabled={uploadsEnabled}>
       <div className="flex h-screen overflow-hidden bg-ink-50/60 print:h-auto print:overflow-visible">
         <AutoRefresh />
         <aside className="print-hide hidden h-full w-64 shrink-0 flex-col border-r border-ink-100 bg-white lg:flex">
@@ -98,6 +104,7 @@ export default function PanelShell({
           </form>
         </div>
       </div>
+      </UploadsProvider>
     </NotificationProvider>
   );
 }

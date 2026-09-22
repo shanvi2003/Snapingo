@@ -34,6 +34,7 @@ import {
 import { requireSession } from "@/lib/dal";
 import { db } from "@/lib/db";
 import PanelShell from "@/components/admin/PanelShell";
+import { isBlobConfigured } from "@/lib/blob";
 
 export const metadata: Metadata = {
   title: "Admin | Snapingo",
@@ -45,7 +46,9 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   const newLeadCount = await db.lead.count({ where: { status: "NEW" } });
 
   return (
-    <PanelShell      title="Admin Panel"
+    <PanelShell
+      uploadsEnabled={isBlobConfigured()}
+      title="Admin Panel"
       rootHref="/admin"
       sections={[
         {

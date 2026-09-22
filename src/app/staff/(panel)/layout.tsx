@@ -30,6 +30,7 @@ import { db } from "@/lib/db";
 import { hasFeature, type StaffFeature } from "@/lib/permissions";
 import { getRolePermissions } from "@/lib/rolePermissions";
 import PanelShell, { type PanelNavSection } from "@/components/admin/PanelShell";
+import { isBlobConfigured } from "@/lib/blob";
 
 export const metadata: Metadata = {
   title: "Staff | Snapingo",
@@ -107,7 +108,9 @@ export default async function StaffLayout({ children }: { children: ReactNode })
   });
 
   return (
-    <PanelShell      title="Staff Panel"
+    <PanelShell
+      uploadsEnabled={isBlobConfigured()}
+      title="Staff Panel"
       rootHref="/staff"
       sections={sections}
     >

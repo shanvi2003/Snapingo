@@ -5,6 +5,9 @@ import { db } from "@/lib/db";
 import { formatRupees } from "@/lib/gst";
 import { getMasterList } from "@/lib/masterData";
 import { getEffectiveExclusions, resolveInclusions } from "@/lib/inclusionHelpers";
+import { isEmailConfigured } from "@/lib/email";
+import SendEmailPanel from "@/components/admin/SendEmailPanel";
+import { sendItineraryEmailAction } from "@/lib/actions/email";
 
 const fmtDate = (d: Date) =>
   d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
@@ -205,6 +208,15 @@ export default async function CustomPackageDetailView({
         </div>
 
         <div className="space-y-6">
+          <SendEmailPanel
+            action={sendItineraryEmailAction.bind(null, quotation.id)}
+            defaultTo={quotation.customerEmail ?? ""}
+            label="Email itinerary to customer"
+            disabledReason={
+              isEmailConfigured() ? undefined : "Email isn't connected yet. Ask an admin to set it up."
+            }
+          />
+
           <Card title="Pricing">
             <dl className="space-y-2 text-sm">
               <div className="flex justify-between">
