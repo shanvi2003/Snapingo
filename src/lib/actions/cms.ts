@@ -5,6 +5,9 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { requireStaffFeature } from "@/lib/dal";
 import type { SessionPayload } from "@/lib/session";
+import { formatDuration } from "@/lib/durationHelpers";
+import { slugify, uniqueSlug } from "@/lib/slug";
+import { withNewPackageCode } from "@/lib/packageCodeServer";
 import {
   packageSchema,
   destinationSchema,
@@ -64,16 +67,86 @@ export async function savePackageAction(isNew: boolean, _prevState: FormState, f
   const session = await requirePackageEditor();
   const parsed = packageSchema.safeParse(parse(formData));
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Please check the form." };
-  const { id, itinerary, ...data } = parsed.data;
+
+  const {
+    id: postedId,
+    itinerary,
+    destinationSlug,
+    durationNights,
+    durationDays,
+    inclusions,
+    badge,
+    ...data
+  } = parsed.data;
+
+  if (durationDays < durationNights) {
+    return { error: "A package can't have more nights than days - check the duration." };
+  }
+
+  // The destination dropdown posts a slug; the display name comes from the
+  // Destination row so the two can't disagree. A slug with no row means the
+  // destination was deleted between the form loading and being submitted.
+  const destination = await db.destination.findUnique({
+    where: { slug: destinationSlug },
+    select: { name: true, type: true },
+  });
+  if (!destination) return { error: "Choose a destination from the list." };
+
+  // The form only offers destinations matching the chosen type, but a Server
+  // Action is a plain POST - so the pairing is checked here too, where it
+  // actually matters.
+  if (destination.type !== data.type) {
+    return {
+      error: `${destination.name} is a ${destination.type} destination - it can't be used on a ${data.type} package.`,
+    };
+  }
+
+  // Inclusions and badges are admin-editable master data, so "what's valid"
+  // only exists in the database - re-checking here stops a hand-crafted POST
+  // from writing a slug that no option list contains (Server Actions are
+  // reachable directly, not just through this form).
+  const allowed = await db.masterOption.findMany({
+    where: { list: { in: ["PACKAGE_INCLUSION", "PACKAGE_BADGE"] } },
+    select: { list: true, value: true },
+  });
+  const allowedInclusions = new Set(allowed.filter((o) => o.list === "PACKAGE_INCLUSION").map((o) => o.value));
+  const allowedBadges = new Set(allowed.filter((o) => o.list === "PACKAGE_BADGE").map((o) => o.value));
+
+  const unknownInclusion = inclusions.find((value) => !allowedInclusions.has(value));
+  if (unknownInclusion) return { error: `"${unknownInclusion}" is not an inclusion option.` };
+  if (badge && !allowedBadges.has(badge)) return { error: `"${badge}" is not a badge option.` };
+
+  // New packages derive their id (and therefore their public URL) from the
+  // title; edits keep the id they already have, since changing it would break
+  // every link to the package that exists in the wild.
+  const id = isNew
+    ? await uniqueSlug(slugify(data.title), async (candidate) =>
+        Boolean(await db.package.findUnique({ where: { id: candidate }, select: { id: true } }))
+      )
+    : postedId;
+  if (!id) return { error: "This package is missing its ID - reopen it from the packages list." };
+
+  const shared = {
+    ...data,
+    destinationSlug,
+    destination: destination.name,
+    durationNights,
+    durationDays,
+    duration: formatDuration({ nights: durationNights, days: durationDays }),
+    inclusions,
+    badge,
+  };
 
   if (isNew) {
-    const existing = await db.package.findUnique({ where: { id } });
-    if (existing) return { error: "A package with this ID already exists." };
-    await db.package.create({ data: { id, ...data, itinerary: { create: itinerary } } });
+    // The sequential staff-facing number is issued here, not posted by the
+    // form - the form only previews what it will be.
+    await withNewPackageCode((code) =>
+      db.package.create({ data: { id, code, ...shared, itinerary: { create: itinerary } } })
+    );
   } else {
     await db.package.update({
       where: { id },
-      data: { ...data, itinerary: { deleteMany: {}, create: itinerary } },
+      data: { ...shared, itinerary: { deleteMany: {}, create: itinerary } },
     });
   }
 

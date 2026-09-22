@@ -1,18 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import {
-  BedDouble,
-  Calendar,
-  Camera,
-  Car,
-  Check,
-  MapPin,
-  Plane,
-  Star,
-  Utensils,
-  X,
-} from "lucide-react";
-import type { Inclusion } from "@/data/packages";
+import { Calendar, Check, MapPin, Star, X } from "lucide-react";
+import { resolveInclusionIcon } from "@/lib/icons";
 import { getPackageById, getPackageIds, getSimilarPackages } from "@/lib/content/packages";
 import DetailHero from "@/components/DetailHero";
 import ItineraryPrintView from "@/components/ItineraryPrintView";
@@ -20,22 +9,6 @@ import ItineraryTimeline from "@/components/ItineraryTimeline";
 import StickyBookingCard from "@/components/StickyBookingCard";
 import SimilarPackages from "@/components/SimilarPackages";
 import { JsonLd, breadcrumbJsonLd, tripPackageJsonLd } from "@/lib/structuredData";
-
-const inclusionIcons: Record<Inclusion, typeof Plane> = {
-  flight: Plane,
-  hotel: BedDouble,
-  meals: Utensils,
-  transfer: Car,
-  sightseeing: Camera,
-};
-
-const inclusionLabels: Record<Inclusion, string> = {
-  flight: "Return flights",
-  hotel: "Hotel accommodation",
-  meals: "Meals as per itinerary",
-  transfer: "Airport & local transfers",
-  sightseeing: "Guided sightseeing",
-};
 
 export async function generateStaticParams() {
   const ids = await getPackageIds();
@@ -139,15 +112,15 @@ export default async function PackageDetailPage({
                   What&apos;s included
                 </h3>
                 <div className="mt-4 flex flex-wrap gap-3">
-                  {pkg.inclusions.map((inc) => {
-                    const Icon = inclusionIcons[inc];
+                  {(pkg.inclusionDetails ?? []).map((inc) => {
+                    const Icon = resolveInclusionIcon(inc.icon);
                     return (
                       <span
-                        key={inc}
+                        key={inc.value}
                         className="flex items-center gap-2 rounded-full bg-ink-50 px-4 py-2 text-sm font-medium text-ink-700"
                       >
                         <Icon className="h-4 w-4 text-brand-600" />
-                        {inclusionLabels[inc]}
+                        {inc.label}
                       </span>
                     );
                   })}

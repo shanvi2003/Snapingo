@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, Search, SlidersHorizontal, X } from "lucide-react";
-import type { Inclusion, TourPackage } from "@/data/packages";
+import type { TourPackage } from "@/data/packages";
 import PackageCard from "@/components/PackageCard";
 import CustomSelect from "@/components/CustomSelect";
 import { useScrollLock } from "@/hooks/useScrollLock";
@@ -24,14 +24,6 @@ const sortOptions = [
   { value: "price-low", label: "Price: Low to High" },
   { value: "price-high", label: "Price: High to Low" },
   { value: "rating", label: "Highest Rated" },
-];
-
-const inclusionOptions: { value: Inclusion; label: string }[] = [
-  { value: "flight", label: "Flights" },
-  { value: "hotel", label: "Hotel" },
-  { value: "meals", label: "Meals" },
-  { value: "transfer", label: "Transfers" },
-  { value: "sightseeing", label: "Sightseeing" },
 ];
 
 type DestType = "domestic" | "international";
@@ -101,10 +93,28 @@ export default function PackagesGrid({
   // shows only that bucket, picking the same one again clears back to all.
   const [duration, setDuration] = useState<DurationBucket | null>(null);
   const [budget, setBudget] = useState<BudgetBucket | null>(null);
-  const [inclusions, setInclusions] = useState<Set<Inclusion>>(new Set());
+  const [inclusions, setInclusions] = useState<Set<string>>(new Set());
   const [sort, setSort] = useState<Sort>("popular");
   const [query, setQuery] = useState("");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+
+  // Built from the packages on screen rather than a fixed list: inclusions are
+  // admin-editable master data now, so a hardcoded set of five would silently
+  // stop matching the moment an admin adds one - and a filter for an inclusion
+  // no package actually has would only ever return an empty grid.
+  const inclusionOptions = useMemo(() => {
+    const byValue = new Map<string, string>();
+    for (const pkg of allPackages) {
+      for (const inc of pkg.inclusionDetails ?? []) {
+        // Free-text "Other" entries are one-off per package, so they make
+        // poor filters - skip them and keep the master-list ones.
+        if (!inc.value.startsWith("custom:") && !byValue.has(inc.value)) {
+          byValue.set(inc.value, inc.label);
+        }
+      }
+    }
+    return [...byValue].map(([value, label]) => ({ value, label }));
+  }, [allPackages]);
   const asideRef = useRef<HTMLElement>(null);
 
   useScrollLock(mobileFiltersOpen);
@@ -149,7 +159,9 @@ export default function PackagesGrid({
       base = base.filter((p) => matchesBudgetBucket(p.price, budget));
     }
     if (inclusions.size > 0) {
-      base = base.filter((p) => [...inclusions].some((inc) => p.inclusions.includes(inc)));
+      base = base.filter((p) =>
+        (p.inclusionDetails ?? []).some((inc) => inclusions.has(inc.value))
+      );
     }
     if (query.trim()) {
       const q = query.trim().toLowerCase();

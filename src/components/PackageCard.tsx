@@ -1,15 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
-import { BedDouble, Camera, Car, Plane, Star, Utensils } from "lucide-react";
-import type { Inclusion, TourPackage } from "@/data/packages";
-
-const inclusionIcons: Record<Inclusion, typeof Plane> = {
-  flight: Plane,
-  hotel: BedDouble,
-  meals: Utensils,
-  transfer: Car,
-  sightseeing: Camera,
-};
+import { Star } from "lucide-react";
+import type { TourPackage } from "@/data/packages";
+import { resolveInclusionIcon } from "@/lib/icons";
 
 export default function PackageCard({ pkg }: { pkg: TourPackage }) {
   const discount = Math.round(
@@ -60,13 +53,13 @@ export default function PackageCard({ pkg }: { pkg: TourPackage }) {
         <p className="mt-1 text-sm text-ink-900 3xl:text-base">{pkg.duration}</p>
 
         <div className="mt-4 flex flex-wrap gap-2">
-          {pkg.inclusions.map((inc) => {
-            const Icon = inclusionIcons[inc];
+          {(pkg.inclusionDetails ?? []).map((inc) => {
+            const Icon = resolveInclusionIcon(inc.icon);
             return (
               <span
-                key={inc}
+                key={inc.value}
                 className="grid h-8 w-8 place-items-center rounded-full bg-ink-50 text-ink-900"
-                title={inc}
+                title={inc.label}
               >
                 <Icon className="h-4 w-4" />
               </span>

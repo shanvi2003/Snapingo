@@ -1,34 +1,20 @@
 import { User } from "lucide-react";
-import type { Inclusion, TourPackage } from "@/data/packages";
+import type { TourPackage } from "@/data/packages";
 import {
   getAccommodationForPackage,
   getNightStayBreakdown,
   inferVehicleType,
 } from "@/lib/itineraryPdfHelpers";
 import { siteConfig } from "@/lib/siteConfig";
-
-const inclusionLabels: Record<Inclusion, string> = {
-  flight: "Return flights",
-  hotel: "Hotel accommodation",
-  meals: "Meals as per itinerary",
-  transfer: "Airport & local transfers",
-  sightseeing: "Guided sightseeing",
-};
+import { getContentBlock, parseContentBody, type ContentBlockView } from "@/lib/contentBlocks";
+import { getSettings } from "@/lib/settings";
+import type { ContentBlockKey } from "@/generated/prisma/enums";
 
 const quoteDateFormatter = new Intl.DateTimeFormat("en-IN", {
   day: "numeric",
   month: "long",
   year: "numeric",
 });
-
-// The one contact this itinerary format names by name (per the approved
-// design) rather than pulling from siteConfig, which only holds the
-// company-wide support line/email.
-const operationHead = {
-  name: "Ashutosh Pandey",
-  phone: "+91 87077 36609",
-  email: "ashutosh@snapingo.com",
-};
 
 // Every font size below (the text-[Npx] values) was measured directly off
 // the reference PDF's content stream, not eyeballed: each text run's
@@ -51,12 +37,64 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function ItineraryPrintView({ pkg }: { pkg: TourPackage }) {
+// Renders one admin-edited block. Each line of the stored body is either a
+// bullet or a paragraph (see parseContentBody); an empty body renders nothing
+// at all, so a block an admin hasn't filled in yet leaves no orphan heading
+// on the customer's PDF.
+function ContentSection({ block, className = "mt-6" }: { block: ContentBlockView; className?: string }) {
+  const lines = parseContentBody(block.body);
+  if (lines.length === 0) return null;
+
+  const paragraphs = lines.filter((l) => l.type === "paragraph");
+  const bullets = lines.filter((l) => l.type === "bullet");
+
+  return (
+    <section className={className}>
+      <SectionHeading>{block.title}</SectionHeading>
+      {paragraphs.map((line, i) => (
+        <p key={i} className="mt-2 text-[19px] leading-relaxed text-ink-800">
+          {line.text}
+        </p>
+      ))}
+      {bullets.length > 0 && (
+        <ul className="mt-2 space-y-1 text-[19px] text-ink-800">
+          {bullets.map((line, i) => (
+            <li key={i} className="break-inside-avoid">
+              &bull; {line.text}
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+export default async function ItineraryPrintView({ pkg }: { pkg: TourPackage }) {
   const discount = Math.round(((pkg.originalPrice - pkg.price) / pkg.originalPrice) * 100);
   const { hotel, categoryLabel } = getAccommodationForPackage(pkg);
   const nightStays = getNightStayBreakdown(pkg);
   const vehicleType = inferVehicleType(pkg);
   const quoteDate = quoteDateFormatter.format(new Date());
+
+  // The policy copy and the operation-head contact used to be string literals
+  // in this file, which meant a wording change was a code change. They are
+  // admin-editable rows now; this component just renders whatever is stored.
+  const blockKeys: ContentBlockKey[] = [
+    "PDF_ABOUT",
+    "PDF_TERMS",
+    "PDF_PAYMENT_POLICY",
+    "PDF_CANCELLATION_POLICY",
+    "PDF_ACCOUNT_DETAILS",
+    "PDF_DISCLAIMER",
+  ];
+  const [about, terms, paymentPolicy, cancellationPolicy, accountDetails, disclaimer] =
+    await Promise.all(blockKeys.map((key) => getContentBlock(key)));
+  const settings = await getSettings();
+  const operationHead = {
+    name: settings.operation_head_name,
+    phone: settings.operation_head_phone,
+    email: settings.operation_head_email,
+  };
 
   return (
     <div
@@ -332,8 +370,8 @@ export default function ItineraryPrintView({ pkg }: { pkg: TourPackage }) {
             Inclusion
           </h2>
           <ul className="mt-2 space-y-1 text-[19px] text-ink-800">
-            {pkg.inclusions.map((inc) => (
-              <li key={inc} className="break-inside-avoid">&bull; {inclusionLabels[inc]}</li>
+            {(pkg.inclusionDetails ?? []).map((inc) => (
+              <li key={inc.value} className="break-inside-avoid">&bull; {inc.label}</li>
             ))}
           </ul>
         </section>
@@ -349,26 +387,9 @@ export default function ItineraryPrintView({ pkg }: { pkg: TourPackage }) {
         </section>
       </div>
 
-      <section className="mt-6">
-        <SectionHeading>About Snapingo</SectionHeading>
-        <p className="mt-2 text-[19px] leading-relaxed text-ink-800">
-          Snapingo Travel was built to give the modern traveller flexibility and a genuine sense
-          of independence in planning a trip. We curate all-inclusive holiday packages, flights,
-          stay, transfers and sightseeing, bundled into a single booking, backed by an in-house
-          team that stays reachable through the whole journey, not just at the time of booking.
-        </p>
-      </section>
+      <ContentSection block={about} />
 
-      <section className="mt-6">
-        <SectionHeading>Terms &amp; Conditions</SectionHeading>
-        <ul className="mt-2 space-y-1 text-[19px] text-ink-800">
-          <li className="break-inside-avoid">&bull; Packages can be customized, except Fixed Departure tours which follow a pre-set itinerary.</li>
-          <li className="break-inside-avoid">&bull; All change requests must be communicated to Snapingo Travel in writing.</li>
-          <li className="break-inside-avoid">&bull; Services are provided strictly as detailed in the official Booking Confirmation.</li>
-          <li className="break-inside-avoid">&bull; Snapingo Travel is not liable for delays or cancellations caused by natural calamities, strikes, political unrest, or other unforeseen events.</li>
-          <li className="break-inside-avoid">&bull; Jurisdiction: legal disputes are subject to competent courts in Uttar Pradesh / Delhi NCR.</li>
-        </ul>
-      </section>
+      <ContentSection block={terms} />
 
       {/* break-inside-avoid (not break-before-page): Payment Policy's bullet
           list is short enough to jump to the next page as one whole block
@@ -376,25 +397,11 @@ export default function ItineraryPrintView({ pkg }: { pkg: TourPackage }) {
           Accommodation/Vehicle-Transport above do - forcing it onto its own
           page regardless of how much room was actually left was what
           stranded a large blank gap under Terms & Conditions. */}
-      <section className="mt-6 break-inside-avoid">
-        <SectionHeading>Payment Policy</SectionHeading>
-        <ul className="mt-2 space-y-1 text-[19px] text-ink-800">
-          <li className="break-inside-avoid">&bull; Standard packages: 75% advance at booking, 25% on arrival.</li>
-          <li className="break-inside-avoid">&bull; Himachal packages: 50% advance, 50% on arrival.</li>
-          <li className="break-inside-avoid">&bull; 4-star / 5-star &amp; luxury packages: 100% advance required.</li>
-          <li className="break-inside-avoid">&bull; Accepted modes: Bank Transfer (NEFT/RTGS/IMPS), UPI, Cheque.</li>
-        </ul>
-      </section>
+      <ContentSection block={paymentPolicy} className="mt-6 break-inside-avoid" />
 
-      <section className="mt-6">
-        <SectionHeading>Cancellation Policy</SectionHeading>
-        <ul className="mt-2 space-y-1 text-[19px] text-ink-800">
-          <li className="break-inside-avoid">&bull; Token / advance payment is non-refundable in all cases.</li>
-          <li className="break-inside-avoid">&bull; 15+ days before departure: 25% to 50% cancellation fee.</li>
-          <li className="break-inside-avoid">&bull; Within 15 days, or a no-show: 100% retention, no refund.</li>
-          <li className="break-inside-avoid">&bull; No refunds for unused flights, hotels, meals or sightseeing.</li>
-        </ul>
-      </section>
+      <ContentSection block={cancellationPolicy} />
+
+      <ContentSection block={accountDetails} className="mt-6 break-inside-avoid" />
 
       <section className="mt-6 break-inside-avoid rounded-xl border border-brand-200 bg-brand-50 p-4">
         <h2 className="text-[17px] font-extrabold uppercase tracking-wide text-brand-700">
@@ -411,27 +418,36 @@ export default function ItineraryPrintView({ pkg }: { pkg: TourPackage }) {
       </section>
 
       <div className="relative">
-        <div className="mt-6 flex flex-wrap items-center gap-6 break-inside-avoid">
-          <div className="flex min-w-[300px] items-center gap-3 rounded-xl border border-brand-200 px-5 py-4">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-brand-600 text-white">
-              <User className="h-5 w-5" />
-            </span>
-            <div>
-              <p className="text-2xl font-bold uppercase tracking-wide text-brand-600">
-                Operation Head
-              </p>
-              <p className="text-[27px] font-extrabold text-ink-900">
-                {operationHead.name}
-              </p>
+        {/* Hidden entirely when no operation head is configured in Settings -
+            a named-contact card with a blank name reads worse to a customer
+            than no card at all. */}
+        {operationHead.name && (
+          <div className="mt-6 flex flex-wrap items-center gap-6 break-inside-avoid">
+            <div className="flex min-w-[300px] items-center gap-3 rounded-xl border border-brand-200 px-5 py-4">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-brand-600 text-white">
+                <User className="h-5 w-5" />
+              </span>
+              <div>
+                <p className="text-2xl font-bold uppercase tracking-wide text-brand-600">
+                  Operation Head
+                </p>
+                <p className="text-[27px] font-extrabold text-ink-900">
+                  {operationHead.name}
+                </p>
+              </div>
             </div>
+            <ul className="space-y-1 text-[17px] text-ink-800">
+              <li className="break-inside-avoid">&bull; Operation Head | {siteConfig.name}</li>
+              {operationHead.phone && (
+                <li className="break-inside-avoid">&bull; {operationHead.phone}</li>
+              )}
+              {operationHead.email && (
+                <li className="break-inside-avoid">&bull; {operationHead.email}</li>
+              )}
+              <li className="break-inside-avoid">&bull; {siteConfig.url.replace(/^https?:\/\//, "")}</li>
+            </ul>
           </div>
-          <ul className="space-y-1 text-[17px] text-ink-800">
-            <li className="break-inside-avoid">&bull; Operation Head | Snapingo</li>
-            <li className="break-inside-avoid">&bull; {operationHead.phone}</li>
-            <li className="break-inside-avoid">&bull; {operationHead.email}</li>
-            <li className="break-inside-avoid">&bull; {siteConfig.url.replace(/^https?:\/\//, "")}</li>
-          </ul>
-        </div>
+        )}
 
         <footer className="mt-8 break-inside-avoid border-t border-ink-200 pt-3 text-[17px] text-ink-500">
           <p className="text-xl font-semibold text-ink-700">SNAPINGO TRAVELS</p>
@@ -442,12 +458,11 @@ export default function ItineraryPrintView({ pkg }: { pkg: TourPackage }) {
           <p className="mt-1">
             {siteConfig.phone} &middot; {siteConfig.email} &middot; {siteConfig.url.replace(/^https?:\/\//, "")}
           </p>
-          <p className="mt-2">
-            Hotel, room category and vehicle details above are indicative and subject to
-            availability at the time of booking; a specific property and vehicle will be
-            confirmed in your Booking Confirmation. Prices are per person, starting from. This
-            itinerary is indicative: contact us to confirm final dates and inclusions.
-          </p>
+          {parseContentBody(disclaimer.body).map((line, i) => (
+            <p key={i} className="mt-2">
+              {line.text}
+            </p>
+          ))}
         </footer>
       </div>
     </div>

@@ -1,4 +1,19 @@
+// The five slugs this static file was written with. Kept as a type only for
+// the legacy rows below - inclusions are admin-editable master data now
+// (MasterOption / MasterListKey.PACKAGE_INCLUSION), so anything reading a
+// package at runtime should use `inclusionDetails` rather than assuming this
+// union still covers what's stored.
 export type Inclusion = "flight" | "hotel" | "meals" | "transfer" | "sightseeing";
+
+// An inclusion resolved against the live master list: the slug stored on the
+// package, plus the label and icon an admin has given it. Optional on
+// TourPackage because the static `allPackages` array below predates it; every
+// database read path (src/lib/content/packages.ts) always fills it in.
+export type ResolvedInclusion = {
+  value: string;
+  label: string;
+  icon: string | null;
+};
 
 export type ItineraryDay = {
   day: number;
@@ -19,12 +34,16 @@ export type TourPackage = {
   rating: number;
   reviews: number;
   inclusions: Inclusion[];
+  // Display-ready inclusions (master-list label + icon, plus any free-text
+  // "Other" entries). Prefer this over `inclusions` when rendering.
+  inclusionDetails?: ResolvedInclusion[];
   exclusions: string[];
   highlights: string[];
   itinerary: ItineraryDay[];
   badge?: string;
   featured: boolean;
   hotDeal?: boolean;
+  tripsSold?: number;
 };
 
 const img = (id: string) => `/images/unsplash/${id}.jpg`;

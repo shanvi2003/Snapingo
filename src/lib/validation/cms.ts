@@ -23,17 +23,34 @@ const jsonRows = z.string().transform((v, ctx) => {
 });
 
 export const packageSchema = z.object({
-  id: z.string().trim().min(1).max(120).regex(/^[a-z0-9-]+$/, "Use lowercase letters, numbers and hyphens only."),
+  // Optional because new packages no longer carry one: savePackageAction
+  // derives the id from the title (see src/lib/slug.ts). On an edit the form
+  // still posts the existing id back in a read-only field, and the action
+  // rejects a missing one there.
+  id: z
+    .string()
+    .trim()
+    .max(120)
+    .regex(/^[a-z0-9-]*$/, "Use lowercase letters, numbers and hyphens only.")
+    .optional(),
   title: z.string().trim().min(1).max(200),
-  destination: z.string().trim().min(1).max(200),
+  // `destination` (the display name) is no longer posted by the form at all -
+  // staff pick a destination from a dropdown, which submits only the slug,
+  // and the action looks the name up from the Destination row. That makes it
+  // impossible to save a package whose destination name and slug disagree,
+  // which the two free-text fields previously allowed.
   destinationSlug: z.string().trim().min(1).max(120),
   type: z.enum(["domestic", "international"]),
   image: imageField,
-  duration: z.string().trim().min(1).max(60),
+  // Duration arrives as two numbers from two dropdowns; the display string is
+  // derived from them in the action via formatDuration.
+  durationNights: z.coerce.number().int().min(0).max(30),
+  durationDays: z.coerce.number().int().min(1).max(31),
   price: z.coerce.number().int().nonnegative(),
   originalPrice: z.coerce.number().int().nonnegative(),
   rating: z.coerce.number().min(0).max(5),
   reviews: z.coerce.number().int().nonnegative(),
+  tripsSold: z.coerce.number().int().nonnegative().default(0),
   badge: z.string().trim().max(60).optional(),
   // .default(false), not a bare z.coerce.boolean(): an unchecked checkbox is
   // omitted from FormData entirely (standard HTML behavior), so the key is
@@ -41,9 +58,17 @@ export const packageSchema = z.object({
   // as invalid on every package/destination/service with the box unchecked.
   featured: z.coerce.boolean().default(false),
   hotDeal: z.coerce.boolean().default(false),
-  inclusions: z.array(z.enum(["flight", "hotel", "meals", "transfer", "sightseeing"])),
+  // Open-ended now that the inclusion list is admin-editable master data
+  // rather than a fixed union. The action checks each value against the live
+  // PACKAGE_INCLUSION list, which is the only place that can know what's valid.
+  inclusions: z.array(z.string().max(120)),
+  // Free-text inclusions from the extra box, one per line.
+  customInclusions: z.string().transform(linesToArray).pipe(z.array(z.string().max(200)).max(20)),
+  // Additional exclusions staff type on top of the automatic ones (taxes,
+  // insurance, personal expenses - things that aren't the inverse of any
+  // inclusion). See getEffectiveExclusions.
+  exclusions: z.string().transform(linesToArray).pipe(z.array(z.string().max(300)).max(30)),
   categories: z.array(z.string()),
-  exclusions: z.string().transform(linesToArray),
   highlights: z.string().transform(linesToArray),
   itinerary: jsonRows.transform((rows) =>
     rows.map((r, i) => ({ day: i + 1, title: r.title ?? "", desc: r.desc ?? "" }))
