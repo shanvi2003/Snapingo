@@ -3,10 +3,17 @@
 import { useState } from "react";
 import { Plus, Trash2, GripVertical } from "lucide-react";
 import CustomSelect from "@/components/CustomSelect";
+import SuggestInput from "@/components/admin/SuggestInput";
 
 export type RowField =
-  | { key: string; label: string; type: "text" | "textarea" }
-  | { key: string; label: string; type: "select"; options: string[] };
+  | { key: string; label: string; type: "text" | "textarea" | "date" | "number" | "checkbox" }
+  | { key: string; label: string; type: "select"; options: string[] }
+  // Same control as "select" but with separate stored value and shown label,
+  // which master-data lists need (the row stores a slug, staff read a label).
+  | { key: string; label: string; type: "options"; options: { value: string; label: string }[] }
+  // Free text that offers previously-entered values as you type (hotel names,
+  // cities). Suggests without constraining - a new value is always allowed.
+  | { key: string; label: string; type: "suggest"; suggestions: string[] };
 
 // Generic editor for an array of objects (itinerary days, highlights,
 // blog content sections) inside a native form. State lives here in React,
@@ -55,6 +62,15 @@ export default function RepeatableRows({
     setRows((prev) => prev.filter((_, i) => i !== index));
   };
 
+  // In stacked mode every field gets its own full-width row, which is right
+  // for a description but absurd for a one-line title - a day title stretched
+  // across a 1300px screen is mostly empty box. So each control gets a width
+  // that suits what it holds: long text keeps the full row, a title is capped
+  // at a comfortable reading width, and a date or a count stays small.
+  // Side-by-side mode is unchanged: there the grid already sizes the columns.
+  const textWidth = stacked ? "w-full max-w-2xl" : "w-full";
+  const shortWidth = stacked ? "w-full max-w-xs" : "w-full";
+
   return (
     <div>
       <input type="hidden" name={name} value={JSON.stringify(rows)} />
@@ -88,6 +104,44 @@ export default function RepeatableRows({
                       placeholder="—"
                       options={field.options.map((opt) => ({ value: opt, label: opt }))}
                     />
+                  ) : field.type === "options" ? (
+                    <CustomSelect
+                      value={row[field.key] ?? ""}
+                      onChange={(value) => updateField(index, field.key, value)}
+                      placeholder="—"
+                      options={field.options}
+                    />
+                  ) : field.type === "suggest" ? (
+                    // No `name`: like every other field here, the value is
+                    // serialized into the single hidden JSON input below
+                    // rather than submitted as its own form field.
+                    <SuggestInput
+                      suggestions={field.suggestions}
+                      value={row[field.key] ?? ""}
+                      onChange={(next) => updateField(index, field.key, next)}
+                      className={`${textWidth} rounded-lg border border-ink-200 bg-white px-3 py-2 text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 ${stacked ? "" : "flex-1"}`}
+                    />
+                  ) : field.type === "checkbox" ? (
+                    // Stored as the string "true"/"" so a row stays a flat
+                    // Record<string, string> and keeps serializing into the
+                    // single JSON hidden input below.
+                    <label className="flex h-[38px] items-center gap-2 text-sm text-ink-900">
+                      <input
+                        type="checkbox"
+                        checked={row[field.key] === "true"}
+                        onChange={(e) => updateField(index, field.key, e.target.checked ? "true" : "")}
+                        className="h-4 w-4 rounded border-ink-300 accent-brand-600"
+                      />
+                      Yes
+                    </label>
+                  ) : field.type === "date" || field.type === "number" ? (
+                    <input
+                      type={field.type}
+                      min={field.type === "number" ? 0 : undefined}
+                      value={row[field.key] ?? ""}
+                      onChange={(e) => updateField(index, field.key, e.target.value)}
+                      className={`${shortWidth} rounded-lg border border-ink-200 bg-white px-3 py-2 text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 ${stacked ? "" : "flex-1"}`}
+                    />
                   ) : (
                     // flex-1 (not just w-full) so a single-line input
                     // stretches to match a taller sibling textarea's height
@@ -99,7 +153,7 @@ export default function RepeatableRows({
                       type="text"
                       value={row[field.key] ?? ""}
                       onChange={(e) => updateField(index, field.key, e.target.value)}
-                      className={`w-full rounded-lg border border-ink-200 bg-white px-3 py-2 text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 ${stacked ? "" : "flex-1"}`}
+                      className={`${textWidth} rounded-lg border border-ink-200 bg-white px-3 py-2 text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 ${stacked ? "" : "flex-1"}`}
                     />
                   )}
                 </div>
