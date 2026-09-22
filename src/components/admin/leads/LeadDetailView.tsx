@@ -1,27 +1,62 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CalendarPlus, Users } from "lucide-react";
+import { ArrowLeft, CalendarPlus, Download, FileText, Users } from "lucide-react";
 import { db } from "@/lib/db";
-import { sourceLabels, statusLabels, statusStyles } from "@/components/admin/leads/statusStyles";
+import { getSession } from "@/lib/dal";
+import { getActiveMasterList } from "@/lib/masterData";
+import {
+  noteStatusLabels,
+  noteStatusStyles,
+  sourceLabels,
+  statusLabels,
+  statusStyles,
+} from "@/components/admin/leads/statusStyles";
 import LeadStatusSelect from "@/components/admin/leads/LeadStatusSelect";
 import LeadAssignSelect from "@/components/admin/leads/LeadAssignSelect";
-import { addLeadNoteAction } from "@/lib/actions/admin-leads";
+import LeadFavoriteButton from "@/components/admin/leads/LeadFavoriteButton";
+import LeadNoteForm from "@/components/admin/leads/LeadNoteForm";
+import LeadEditForm from "@/components/admin/leads/LeadEditForm";
 
 const fmtDate = (d: Date) =>
   d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 const fmtDateTime = (d: Date) =>
   d.toLocaleString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 
+// <input type="date"> wants yyyy-mm-dd, and toISOString() shifts the day
+// backwards for any timezone east of UTC - so this formats from local parts.
+function toDateInput(value: Date | null): string {
+  if (!value) return "";
+  return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}-${String(
+    value.getDate()
+  ).padStart(2, "0")}`;
+}
+
+const str = (v: string | number | null | undefined) => (v === null || v === undefined ? "" : String(v));
+
 export default async function LeadDetailView({ basePath, leadId }: { basePath: string; leadId: string }) {
-  const [lead, staff] = await Promise.all([
+  const [lead, staff, session, roomCategories, hotelCategories] = await Promise.all([
     db.lead.findUnique({
       where: { id: leadId },
-      include: { assignedTo: { select: { name: true } }, notes: { include: { author: true }, orderBy: { createdAt: "asc" } } },
+      include: {
+        assignedTo: { select: { name: true } },
+        notes: { include: { author: true }, orderBy: { createdAt: "asc" } },
+        // Quotations raised from this lead: what the "download the itinerary
+        // PDF and send it on WhatsApp" step actually links to.
+        customPackages: {
+          orderBy: { createdAt: "desc" },
+          select: { id: true, tripId: true, destinationName: true, totalAmount: true, createdAt: true },
+        },
+      },
     }),
     db.staffUser.findMany({ where: { isActive: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
+    getSession(),
+    getActiveMasterList("ROOM_CATEGORY"),
+    getActiveMasterList("HOTEL_CATEGORY"),
   ]);
 
   if (!lead) notFound();
+
+  const isAdmin = session?.role === "ADMIN";
 
   const duplicates = lead.phone
     ? await db.lead.findMany({
@@ -32,29 +67,8 @@ export default async function LeadDetailView({ basePath, leadId }: { basePath: s
       })
     : [];
 
-  const fields: { label: string; value: string }[] = [
-    ["Name", lead.name],
-    ["Phone", lead.phone],
-    ["Email", lead.email],
-    ["Trip type", lead.tripType],
-    ["Destination", lead.destinationName],
-    ["Date mode", lead.dateMode],
-    ["Start date", lead.startDate ? fmtDate(lead.startDate) : null],
-    ["End date", lead.endDate ? fmtDate(lead.endDate) : null],
-    ["Month", lead.month],
-    ["Duration", lead.days],
-    ["Package", lead.packageTitle],
-    ["Hotel", lead.hotelName],
-    ["Price/night", lead.pricePerNight ? `₹${lead.pricePerNight.toLocaleString("en-IN")}` : null],
-    ["Flight", lead.flightLabel],
-    ["From city", lead.fromCityName],
-    ["Class", lead.classLabel],
-    ["Category", lead.categoryLabel],
-    ["Price range", lead.priceLabel],
-    ["Page", lead.pageUrl],
-  ]
-    .filter((pair): pair is [string, string] => Boolean(pair[1]))
-    .map(([label, value]) => ({ label, value }));
+  const toOptions = (list: { value: string; label: string }[]) =>
+    list.map((o) => ({ value: o.value, label: o.label }));
 
   return (
     <div>
@@ -70,12 +84,29 @@ export default async function LeadDetailView({ basePath, leadId }: { basePath: s
           </h1>
           <p className="mt-1 text-sm text-ink-500">
             {sourceLabels[lead.source]} · {fmtDateTime(lead.createdAt)}
+            {lead.assignedTo && ` · assigned to ${lead.assignedTo.name}`}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
+          <LeadFavoriteButton leadId={lead.id} isFavorite={lead.isFavorite} />
           <LeadStatusSelect leadId={lead.id} status={lead.status} />
-          <LeadAssignSelect leadId={lead.id} assignedToId={lead.assignedToId} staff={staff} />
-          {basePath.startsWith("/admin") && (
+          {/* Assignment is an admin decision (see assignLeadAction). Staff see
+              who owns the lead in the subtitle above, but no control. */}
+          {isAdmin ? (
+            <LeadAssignSelect leadId={lead.id} assignedToId={lead.assignedToId} staff={staff} />
+          ) : (
+            <span className="rounded-full bg-ink-50 px-4 py-2 text-sm font-semibold text-ink-500">
+              {lead.assignedTo ? lead.assignedTo.name : "Unassigned"}
+            </span>
+          )}
+          <Link
+            href={`${basePath}/custom-packages/new?leadId=${lead.id}`}
+            className="flex items-center gap-1.5 rounded-full border border-ink-200 px-4 py-2 text-sm font-semibold text-ink-700 transition hover:border-brand-400 hover:text-brand-600"
+          >
+            <FileText className="h-4 w-4" />
+            New quotation
+          </Link>
+          {isAdmin && (
             <Link
               href={`/admin/bookings/new?leadId=${lead.id}`}
               className="flex items-center gap-1.5 rounded-full bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-brand transition hover:bg-brand-700"
@@ -107,23 +138,72 @@ export default async function LeadDetailView({ basePath, leadId }: { basePath: s
         </div>
       )}
 
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1.4fr_1fr]">
-        <div className="rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
-          <h2 className="font-heading text-base font-bold text-ink-900">Submitted details</h2>
-          <dl className="mt-4 grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
-            {fields.map((f) => (
-              <div key={f.label}>
-                <dt className="text-xs font-bold uppercase tracking-wide text-ink-500">{f.label}</dt>
-                <dd className="mt-0.5 text-sm text-ink-900">{f.value}</dd>
+      {lead.customPackages.length > 0 && (
+        <div className="mt-4 rounded-2xl border border-ink-100 bg-white p-4 shadow-sm">
+          <p className="text-sm font-semibold text-ink-900">Quotations for this lead</p>
+          <div className="mt-3 space-y-2">
+            {lead.customPackages.map((quotation) => (
+              <div
+                key={quotation.id}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-ink-50/60 px-3 py-2"
+              >
+                <div>
+                  <Link
+                    href={`${basePath}/custom-packages/${quotation.id}`}
+                    className="font-mono text-xs font-semibold text-brand-600 hover:text-brand-700"
+                  >
+                    {quotation.tripId}
+                  </Link>
+                  <p className="text-xs text-ink-500">
+                    {quotation.destinationName} · ₹{quotation.totalAmount.toLocaleString("en-IN")} ·{" "}
+                    {fmtDate(quotation.createdAt)}
+                  </p>
+                </div>
+                {/* Downloads the generated PDF straight to disk, ready to
+                    attach to a WhatsApp message. */}
+                <a
+                  href={`/api/admin/custom-packages/${quotation.id}/pdf`}
+                  className="flex items-center gap-1.5 rounded-full bg-brand-600 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-brand-700"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Download PDF
+                </a>
               </div>
             ))}
-          </dl>
-          {lead.message && (
-            <div className="mt-5 border-t border-ink-100 pt-4">
-              <dt className="text-xs font-bold uppercase tracking-wide text-ink-500">Message</dt>
-              <dd className="mt-1 text-sm leading-relaxed text-ink-900">{lead.message}</dd>
-            </div>
-          )}
+          </div>
+        </div>
+      )}
+
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1.4fr_1fr]">
+        <div className="rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
+          <LeadEditForm
+            leadId={lead.id}
+            roomCategories={toOptions(roomCategories)}
+            hotelCategories={toOptions(hotelCategories)}
+            defaults={{
+              name: str(lead.name),
+              phone: str(lead.phone),
+              email: str(lead.email),
+              status: lead.status,
+              tripType: str(lead.tripType),
+              destinationName: str(lead.destinationName),
+              startDate: toDateInput(lead.startDate),
+              endDate: toDateInput(lead.endDate),
+              month: str(lead.month),
+              days: str(lead.days),
+              packageTitle: str(lead.packageTitle),
+              adults: str(lead.adults),
+              children: str(lead.children),
+              infants: str(lead.infants),
+              childAges: lead.childAges,
+              rooms: str(lead.rooms),
+              extraBeds: str(lead.extraBeds),
+              extraMattresses: str(lead.extraMattresses),
+              roomCategory: str(lead.roomCategory),
+              hotelCategory: str(lead.hotelCategory),
+              message: str(lead.message),
+            }}
+          />
         </div>
 
         <div className="rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
@@ -131,6 +211,13 @@ export default async function LeadDetailView({ basePath, leadId }: { basePath: s
           <div className="mt-4 space-y-3">
             {lead.notes.map((note) => (
               <div key={note.id} className="rounded-xl bg-ink-50/60 p-3">
+                {note.status && (
+                  <span
+                    className={`mb-1.5 inline-block rounded-full px-2.5 py-0.5 text-[11px] font-bold ${noteStatusStyles[note.status]}`}
+                  >
+                    {noteStatusLabels[note.status]}
+                  </span>
+                )}
                 <p className="text-sm text-ink-900">{note.body}</p>
                 <p className="mt-1 text-xs text-ink-500">
                   {note.author.name} · {fmtDateTime(note.createdAt)}
@@ -140,20 +227,7 @@ export default async function LeadDetailView({ basePath, leadId }: { basePath: s
             {lead.notes.length === 0 && <p className="text-sm text-ink-500">No notes yet.</p>}
           </div>
 
-          <form action={addLeadNoteAction.bind(null, lead.id)} className="mt-4 flex flex-col gap-2">
-            <textarea
-              name="body"
-              rows={3}
-              placeholder="Add a note for the team..."
-              className="w-full rounded-xl border border-ink-200 bg-white px-3 py-2.5 text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
-            />
-            <button
-              type="submit"
-              className="self-end rounded-full bg-brand-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-brand-700"
-            >
-              Add note
-            </button>
-          </form>
+          <LeadNoteForm leadId={lead.id} />
         </div>
       </div>
     </div>
