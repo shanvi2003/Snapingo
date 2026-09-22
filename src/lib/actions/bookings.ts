@@ -7,6 +7,7 @@ import { requireStaffFeature } from "@/lib/dal";
 import { createBookingSchema, addPaymentSchema } from "@/lib/validation/booking";
 import type { BookingStatus } from "@/generated/prisma/client";
 import type { SessionPayload } from "@/lib/session";
+import { withNewTripId } from "@/lib/tripIdServer";
 
 export type FormState = { error: string } | undefined;
 
@@ -54,7 +55,34 @@ export async function createBookingAction(_prevState: FormState, formData: FormD
     return { error: parsed.error.issues[0]?.message ?? "Please check the form fields." };
   }
 
-  const booking = await db.booking.create({ data: { ...parsed.data, createdById: session.userId } });
+  // If this booking comes from a lead that already has a quotation, it
+  // inherits that quotation's Trip ID rather than drawing a new one: the
+  // customer has already been given that reference on a PDF, and handing them
+  // a second number for the same trip is exactly the confusion Trip IDs exist
+  // to prevent.
+  const existingQuotation = parsed.data.leadId
+    ? await db.customPackage.findFirst({
+        where: { leadId: parsed.data.leadId },
+        orderBy: { createdAt: "desc" },
+        select: { tripId: true },
+      })
+    : null;
+
+  const booking = existingQuotation
+    ? await db.booking.create({
+        data: { ...parsed.data, tripId: existingQuotation.tripId, createdById: session.userId },
+      })
+    : await withNewTripId((tripId) =>
+        db.booking.create({ data: { ...parsed.data, tripId, createdById: session.userId } })
+      );
+
+  // Converting a lead into a booking is what makes it Converted - that status
+  // is what the Converted Leads list reads.
+  if (parsed.data.leadId) {
+    await db.lead.update({ where: { id: parsed.data.leadId }, data: { status: "CONVERTED" } });
+    revalidatePath("/admin/leads");
+    revalidatePath("/staff/leads");
+  }
 
   revalidateBookingPaths();
   redirect(`${basePathFor(session)}/bookings/${booking.id}`);

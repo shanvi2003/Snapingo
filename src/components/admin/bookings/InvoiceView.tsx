@@ -9,7 +9,10 @@ const fmtDate = (d: Date) => d.toLocaleDateString("en-IN", { day: "numeric", mon
 export default async function InvoiceView({ bookingId }: { bookingId: string }) {
   const booking = await db.booking.findUnique({
     where: { id: bookingId },
-    include: { payments: { orderBy: { paidAt: "asc" } } },
+    include: {
+      payments: { orderBy: { paidAt: "asc" } },
+      invoice: { include: { installments: { orderBy: { order: "asc" } } } },
+    },
   });
   if (!booking) notFound();
 
@@ -17,6 +20,7 @@ export default async function InvoiceView({ bookingId }: { bookingId: string }) 
   const grandTotal = booking.totalAmount + booking.taxAmount;
   const balance = grandTotal - paid;
   const balanceDisplay = formatBalance(balance);
+  const invoice = booking.invoice;
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -32,7 +36,9 @@ export default async function InvoiceView({ bookingId }: { bookingId: string }) 
           </div>
           <div className="text-right">
             <p className="font-heading text-lg font-bold text-ink-900">INVOICE</p>
-            <p className="text-xs text-ink-500">#{booking.id.slice(-10).toUpperCase()}</p>
+            <p className="text-xs text-ink-500">
+              {invoice?.invoiceNumber ?? booking.tripId ?? `#${booking.id.slice(-10).toUpperCase()}`}
+            </p>
             <p className="text-xs text-ink-500">{fmtDate(booking.createdAt)}</p>
           </div>
         </header>
@@ -40,7 +46,18 @@ export default async function InvoiceView({ bookingId }: { bookingId: string }) 
         <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
           <div>
             <p className="text-xs font-bold uppercase tracking-wide text-ink-500">Billed To</p>
-            <p className="mt-1 text-sm font-semibold text-ink-900">{booking.travelerName}</p>
+            <p className="mt-1 text-sm font-semibold text-ink-900">
+              {invoice?.billingName ?? booking.travelerName}
+            </p>
+            {/* Billing address comes from the invoice when one has been
+                raised - a customer's billing address is regularly not the
+                traveller's contact details. */}
+            {invoice && (
+              <p className="text-sm text-ink-700">
+                {invoice.billingAddress}, {invoice.billingCity}, {invoice.billingState}{" "}
+                {invoice.billingPincode}, {invoice.billingCountry}
+              </p>
+            )}
             <p className="text-sm text-ink-700">{booking.phone}</p>
             {booking.email && <p className="text-sm text-ink-700">{booking.email}</p>}
           </div>
@@ -110,6 +127,25 @@ export default async function InvoiceView({ bookingId }: { bookingId: string }) 
             </div>
           </div>
         </div>
+
+        {invoice && invoice.installments.length > 0 && (
+          <div className="mt-8 border-t border-ink-100 pt-5">
+            <p className="text-xs font-bold uppercase tracking-wide text-ink-500">Installment Plan</p>
+            <table className="mt-2 w-full text-left text-xs">
+              <tbody>
+                {invoice.installments.map((installment, index) => (
+                  <tr key={installment.id} className="border-b border-ink-50 last:border-0">
+                    <td className="py-1.5 text-ink-700">Installment {index + 1}</td>
+                    <td className="py-1.5 text-ink-700">{fmtDate(installment.dueDate)}</td>
+                    <td className="py-1.5 text-right font-semibold text-ink-900">
+                      ₹{installment.amount.toLocaleString("en-IN")}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
         {booking.payments.length > 0 && (
           <div className="mt-8 border-t border-ink-100 pt-5">
