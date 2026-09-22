@@ -5,15 +5,17 @@ import { saveDestinationAction, type FormState } from "@/lib/actions/cms";
 import ImageUrlField from "@/components/admin/cms/ImageUrlField";
 import RepeatableRows from "@/components/admin/cms/RepeatableRows";
 import CustomSelect from "@/components/CustomSelect";
+import { slugify } from "@/lib/slug";
+import { MONTHS, formatBestTime, parseBestTime } from "@/lib/bestTime";
 
 const inputClass =
   "w-full rounded-xl border border-ink-200 bg-white px-4 py-2.5 text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100";
-// Single-value fields (a slug, a price, a duration...) never need to be
-// wider than this to show their whole value - see PackageForm for the
-// same pattern. Multi-line fields (overview, gallery URLs) keep the plain
-// w-full `inputClass` since those benefit from the extra width.
-const shortInputClass = `${inputClass} max-w-sm`;
 const labelClass = "mb-1.5 block text-xs font-bold uppercase tracking-wide text-ink-900";
+// Sections outrank field labels visually - same treatment as PackageForm.
+const sectionClass =
+  "mb-3 block border-b border-ink-100 pb-2 font-heading text-base font-bold text-ink-900";
+
+const monthOptions = MONTHS.map((m) => ({ value: m, label: m }));
 
 // Matches the icon set rendered on the public destination page
 // (src/app/(site)/destinations/[slug]/page.tsx's highlightIcons map).
@@ -44,22 +46,66 @@ export default function DestinationForm({ isNew, defaults }: { isNew: boolean; d
   );
   const [type, setType] = useState(defaults?.type ?? "domestic");
 
+  const [name, setName] = useState(defaults?.name ?? "");
+  const [slug, setSlug] = useState(defaults?.slug ?? "");
+  // Tracks whether the slug has been typed into directly. Until it has, it
+  // follows the name; after that it is left alone, so a deliberate slug is
+  // never silently overwritten by a later title tweak.
+  const [slugEdited, setSlugEdited] = useState(!isNew);
+
+  const [bestTime, setBestTime] = useState(() => parseBestTime(defaults?.bestTimeToVisit));
+  const bestTimeValue = formatBestTime(bestTime);
+
+  const updateName = (next: string) => {
+    setName(next);
+    if (!slugEdited) setSlug(slugify(next));
+  };
+
   return (
     <form action={formAction} className="mt-6 w-full space-y-6 rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+      {/* Capped and tightened like the package form, so the two columns sit
+          together instead of at opposite edges of a wide screen. */}
+      <div className="grid max-w-3xl grid-cols-1 gap-x-4 gap-y-5 sm:grid-cols-2">
+        <div>
+          {/* Labelled "Destination", though the column is still `name` - the
+              database field keeps its name, only what staff read changes. */}
+          <label className={labelClass} htmlFor="name">Destination</label>
+          <input
+            id="name"
+            name="name"
+            required
+            value={name}
+            onChange={(e) => updateName(e.target.value)}
+            className={inputClass}
+          />
+        </div>
         <div>
           <label className={labelClass} htmlFor="slug">Slug (URL)</label>
-          <input id="slug" name="slug" required readOnly={!isNew} defaultValue={defaults?.slug} placeholder="goa" className={`${shortInputClass} ${!isNew ? "bg-ink-50 text-ink-400" : ""}`} />
+          {/* Filled from the name as it is typed, but still editable on a new
+              destination - the slug is the public URL, and occasionally it
+              should read differently from the display name. On an existing
+              destination it stays read-only, since changing it would break
+              every link that already points at the page. */}
+          <input
+            id="slug"
+            name="slug"
+            required
+            readOnly={!isNew}
+            value={slug}
+            onChange={(e) => {
+              setSlug(e.target.value);
+              // Once it's been edited by hand, stop overwriting it.
+              setSlugEdited(true);
+            }}
+            placeholder="goa"
+            className={`${inputClass} ${!isNew ? "bg-ink-50 text-ink-400" : ""}`}
+          />
         </div>
-        <div>
-          <label className={labelClass} htmlFor="name">Name</label>
-          <input id="name" name="name" required defaultValue={defaults?.name} className={shortInputClass} />
-        </div>
-      </div>
 
-      <div>
-        <label className={labelClass} htmlFor="tagline">Tagline</label>
-        <input id="tagline" name="tagline" required defaultValue={defaults?.tagline} className={shortInputClass} />
+        <div className="sm:col-span-2">
+          <label className={labelClass} htmlFor="tagline">Tagline</label>
+          <input id="tagline" name="tagline" required defaultValue={defaults?.tagline} className={inputClass} />
+        </div>
       </div>
 
       <div className="max-w-xl">
@@ -71,8 +117,11 @@ export default function DestinationForm({ isNew, defaults }: { isNew: boolean; d
         <textarea id="gallery" name="gallery" rows={4} defaultValue={defaults?.gallery?.join("\n")} className={inputClass} />
       </div>
 
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-4">
-        <div className="max-w-sm">
+      {/* Four equal columns across the full row - unlike the name/slug pair
+          above, these four belong together as one band of trip facts, so they
+          share the width evenly instead of stopping short. */}
+      <div className="grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-4">
+        <div>
           <label className={labelClass} htmlFor="type">Type</label>
           <CustomSelect
             name="type"
@@ -86,21 +135,65 @@ export default function DestinationForm({ isNew, defaults }: { isNew: boolean; d
         </div>
         <div>
           <label className={labelClass} htmlFor="packagesCount">Packages Count</label>
-          <input id="packagesCount" name="packagesCount" type="number" min={0} required defaultValue={defaults?.packagesCount} className={shortInputClass} />
+          <input id="packagesCount" name="packagesCount" type="number" min={0} required defaultValue={defaults?.packagesCount} className={inputClass} />
         </div>
         <div>
           <label className={labelClass} htmlFor="startingPrice">Starting Price (₹)</label>
-          <input id="startingPrice" name="startingPrice" type="number" min={0} required defaultValue={defaults?.startingPrice} className={shortInputClass} />
+          <input id="startingPrice" name="startingPrice" type="number" min={0} required defaultValue={defaults?.startingPrice} className={inputClass} />
         </div>
         <div>
           <label className={labelClass} htmlFor="idealDuration">Ideal Duration</label>
-          <input id="idealDuration" name="idealDuration" required placeholder="5-6 days" defaultValue={defaults?.idealDuration} className={shortInputClass} />
+          <input id="idealDuration" name="idealDuration" required placeholder="5-6 days" defaultValue={defaults?.idealDuration} className={inputClass} />
         </div>
       </div>
 
       <div>
-        <label className={labelClass} htmlFor="bestTimeToVisit">Best Time to Visit</label>
-        <input id="bestTimeToVisit" name="bestTimeToVisit" required defaultValue={defaults?.bestTimeToVisit} className={shortInputClass} />
+        <p className={sectionClass}>Best Time to Visit</p>
+        {/* The three controls below are not form fields - they compose the
+            single string the website renders, which is submitted by the
+            hidden input. */}
+        <input type="hidden" name="bestTimeToVisit" value={bestTimeValue} />
+
+        <div className="grid max-w-3xl grid-cols-1 gap-x-4 gap-y-5 sm:grid-cols-3">
+          <div>
+            <label className={labelClass} htmlFor="bestTimeFrom">From</label>
+            <CustomSelect
+              value={bestTime.from}
+              onChange={(from) => setBestTime((prev) => ({ ...prev, from }))}
+              placeholder="Select month"
+              options={monthOptions}
+            />
+          </div>
+          <div>
+            <label className={labelClass} htmlFor="bestTimeTo">To</label>
+            <CustomSelect
+              value={bestTime.to}
+              onChange={(to) => setBestTime((prev) => ({ ...prev, to }))}
+              placeholder="Select month"
+              options={monthOptions}
+            />
+          </div>
+          <div>
+            <label className={labelClass} htmlFor="bestTimeNote">Note (optional)</label>
+            <input
+              id="bestTimeNote"
+              value={bestTime.note}
+              onChange={(e) => setBestTime((prev) => ({ ...prev, note: e.target.value }))}
+              placeholder="snow season, festival..."
+              className={inputClass}
+            />
+          </div>
+        </div>
+
+        <p className="mt-2 text-xs text-ink-500">
+          Shown on the website as:{" "}
+          <span className="font-semibold text-ink-800">{bestTimeValue || "—"}</span>
+        </p>
+        {!bestTimeValue && (
+          <p className="mt-1 text-xs font-medium text-red-600">
+            Pick a From and To month (or write a note) before saving.
+          </p>
+        )}
       </div>
 
       <div>
@@ -109,7 +202,7 @@ export default function DestinationForm({ isNew, defaults }: { isNew: boolean; d
       </div>
 
       <div>
-        <p className={labelClass}>Highlights</p>
+        <p className={sectionClass}>Highlights</p>
         <RepeatableRows
           name="highlights"
           addLabel="Add Highlight"
