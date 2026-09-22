@@ -17,8 +17,16 @@ import { inferPackageCategories } from "../src/lib/packageCategoryHelpers";
 // Standalone client here (not src/lib/db.ts) since this script runs outside
 // the Next.js app via `tsx`, not as a serverless function — no need for the
 // globalThis-caching or the tight connection cap that runtime code needs.
+//
+// DIRECT_URL first, not DATABASE_URL: this script holds one connection open
+// for hundreds of sequential creates, which is exactly what a transaction
+// pooler (Supabase's Supavisor in transaction mode, Render's old PgBouncer)
+// is not built for - it's tuned for many short, isolated queries, not one
+// long-lived session, and drops the connection partway through a run like
+// this one. DIRECT_URL is the session-mode connection every other seed
+// script here already prefers for the same reason.
 const adapter = new PrismaPg({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.DIRECT_URL ?? process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
 });
 const db = new PrismaClient({ adapter });
