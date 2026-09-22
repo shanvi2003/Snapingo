@@ -6,8 +6,10 @@ import {
   BarChart3,
   BedDouble,
   CalendarCheck,
+  CalendarClock,
   CheckCircle2,
   Download,
+  FileText,
   HelpCircle,
   Inbox,
   LayoutDashboard,
@@ -16,6 +18,7 @@ import {
   Newspaper,
   Package,
   Plane,
+  PlaneTakeoff,
   Receipt,
   Search,
   Settings,
@@ -26,6 +29,7 @@ import {
   Users,
   Wallet,
   Wrench,
+  XCircle,
 } from "lucide-react";
 import { requireSession } from "@/lib/dal";
 import { db } from "@/lib/db";
@@ -41,8 +45,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   const newLeadCount = await db.lead.count({ where: { status: "NEW" } });
 
   return (
-    <PanelShell
-      title="Admin Panel"
+    <PanelShell      title="Admin Panel"
       rootHref="/admin"
       sections={[
         {
@@ -62,6 +65,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
             { href: "/admin/cms/service-categories", label: "Homepage Categories", icon: <LayoutGrid className="h-full w-full" /> },
             { href: "/admin/cms/trust-logos", label: "Trust Logos", icon: <Award className="h-full w-full" /> },
             { href: "/admin/cms/usps", label: "Why Choose Us", icon: <Sparkles className="h-full w-full" /> },
+            { href: "/admin/cms/pdf-content", label: "Itinerary PDF Content", icon: <FileText className="h-full w-full" /> },
           ],
         },
         {
@@ -70,8 +74,13 @@ export default async function AdminLayout({ children }: { children: ReactNode })
             { href: "/admin/search", label: "Customer Search", icon: <Search className="h-full w-full" /> },
             { href: "/admin/leads", label: "Leads", icon: <Inbox className="h-full w-full" />, badge: newLeadCount },
             { href: "/admin/activities", label: "Lead Activities", icon: <Activity className="h-full w-full" /> },
+            { href: "/admin/leads-converted", label: "Converted Leads", icon: <CheckCircle2 className="h-full w-full" /> },
+            { href: "/admin/leads-cancelled", label: "Cancelled Leads", icon: <XCircle className="h-full w-full" /> },
             { href: "/admin/bookings", label: "Booking Management", icon: <CalendarCheck className="h-full w-full" /> },
+            { href: "/admin/trips-ongoing", label: "Ongoing Trips", icon: <PlaneTakeoff className="h-full w-full" /> },
+            { href: "/admin/trips-upcoming", label: "Upcoming Trips", icon: <CalendarClock className="h-full w-full" /> },
             { href: "/admin/trips", label: "Complete Trips", icon: <CheckCircle2 className="h-full w-full" /> },
+            { href: "/admin/custom-packages", label: "Customized Packages", icon: <FileText className="h-full w-full" /> },
             { href: "/admin/payments", label: "Payments", icon: <Wallet className="h-full w-full" /> },
             { href: "/admin/invoices", label: "Invoices", icon: <Receipt className="h-full w-full" /> },
           ],

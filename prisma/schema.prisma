@@ -40,24 +40,28 @@ enum StaffJobRole {
 }
 
 model StaffUser {
-  id                  String         @id @default(cuid())
+  id                  String           @id @default(cuid())
   name                String
-  email               String         @unique
+  email               String           @unique
   passwordHash        String
-  role                StaffRole      @default(STAFF)
+  role                StaffRole        @default(STAFF)
   jobRole             StaffJobRole?
-  isActive            Boolean        @default(true)
+  isActive            Boolean          @default(true)
   // Brute-force lockout: failedLoginAttempts resets to 0 on any successful
   // login; hitting the threshold in src/lib/actions/auth.ts sets lockedUntil
   // instead of letting the counter grow unbounded.
-  failedLoginAttempts Int            @default(0)
+  failedLoginAttempts Int              @default(0)
   lockedUntil         DateTime?
-  createdAt           DateTime       @default(now())
-  updatedAt           DateTime       @updatedAt
-  assignedLeads       Lead[]         @relation("AssignedTo")
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  assignedLeads       Lead[]           @relation("AssignedTo")
   leadNotes           LeadNote[]
-  bookings            Booking[]      @relation("BookingCreatedBy")
-  payments            Payment[]      @relation("PaymentRecordedBy")
+  bookings            Booking[]        @relation("BookingCreatedBy")
+  customPackages      CustomPackage[]  @relation("CustomPackageCreatedBy")
+  invoices            Invoice[]        @relation("InvoiceCreatedBy")
+  vouchers            BookingVoucher[] @relation("VoucherUploadedBy")
+  emails              EmailLog[]       @relation("EmailSentBy")
+  payments            Payment[]        @relation("PaymentRecordedBy")
   notifications       Notification[]
 }
 
@@ -89,12 +93,31 @@ enum LeadSource {
   META_ADS
 }
 
+// ASSIGNED sits between NEW and CONTACTED on purpose: the client's rule is
+// that a lead stays "New" no matter how many times staff open it, and only
+// stops being New once an admin assigns it to someone. CANCELLED is the
+// outcome the "Won't Book With Me" note reason sets, and is what the
+// Cancelled Leads list reads.
 enum LeadStatus {
   NEW
+  ASSIGNED
   CONTACTED
   QUOTED
   CONVERTED
+  CANCELLED
   CLOSED
+}
+
+// Preset reasons staff pick when adding a note. Behaviour-bearing (picking
+// WONT_BOOK_WITH_ME also cancels the lead), which is why these are a real
+// enum rather than admin-editable MasterOption rows - an admin renaming a
+// row must not be able to silently change what a status does.
+enum LeadNoteStatus {
+  TRAVELER_NOT_REACHABLE
+  WONT_BOOK_WITH_ME
+  TALK_IN_PROGRESS_WITH_TRAVELER
+  TRAVELER_WILL_FINALIZE
+  MY_HOT
 }
 
 model Lead {
@@ -130,6 +153,24 @@ model Lead {
   categoryLabel String?
   priceLabel    String?
 
+  // Party composition and room requirements. Nullable rather than defaulted:
+  // a website enquiry form doesn't ask for any of this, so "not stated yet"
+  // and "zero children" are genuinely different answers, and a default of 0
+  // would make an unanswered lead look like a confirmed solo traveller.
+  adults          Int?
+  children        Int?
+  infants         Int?
+  childAges       String[] @default([])
+  rooms           Int?
+  extraBeds       Int?
+  extraMattresses Int?
+  roomCategory    String?
+  hotelCategory   String?
+
+  // Staff pin important leads here; per-lead rather than per-user because the
+  // team works one shared inbox, not private ones.
+  isFavorite Boolean @default(false)
+
   // Free text
   message String?
 
@@ -140,12 +181,17 @@ model Lead {
   pageUrl   String?
   userAgent String?
 
-  assignedTo    StaffUser?     @relation("AssignedTo", fields: [assignedToId], references: [id])
-  assignedToId  String?
-  notes         LeadNote[]
-  activities    LeadActivity[]
-  bookings      Booking[]
-  notifications Notification[]
+  assignedTo     StaffUser?      @relation("AssignedTo", fields: [assignedToId], references: [id])
+  assignedToId   String?
+  // When assignment happened, which is what moves a lead out of "New". Kept
+  // separate from updatedAt so an unrelated edit doesn't look like a
+  // reassignment in reporting.
+  assignedAt     DateTime?
+  notes          LeadNote[]
+  activities     LeadActivity[]
+  bookings       Booking[]
+  customPackages CustomPackage[]
+  notifications  Notification[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -187,13 +233,20 @@ model Notification {
 }
 
 model LeadNote {
-  id        String    @id @default(cuid())
-  lead      Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  id        String          @id @default(cuid())
+  lead      Lead            @relation(fields: [leadId], references: [id], onDelete: Cascade)
   leadId    String
-  author    StaffUser @relation(fields: [authorId], references: [id])
+  author    StaffUser       @relation(fields: [authorId], references: [id])
   authorId  String
+  // Optional because notes written before preset reasons existed have none,
+  // and a plain note with no status is still allowed.
+  status    LeadNoteStatus?
+  // Required by the form whenever a status is picked - the client asked that
+  // a reason can never be saved blank.
   body      String
-  createdAt DateTime  @default(now())
+  createdAt DateTime        @default(now())
+
+  @@index([leadId, createdAt])
 }
 
 // System-generated timeline entries (created/status changed/assigned/note
@@ -231,8 +284,14 @@ enum BookingStatus {
 }
 
 model Booking {
-  id              String        @id @default(cuid())
-  lead            Lead?         @relation(fields: [leadId], references: [id])
+  id     String  @id @default(cuid())
+  // Customer-facing reference, drawn from the same yearly sequence as a
+  // quotation's (see src/lib/tripId.ts) so one number identifies a trip
+  // wherever staff look it up - invoice list, lead search, WhatsApp message.
+  // Nullable because bookings created before Trip IDs existed have none.
+  tripId String? @unique
+
+  lead            Lead?            @relation(fields: [leadId], references: [id])
   leadId          String?
   travelerName    String
   phone           String
@@ -243,17 +302,126 @@ model Booking {
   travelStartDate DateTime?
   travelEndDate   DateTime?
   totalAmount     Int
-  taxAmount       Int           @default(0)
-  status          BookingStatus @default(PENDING)
+  taxAmount       Int              @default(0)
+  status          BookingStatus    @default(PENDING)
   notes           String?
-  createdBy       StaffUser     @relation("BookingCreatedBy", fields: [createdById], references: [id])
+  createdBy       StaffUser        @relation("BookingCreatedBy", fields: [createdById], references: [id])
   createdById     String
   payments        Payment[]
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  invoice         Invoice?
+  vouchers        BookingVoucher[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
 
   @@index([status])
   @@index([createdAt])
+  // Ongoing / Upcoming / Complete are derived from the travel dates on every
+  // read rather than moved by a scheduled job, so this index is what keeps
+  // those three lists cheap.
+  @@index([travelStartDate, travelEndDate])
+}
+
+// A formal invoice raised against a booking: billing address plus the
+// installment plan the customer agreed to. One per booking - re-issuing means
+// editing this one, not creating a second document with a different number.
+model Invoice {
+  id            String  @id @default(cuid())
+  invoiceNumber String  @unique
+  booking       Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  bookingId     String  @unique
+
+  billingName    String
+  billingAddress String
+  billingCity    String
+  billingState   String
+  billingCountry String @default("India")
+  billingPincode String
+
+  // Copied from the booking at issue time. The installments must add up to
+  // exactly this (enforced in the action), which is the validation the client
+  // asked for - an invoice whose parts don't match the package cost can't be
+  // created at all.
+  totalAmount Int
+
+  installments InvoiceInstallment[]
+
+  createdBy   StaffUser @relation("InvoiceCreatedBy", fields: [createdById], references: [id])
+  createdById String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// Booking vouchers staff upload (hotel confirmation, flight ticket, cab
+// voucher). Many per booking: a trip regularly has one per service.
+//
+// Only the blob URL is stored - the file itself lives in private blob storage
+// and is never publicly readable. Downloads go through an authenticated admin
+// route that streams it back, so a leaked URL on its own is not enough to
+// read a customer's paperwork.
+model BookingVoucher {
+  id          String  @id @default(cuid())
+  booking     Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  bookingId   String
+  label       String?
+  fileName    String
+  blobUrl     String
+  contentType String
+  size        Int
+
+  uploadedBy   StaffUser @relation("VoucherUploadedBy", fields: [uploadedById], references: [id])
+  uploadedById String
+  createdAt    DateTime  @default(now())
+
+  @@index([bookingId, createdAt])
+}
+
+enum EmailKind {
+  ITINERARY
+  INVOICE
+  VOUCHER
+  CUSTOM
+}
+
+enum EmailStatus {
+  SENT
+  FAILED
+}
+
+// Record of every message sent to a customer from the panel.
+//
+// Worth its own table rather than a log line: "did we actually send them the
+// invoice, and when?" is a question staff ask constantly, and a failed send
+// that nobody notices is worse than one that errors loudly.
+model EmailLog {
+  id      String      @id @default(cuid())
+  to      String
+  subject String
+  kind    EmailKind
+  status  EmailStatus
+  error   String?
+
+  bookingId       String?
+  customPackageId String?
+  leadId          String?
+
+  sentBy    StaffUser @relation("EmailSentBy", fields: [sentById], references: [id])
+  sentById  String
+  createdAt DateTime  @default(now())
+
+  @@index([createdAt])
+  @@index([bookingId])
+  @@index([customPackageId])
+}
+
+model InvoiceInstallment {
+  id        String   @id @default(cuid())
+  invoice   Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  invoiceId String
+  order     Int
+  dueDate   DateTime
+  amount    Int
+
+  @@index([invoiceId, order])
 }
 
 model Payment {
@@ -270,31 +438,255 @@ model Payment {
 }
 
 // ---------------------------------------------------------------------------
+// Customized packages (quotations). Deliberately a separate model from
+// `Package` rather than a flag on it: a Package is website content, and every
+// public query reads that table. Keeping quotations in their own table means
+// there is no way for one to leak onto the site by someone forgetting a
+// `where` clause - the site simply never reads from here.
+//
+// A quotation is built for one named customer, priced once, and rendered to a
+// PDF that staff send over WhatsApp. It is not published, not indexed and has
+// no public URL.
+// ---------------------------------------------------------------------------
+
+model CustomPackage {
+  id     String @id @default(cuid())
+  // Customer-facing reference printed on the PDF, e.g. SNP-2026-0042.
+  // Generated in src/lib/tripId.ts; unique so a retry can never hand two
+  // quotations the same number.
+  tripId String @unique
+
+  // Who it's for. Free text rather than a Customer table: staff quote for
+  // people who are not yet in the system, and forcing a record first would
+  // put a step between a phone call and a PDF.
+  customerName  String
+  customerPhone String?
+  customerEmail String?
+
+  // Optional origin lead, so a quotation raised from the leads inbox can be
+  // traced back (and, in a later phase, downloaded straight from that lead).
+  lead   Lead?   @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  leadId String?
+
+  destinationName String
+  startDate       DateTime?
+  endDate         DateTime?
+  durationNights  Int
+  durationDays    Int
+
+  // Party composition. Infant ages are a small string list rather than their
+  // own table - they only ever appear as a printed note on the quotation.
+  adults          Int      @default(1)
+  children        Int      @default(0)
+  infants         Int      @default(0)
+  childAges       String[] @default([])
+  rooms           Int      @default(1)
+  extraBeds       Int      @default(0)
+  extraMattresses Int      @default(0)
+
+  // MasterOption.value slugs (ROOM_CATEGORY / HOTEL_CATEGORY), plus the
+  // free-text spill-over when "Other (Specify)" is chosen.
+  roomCategory      String?
+  roomCategoryOther String?
+  hotelCategory     String?
+
+  inclusions       String[] @default([])
+  customInclusions String[] @default([])
+
+  vehicleName String?
+
+  // Money is stored in whole rupees, like Booking/Payment. gstPercent is
+  // copied onto the row at save time rather than read live from Settings, so
+  // reprinting an old quotation can't silently restate its tax at a rate that
+  // was introduced later.
+  price       Int
+  gstPercent  Float @default(5)
+  gstAmount   Int   @default(0)
+  totalAmount Int   @default(0)
+
+  notes String?
+
+  days  CustomPackageDay[]
+  stays CustomPackageStay[]
+
+  createdBy   StaffUser @relation("CustomPackageCreatedBy", fields: [createdById], references: [id])
+  createdById String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdAt])
+  @@index([createdById])
+}
+
+model CustomPackageDay {
+  id              String        @id @default(cuid())
+  customPackage   CustomPackage @relation(fields: [customPackageId], references: [id], onDelete: Cascade)
+  customPackageId String
+  day             Int
+  // Per-day calendar date, which the website's package itinerary has no
+  // concept of - a quotation is for specific travel dates.
+  date            DateTime?
+  title           String
+  desc            String
+
+  @@index([customPackageId, day])
+}
+
+// One hotel block of a stay. Repeatable because a multi-city trip books a
+// different property in each city, which is exactly what the website
+// itinerary used to *guess* from the package price.
+model CustomPackageStay {
+  id              String        @id @default(cuid())
+  customPackage   CustomPackage @relation(fields: [customPackageId], references: [id], onDelete: Cascade)
+  customPackageId String
+  order           Int           @default(0)
+  city            String?
+  nights          Int?
+  hotelName       String
+  hotelCategory   String?
+  roomCategory    String?
+  rooms           Int           @default(1)
+  extraBed        Boolean       @default(false)
+  extraMattress   Boolean       @default(false)
+
+  @@index([customPackageId, order])
+}
+
+// ---------------------------------------------------------------------------
+// Admin-editable master data. Everything here exists so that no dropdown
+// option, policy paragraph or tax rate has to live in a TypeScript literal:
+// staff can add an inclusion or reword the cancellation policy without a
+// deploy, and the itinerary PDF reads the same rows the admin panel edits.
+// ---------------------------------------------------------------------------
+
+// Which dropdown/checkbox list a MasterOption row belongs to. Adding a new
+// *kind* of list is a schema change (rare); adding values to an existing one
+// is an ordinary admin action (common), which is the split this enum is for.
+enum MasterListKey {
+  PACKAGE_INCLUSION
+  PACKAGE_BADGE
+  ROOM_CATEGORY
+  HOTEL_CATEGORY
+  VEHICLE_TYPE
+}
+
+model MasterOption {
+  id       String        @id @default(cuid())
+  list     MasterListKey
+  // Stable slug stored on referencing rows (e.g. Package.inclusions). Never
+  // changes once created, so `label` can be reworded freely without a data
+  // migration.
+  value    String
+  label    String
+  // lucide-react icon name (e.g. "Plane") for the lists the public site
+  // renders with icons. Resolved through an explicit allow-list registry,
+  // not dynamic import - see src/lib/icons.ts.
+  icon     String?
+  order    Int           @default(0)
+  // Soft-delete: an option that packages already reference must keep
+  // rendering, but shouldn't be offered on new forms.
+  isActive Boolean       @default(true)
+  // Marks the "Other (Specify)" style row that reveals a free-text box
+  // instead of being a plain checkbox value.
+  freeText Boolean       @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([list, value])
+  @@index([list, order])
+}
+
+// Long-form, staff-editable copy. These are the blocks the itinerary PDF
+// used to hardcode in JSX (About Snapingo, T&C, Payment/Cancellation policy,
+// bank account details). Stored as plain text; a line starting with "- " is
+// rendered as a bullet, everything else as a paragraph.
+enum ContentBlockKey {
+  PDF_ABOUT
+  PDF_TERMS
+  PDF_PAYMENT_POLICY
+  PDF_CANCELLATION_POLICY
+  PDF_ACCOUNT_DETAILS
+  PDF_DISCLAIMER
+}
+
+model ContentBlock {
+  key       ContentBlockKey @id
+  title     String
+  body      String
+  updatedAt DateTime        @updatedAt
+}
+
+// Small scalar settings that don't deserve a column anywhere (GST rate, the
+// operation-head contact printed on every itinerary, the Trip ID prefix).
+// Values are stored as strings and parsed at the read site, which keeps this
+// table stable as new settings appear.
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
 // CMS content — mirrors src/data/*.ts field-for-field so ids/slugs never change
 // ---------------------------------------------------------------------------
 
 model Package {
-  id              String         @id
-  title           String
-  destination     String
-  destinationSlug String
-  type            String
-  image           String
-  duration        String
-  price           Int
-  originalPrice   Int
-  rating          Float
-  reviews         Int
-  inclusions      String[]
-  exclusions      String[]
-  highlights      String[]
-  badge           String?
-  featured        Boolean        @default(false)
-  hotDeal         Boolean        @default(false)
-  categories      String[]
-  itinerary       ItineraryDay[]
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  // The slug the public URL uses (/packages/goa-beach-bliss). Derived from the
+  // title on create and never changed afterwards, since every link to the
+  // package in the wild points at it.
+  id String @id
+
+  // The reference staff actually use: SNP-2026-01. Prefix comes from the same
+  // `trip_id_prefix` setting as Trip IDs, and the sequence restarts each year.
+  //
+  // Deliberately separate from `id`: a code is easy to read out and search by,
+  // a slug is what search engines want, and one value can't be good at both.
+  // The slug stays the public URL and is simply not shown on the form.
+  //
+  // Nullable only so the column could be added to a live table - the same
+  // migration backfills every existing row, and new packages always get one.
+  code String? @unique
+
+  title            String
+  destination      String
+  destinationSlug  String
+  type             String
+  image            String
+  // Human-readable display string ("5 Nights / 6 Days") kept as the single
+  // value every public component already renders. It is now *derived* from
+  // durationNights/durationDays on save rather than typed by hand, so the
+  // two can never disagree - see src/lib/durationHelpers.ts.
+  duration         String
+  durationNights   Int?
+  durationDays     Int?
+  price            Int
+  originalPrice    Int
+  rating           Float
+  reviews          Int
+  // MasterOption.value strings from the PACKAGE_INCLUSION list. Anything
+  // NOT ticked here is rendered as an exclusion (see getEffectiveExclusions
+  // in src/lib/inclusionHelpers.ts) - staff no longer fill exclusions
+  // separately.
+  inclusions       String[]
+  // Free-text inclusions staff typed that aren't in the master list (the
+  // "Other (Specify)" box). Kept separate from `inclusions` so the master
+  // list stays a closed vocabulary that can be relabelled centrally.
+  customInclusions String[]       @default([])
+  // Manual override only. Left empty on new packages, where exclusions are
+  // derived from the unticked master inclusions instead; a non-empty value
+  // still wins so the 148 pre-existing packages keep their curated lists.
+  exclusions       String[]
+  highlights       String[]
+  badge            String?
+  featured         Boolean        @default(false)
+  hotDeal          Boolean        @default(false)
+  tripsSold        Int            @default(0)
+  categories       String[]
+  itinerary        ItineraryDay[]
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
 }
 
 model ItineraryDay {

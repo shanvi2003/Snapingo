@@ -5,8 +5,10 @@ import {
   Award,
   BedDouble,
   CalendarCheck,
+  CalendarClock,
   CheckCircle2,
   HelpCircle,
+  FileText,
   Inbox,
   LayoutDashboard,
   LayoutGrid,
@@ -14,11 +16,14 @@ import {
   Newspaper,
   Package as PackageIcon,
   Plane,
+  PlaneTakeoff,
+  Receipt,
   Search,
   Settings,
   Sparkles,
   Star,
   Wrench,
+  XCircle,
 } from "lucide-react";
 import { requireSession } from "@/lib/dal";
 import { db } from "@/lib/db";
@@ -54,9 +59,15 @@ export default async function StaffLayout({ children }: { children: ReactNode })
   const leadsBookingsItems = [
     can("leads") && { href: "/staff/leads", label: "Leads", icon: <Inbox className="h-full w-full" />, badge: newLeadCount },
     can("leadActivities") && { href: "/staff/activities", label: "Lead Activities", icon: <Activity className="h-full w-full" /> },
+    can("leads") && { href: "/staff/leads-converted", label: "Converted Leads", icon: <CheckCircle2 className="h-full w-full" /> },
+    can("leads") && { href: "/staff/leads-cancelled", label: "Cancelled Leads", icon: <XCircle className="h-full w-full" /> },
     can("customerSearch") && { href: "/staff/search", label: "Customer Search", icon: <Search className="h-full w-full" /> },
     can("bookings") && { href: "/staff/bookings", label: "Booking Management", icon: <CalendarCheck className="h-full w-full" /> },
+    can("bookings") && { href: "/staff/invoices", label: "Invoices", icon: <Receipt className="h-full w-full" /> },
+    can("bookings") && { href: "/staff/trips-ongoing", label: "Ongoing Trips", icon: <PlaneTakeoff className="h-full w-full" /> },
+    can("bookings") && { href: "/staff/trips-upcoming", label: "Upcoming Trips", icon: <CalendarClock className="h-full w-full" /> },
     can("completeTrips") && { href: "/staff/trips", label: "Complete Trips", icon: <CheckCircle2 className="h-full w-full" /> },
+    can("customPackages") && { href: "/staff/custom-packages", label: "Customized Packages", icon: <FileText className="h-full w-full" /> },
   ].filter(Boolean) as PanelNavSection["items"];
   if (leadsBookingsItems.length > 0) {
     sections.push({ heading: "Leads & Bookings", items: leadsBookingsItems });
@@ -96,8 +107,7 @@ export default async function StaffLayout({ children }: { children: ReactNode })
   });
 
   return (
-    <PanelShell
-      title="Staff Panel"
+    <PanelShell      title="Staff Panel"
       rootHref="/staff"
       sections={sections}
     >

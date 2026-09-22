@@ -9,6 +9,12 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["framer-motion"],
   },
+  // Both packages ship or locate native/binary files at runtime - the bundled
+  // Chromium build and puppeteer's own launcher. Bundling them rewrites the
+  // paths they use to find those files, so the itinerary PDF route fails at
+  // runtime on the server while working perfectly in dev. Keeping them
+  // external leaves them as plain node_modules requires.
+  serverExternalPackages: ["@sparticuz/chromium", "puppeteer-core"],
   // The site has no legitimate reason to ever render inside someone else's
   // page - blocking all framing is what stops a third party from iframing
   // snapingo.com behind their own URL and having it look like the site

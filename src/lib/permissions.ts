@@ -11,6 +11,7 @@ export type StaffFeature =
   | "customerSearch"
   | "bookings"
   | "completeTrips"
+  | "customPackages"
   | "blogEdit"
   | "reviewsEdit"
   | "packagesEdit"
@@ -26,7 +27,7 @@ export type StaffFeature =
 export const staffFeatureGroups: { heading: string; features: StaffFeature[] }[] = [
   {
     heading: "Leads & Bookings",
-    features: ["leads", "leadActivities", "customerSearch", "bookings", "completeTrips"],
+    features: ["leads", "leadActivities", "customerSearch", "bookings", "completeTrips", "customPackages"],
   },
   {
     heading: "Content",
@@ -50,6 +51,7 @@ export const featureLabels: Record<StaffFeature, string> = {
   customerSearch: "Customer Search",
   bookings: "Booking Management",
   completeTrips: "Complete Trips",
+  customPackages: "Customized Packages",
   packagesEdit: "Packages",
   destinationsEdit: "Destinations",
   hotelsEdit: "Hotels",
@@ -65,6 +67,7 @@ export const featureDescriptions: Record<StaffFeature, string> = {
   customerSearch: "Search customers by name, phone or email across leads and bookings.",
   bookings: "Create and manage bookings and record payments.",
   completeTrips: "Mark bookings as completed once travel is finished.",
+  customPackages: "Create customer quotations and generate their itinerary PDFs. These never appear on the website.",
   packagesEdit: "Create, edit and delete tour packages.",
   destinationsEdit: "Create, edit and delete destinations.",
   hotelsEdit: "Create, edit and delete hotels.",
@@ -92,7 +95,7 @@ export const featuresWithViewFallback: StaffFeature[] = [
 // deployment (or a role an admin hasn't touched on /admin/permissions yet)
 // starts here, but an admin's actual edits always take priority over this.
 export const defaultRolePermissions: Record<StaffJobRole, StaffFeature[]> = {
-  TRAVEL_EXECUTIVE: ["leads", "leadActivities", "customerSearch", "bookings", "completeTrips"],
+  TRAVEL_EXECUTIVE: ["leads", "leadActivities", "customerSearch", "bookings", "completeTrips", "customPackages"],
   BDE: ["leads", "leadActivities", "customerSearch"],
   SOCIAL_MEDIA_EXECUTIVE: [
     "leads",

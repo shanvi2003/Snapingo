@@ -18,8 +18,21 @@ import {
 // defaultRolePermissions in permissions.ts gets caught instead of silently
 // shipping. An admin's own edits on /admin/permissions live in the DB
 // (src/lib/rolePermissions.ts) and are intentionally not covered here.
+//
+// "customPackages" was added for TRAVEL_EXECUTIVE when customized packages
+// shipped: the requirement is that staff fill the quotation form for a
+// customer they are already speaking to, and the Travel Executive is the role
+// that does that. Every other role starts without it, and an admin can grant
+// it on /admin/permissions.
 const expectedMatrix: Record<StaffJobRole, StaffFeature[]> = {
-  TRAVEL_EXECUTIVE: ["leads", "leadActivities", "customerSearch", "bookings", "completeTrips"],
+  TRAVEL_EXECUTIVE: [
+    "leads",
+    "leadActivities",
+    "customerSearch",
+    "bookings",
+    "completeTrips",
+    "customPackages",
+  ],
   BDE: ["leads", "leadActivities", "customerSearch"],
   SOCIAL_MEDIA_EXECUTIVE: [
     "leads",
