@@ -6,7 +6,8 @@ import {
   inferVehicleType,
 } from "@/lib/itineraryPdfHelpers";
 import { siteConfig } from "@/lib/siteConfig";
-import { getContentBlock, parseContentBody, type ContentBlockView } from "@/lib/contentBlocks";
+import { parseContentBody, resolveContentBlocks, type ContentBlockView } from "@/lib/contentBlocks";
+import { db } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
 import type { ContentBlockKey } from "@/generated/prisma/enums";
 
@@ -79,16 +80,19 @@ export default async function ItineraryPrintView({ pkg }: { pkg: TourPackage }) 
   // The policy copy and the operation-head contact used to be string literals
   // in this file, which meant a wording change was a code change. They are
   // admin-editable rows now; this component just renders whatever is stored.
-  const blockKeys: ContentBlockKey[] = [
-    "PDF_ABOUT",
-    "PDF_TERMS",
-    "PDF_PAYMENT_POLICY",
-    "PDF_CANCELLATION_POLICY",
-    "PDF_ACCOUNT_DETAILS",
-    "PDF_DISCLAIMER",
-  ];
-  const [about, terms, paymentPolicy, cancellationPolicy, accountDetails, disclaimer] =
-    await Promise.all(blockKeys.map((key) => getContentBlock(key)));
+  // Each package can carry its own copy of these sections (edited on its
+  // package form); any it doesn't have come from the standard content.
+  // Packages from the static fallback data have no row, so they get the
+  // standard content throughout.
+  const stored = await db.package.findUnique({ where: { id: pkg.id }, select: { contentBlocks: true } });
+  const blocks = await resolveContentBlocks(stored?.contentBlocks);
+  const block = (key: ContentBlockKey) => blocks.find((b) => b.key === key) ?? { key, title: "", body: "" };
+  const about = block("PDF_ABOUT");
+  const terms = block("PDF_TERMS");
+  const paymentPolicy = block("PDF_PAYMENT_POLICY");
+  const cancellationPolicy = block("PDF_CANCELLATION_POLICY");
+  const accountDetails = block("PDF_ACCOUNT_DETAILS");
+  const disclaimer = block("PDF_DISCLAIMER");
   const settings = await getSettings();
   const operationHead = {
     name: settings.operation_head_name,

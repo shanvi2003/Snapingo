@@ -1,6 +1,6 @@
 import "server-only";
 import { db } from "@/lib/db";
-import { getContentBlocks } from "@/lib/contentBlocks";
+import { resolveContentBlocks } from "@/lib/contentBlocks";
 import { getSettings } from "@/lib/settings";
 import { getMasterList } from "@/lib/masterData";
 import { getEffectiveExclusions, resolveInclusions } from "@/lib/inclusionHelpers";
@@ -16,7 +16,7 @@ import type { CustomItineraryContext, CustomItineraryData } from "@/lib/pdf/cust
 export async function loadCustomItinerary(
   id: string
 ): Promise<{ data: CustomItineraryData; context: CustomItineraryContext } | null> {
-  const [quotation, inclusionOptions, roomOptions, hotelOptions, blocks, settings] =
+  const [quotation, inclusionOptions, roomOptions, hotelOptions, settings] =
     await Promise.all([
       db.customPackage.findUnique({
         where: { id },
@@ -28,11 +28,13 @@ export async function loadCustomItinerary(
       getMasterList("PACKAGE_INCLUSION"),
       getMasterList("ROOM_CATEGORY"),
       getMasterList("HOTEL_CATEGORY"),
-      getContentBlocks(),
       getSettings(),
     ]);
 
   if (!quotation) return null;
+
+  // The quotation's own PDF sections, standard content for any it lacks.
+  const blocks = await resolveContentBlocks(quotation.contentBlocks);
 
   const roomLabels = new Map(roomOptions.map((o) => [o.value, o.label]));
   const hotelLabels = new Map(hotelOptions.map((o) => [o.value, o.label]));

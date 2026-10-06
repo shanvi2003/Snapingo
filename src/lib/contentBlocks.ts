@@ -2,6 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { db } from "@/lib/db";
 import type { ContentBlockKey } from "@/generated/prisma/enums";
+import { readStoredContentBlocks } from "@/lib/validation/contentBlocks";
 
 export type ContentBlockView = {
   key: ContentBlockKey;
@@ -37,6 +38,18 @@ export async function getContentBlocks(): Promise<ContentBlockView[]> {
   return contentBlockDefinitions.map(
     (def) => stored.get(def.key) ?? { key: def.key, title: def.title, body: "" }
   );
+}
+
+/**
+ * The blocks one package or quotation prints: its own saved copy where it has
+ * one, the standard content for any block it doesn't. Packages and quotations
+ * saved before they could carry their own copy (`contentBlocks` null) get the
+ * standard content throughout.
+ */
+export async function resolveContentBlocks(stored: unknown): Promise<ContentBlockView[]> {
+  const own = new Map(readStoredContentBlocks(stored).map((b) => [b.key, b]));
+  const standard = await getContentBlocks();
+  return standard.map((block) => own.get(block.key) ?? block);
 }
 
 export async function getContentBlock(key: ContentBlockKey): Promise<ContentBlockView> {

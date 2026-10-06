@@ -75,7 +75,7 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
   if (!from.includes("@")) {
     return {
       ok: false,
-      error: "No sender address is configured. Set it in Admin → Itinerary PDF Content.",
+      error: "No sender address is configured. Set it in Admin → Settings.",
     };
   }
 

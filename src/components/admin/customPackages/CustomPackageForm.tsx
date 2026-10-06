@@ -18,12 +18,13 @@ import { dayOptions, MAX_DURATION_NIGHTS, nightOptions } from "@/lib/durationHel
 import { calculateGst, formatRupees } from "@/lib/gst";
 import SuggestInput from "@/components/admin/SuggestInput";
 import ItineraryDays, { datesFromStart, type DayRow } from "@/components/admin/customPackages/ItineraryDays";
+import ContentBlocksEditor, { type EditableContentBlock } from "@/components/admin/ContentBlocksEditor";
+import FormSection from "@/components/admin/FormSection";
 
 const inputClass =
   "w-full rounded-xl border border-ink-200 bg-white px-4 py-2.5 text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100";
 const shortInputClass = `${inputClass} max-w-sm`;
 const labelClass = "mb-1.5 block text-xs font-bold uppercase tracking-wide text-ink-900";
-const cardClass = "rounded-2xl border border-ink-100 bg-white p-6 shadow-sm";
 
 export type Option = { value: string; label: string; freeText?: boolean };
 
@@ -73,19 +74,11 @@ export type CustomPackageDefaults = {
   notes?: string;
   days?: Record<string, string>[];
   stays?: Record<string, string>[];
+  // This quotation's own PDF sections; absent = start from the standard ones.
+  contentBlocks?: EditableContentBlock[];
 };
 
-function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
-  return (
-    <section className={cardClass}>
-      <div className="border-b border-ink-100 pb-3">
-        <h2 className="font-heading text-xl font-extrabold text-ink-900">{title}</h2>
-        {hint && <p className="mt-1 text-sm text-ink-500">{hint}</p>}
-      </div>
-      <div className="mt-5">{children}</div>
-    </section>
-  );
-}
+const Section = FormSection;
 
 type FormProps = {
   isNew: boolean;
@@ -100,6 +93,8 @@ type FormProps = {
   roomCategories: Option[];
   hotelCategories: Option[];
   gstPercent: number;
+  // The standard PDF sections: the starting copy, and what "Reset" restores.
+  standardContentBlocks: EditableContentBlock[];
 };
 
 type Draft = { savedAt: number; values: CustomPackageDefaults };
@@ -170,6 +165,7 @@ function formToDefaults(form: HTMLFormElement): CustomPackageDefaults {
     customInclusions: (str("customInclusions") ?? "").split("\n").filter(Boolean),
     price: num("price"),
     notes: str("notes"),
+    contentBlocks: rows("contentBlocks") as EditableContentBlock[],
   };
 }
 
@@ -234,6 +230,7 @@ function CustomPackageFormBody({
   roomCategories,
   hotelCategories,
   gstPercent,
+  standardContentBlocks,
   draftKey,
   restoredAt,
   onDiscardDraft,
@@ -684,6 +681,15 @@ function CustomPackageFormBody({
           <label className={labelClass} htmlFor="notes">Internal notes (not printed)</label>
           <textarea id="notes" name="notes" rows={3} defaultValue={defaults?.notes} className={inputClass} />
         </div>
+      </Section>
+
+      <Section title="Standard Content">
+        {/* An empty list (a draft saved before this section existed) falls
+            back to the standard copy rather than an empty editor. */}
+        <ContentBlocksEditor
+          initial={defaults?.contentBlocks?.length ? defaults.contentBlocks : standardContentBlocks}
+          standard={standardContentBlocks}
+        />
       </Section>
 
       {state && "error" in state && (

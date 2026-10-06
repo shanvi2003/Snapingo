@@ -5,6 +5,7 @@ import { getGstPercent } from "@/lib/settings";
 import { getSuggestionSets } from "@/lib/suggestions";
 import CustomPackageForm, { type CustomPackageDefaults } from "@/components/admin/customPackages/CustomPackageForm";
 import { parseDuration } from "@/lib/durationHelpers";
+import { getContentBlocks, resolveContentBlocks } from "@/lib/contentBlocks";
 
 // <input type="date"> only accepts yyyy-mm-dd, and toISOString() would shift
 // the day backwards for anyone east of UTC (which is everyone here) - so the
@@ -112,6 +113,15 @@ export default async function CustomPackageFormPage({
 
   if (customPackageId && !quotation) notFound();
 
+  // The quotation's own PDF sections where it saved some; a new quotation
+  // starts from the standard ones (passed separately, below).
+  const [standardContentBlocks, quotationContentBlocks] = await Promise.all([
+    getContentBlocks(),
+    quotation ? resolveContentBlocks(quotation.contentBlocks) : null,
+  ]);
+  const toEditable = (list: { key: string; title: string; body: string }[]) =>
+    list.map((b) => ({ key: b.key, title: b.title, body: b.body }));
+
   const heading = editLeadId
     ? `Edit Lead${lead?.name ? ` — ${lead.name}` : ""}`
     : isNew
@@ -138,6 +148,7 @@ export default async function CustomPackageFormPage({
         roomCategories={toOptions(roomCategories)}
         hotelCategories={toOptions(hotelCategories)}
         gstPercent={gstPercent}
+        standardContentBlocks={toEditable(standardContentBlocks)}
         defaults={
           quotation
             ? {
@@ -167,6 +178,7 @@ export default async function CustomPackageFormPage({
                 vehicleName: quotation.vehicleName ?? undefined,
                 price: quotation.price,
                 notes: quotation.notes ?? undefined,
+                contentBlocks: quotationContentBlocks ? toEditable(quotationContentBlocks) : undefined,
                 days: quotation.days.map((d) => ({
                   date: toDateInput(d.date) ?? "",
                   title: d.title,

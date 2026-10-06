@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { contentBlocksField } from "@/lib/validation/contentBlocks";
 
 const linesToArray = (v: unknown) =>
   typeof v === "string" ? v.split("\n").map((s) => s.trim()).filter(Boolean) : [];
@@ -69,6 +70,9 @@ export const customPackageSchema = z.object({
   price: z.coerce.number().int().nonnegative(),
 
   notes: optionalText(4000),
+
+  // This quotation's own copy of the PDF sections (About, Terms...).
+  contentBlocks: contentBlocksField,
 
   days: jsonRows.transform((rows) =>
     rows

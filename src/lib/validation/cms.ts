@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { isAllowedImageSource, imageSourceMessage } from "@/lib/imageHosts";
+import { contentBlocksField } from "@/lib/validation/contentBlocks";
 
 const linesToArray = (v: unknown) =>
   typeof v === "string" ? v.split("\n").map((s) => s.trim()).filter(Boolean) : [];
@@ -73,6 +74,8 @@ export const packageSchema = z.object({
   itinerary: jsonRows.transform((rows) =>
     rows.map((r, i) => ({ day: i + 1, title: r.title ?? "", desc: r.desc ?? "" }))
   ),
+  // This package's own copy of the PDF sections (About, Terms...).
+  contentBlocks: contentBlocksField,
 });
 
 export const destinationSchema = z.object({

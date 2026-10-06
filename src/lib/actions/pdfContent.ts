@@ -4,39 +4,28 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireSession } from "@/lib/dal";
-import { contentBlockDefinitions } from "@/lib/contentBlocks";
 import { settingDefinitions, settingKeys, type SettingKey } from "@/lib/settings";
 
 export type FormState = { error: string } | { success: string } | undefined;
 
-const titleSchema = z.string().trim().min(1, "Every section needs a heading.").max(120);
-const bodySchema = z.string().trim().max(8000, "That section is too long (8,000 characters max).");
 const settingValueSchema = z.string().trim().max(300);
 
 /**
- * Saves the policy copy and scalar settings that the itinerary PDF renders.
+ * Saves the company-wide settings (GST rate, operation-head contact, Trip ID
+ * prefix, email sender).
  *
- * Admin-only, deliberately: these blocks appear on every package's PDF and on
- * documents sent to customers, so this is not something a staff account with
- * `packagesEdit` should be able to reword. The package form shows them
- * read-only and only renders its Edit button for admins - this check is what
- * actually enforces that, since a Server Action can be POSTed directly.
+ * Admin-only, deliberately: these reach every customer-facing document, and a
+ * Server Action can be POSTed directly, so this check is what enforces it.
+ *
+ * The PDF's text sections are no longer saved here: each package and
+ * quotation keeps its own copy, edited on its own form. The ContentBlock rows
+ * this used to write remain as the standard copy new ones start from.
  */
 export async function savePdfContentAction(
   _prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
   await requireSession(["ADMIN"]);
-
-  const blocks: { key: (typeof contentBlockDefinitions)[number]["key"]; title: string; body: string }[] = [];
-
-  for (const def of contentBlockDefinitions) {
-    const title = titleSchema.safeParse(formData.get(`title.${def.key}`) ?? "");
-    const body = bodySchema.safeParse(formData.get(`body.${def.key}`) ?? "");
-    if (!title.success) return { error: title.error.issues[0]?.message ?? "Check the headings." };
-    if (!body.success) return { error: body.error.issues[0]?.message ?? "Check the content." };
-    blocks.push({ key: def.key, title: title.data, body: body.data });
-  }
 
   const settings: { key: SettingKey; value: string }[] = [];
   for (const key of settingKeys) {
@@ -57,29 +46,20 @@ export async function savePdfContentAction(
     }
   }
 
-  // One transaction: a half-saved policy set would mean customers receiving
-  // PDFs that mix old and new wording.
-  await db.$transaction([
-    ...blocks.map((block) =>
-      db.contentBlock.upsert({
-        where: { key: block.key },
-        update: { title: block.title, body: block.body },
-        create: block,
-      })
-    ),
-    ...settings.map((setting) =>
+  // One transaction, so the settings never end up half-saved.
+  await db.$transaction(
+    settings.map((setting) =>
       db.setting.upsert({
         where: { key: setting.key },
         update: { value: setting.value },
         create: setting,
       })
-    ),
-  ]);
+    )
+  );
 
-  revalidatePath("/admin/cms/pdf-content");
-  // Every package's public page renders the itinerary PDF, so the copy change
-  // has to reach all of them, not just the admin screen.
+  revalidatePath("/admin/settings");
+  // The operation-head contact prints on every package's PDF.
   revalidatePath("/packages", "layout");
 
-  return { success: "Saved. All itinerary PDFs now use this content." };
+  return { success: "Settings saved." };
 }

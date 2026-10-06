@@ -68,7 +68,6 @@ export default async function AdminLayout({ children }: { children: ReactNode })
             { href: "/admin/cms/service-categories", label: "Homepage Categories", icon: <LayoutGrid className="h-full w-full" /> },
             { href: "/admin/cms/trust-logos", label: "Trust Logos", icon: <Award className="h-full w-full" /> },
             { href: "/admin/cms/usps", label: "Why Choose Us", icon: <Sparkles className="h-full w-full" /> },
-            { href: "/admin/cms/pdf-content", label: "Itinerary PDF Content", icon: <FileText className="h-full w-full" /> },
           ],
         },
         {

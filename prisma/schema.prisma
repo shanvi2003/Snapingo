@@ -509,6 +509,10 @@ model CustomPackage {
 
   notes String?
 
+  // This quotation's own copy of the PDF content blocks, as on Package.
+  // Null = the standard content from ContentBlock.
+  contentBlocks Json?
+
   days  CustomPackageDay[]
   stays CustomPackageStay[]
 
@@ -689,6 +693,10 @@ model Package {
   tripsSold        Int            @default(0)
   categories       String[]
   itinerary        ItineraryDay[]
+  // This package's own copy of the PDF content blocks ([{ key, title, body }],
+  // see src/lib/validation/contentBlocks.ts). Null = the standard content
+  // from ContentBlock, which is what every package had before this existed.
+  contentBlocks    Json?
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
 }

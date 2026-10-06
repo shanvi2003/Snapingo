@@ -2,18 +2,15 @@
 
 import { useActionState } from "react";
 import { savePdfContentAction, type FormState } from "@/lib/actions/pdfContent";
-import type { ContentBlockKey } from "@/generated/prisma/enums";
 
 const inputClass =
   "w-full rounded-xl border border-ink-200 bg-white px-4 py-2.5 text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100";
 const labelClass = "mb-1.5 block text-xs font-bold uppercase tracking-wide text-ink-900";
 
 export default function PdfContentForm({
-  blocks,
   settings,
   settingFields,
 }: {
-  blocks: { key: ContentBlockKey; title: string; body: string }[];
   settings: Record<string, string>;
   settingFields: { key: string; label: string; help: string }[];
 }) {
@@ -46,39 +43,6 @@ export default function PdfContentForm({
           ))}
         </div>
       </div>
-
-      {blocks.map((block) => (
-        <div key={block.key} className="rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
-          <div>
-            <label className={labelClass} htmlFor={`title.${block.key}`}>
-              Section heading
-            </label>
-            <input
-              id={`title.${block.key}`}
-              name={`title.${block.key}`}
-              defaultValue={block.title}
-              required
-              className={`${inputClass} max-w-sm`}
-            />
-          </div>
-          <div className="mt-4">
-            <label className={labelClass} htmlFor={`body.${block.key}`}>
-              Content
-            </label>
-            <textarea
-              id={`body.${block.key}`}
-              name={`body.${block.key}`}
-              rows={7}
-              defaultValue={block.body}
-              className={inputClass}
-            />
-            <p className="mt-1 text-xs text-ink-500">
-              Start a line with <code className="rounded bg-ink-50 px-1">-</code> to make it a
-              bullet point. Everything else becomes a paragraph. Leave empty to hide the section.
-            </p>
-          </div>
-        </div>
-      ))}
 
       {state && "error" in state && (
         <p className="rounded-lg bg-red-50 px-4 py-2.5 text-sm font-medium text-red-600">{state.error}</p>
