@@ -4,12 +4,10 @@ import { useActionState } from "react";
 import { saveBlogPostAction, type FormState } from "@/lib/actions/cms";
 import ImageUrlField from "@/components/admin/cms/ImageUrlField";
 import RepeatableRows from "@/components/admin/cms/RepeatableRows";
+import FormSection from "@/components/admin/FormSection";
 
 const inputClass =
   "w-full rounded-xl border border-ink-200 bg-white px-4 py-2.5 text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100";
-// Single-value fields never need to be wider than this to show their whole
-// value - see PackageForm for the same pattern.
-const shortInputClass = `${inputClass} max-w-sm`;
 const labelClass = "mb-1.5 block text-xs font-bold uppercase tracking-wide text-ink-900";
 
 export type BlogPostDefaults = {
@@ -31,64 +29,72 @@ export default function BlogPostForm({ isNew, defaults }: { isNew: boolean; defa
   );
 
   return (
-    <form action={formAction} className="mt-6 w-full space-y-6 rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-        <div>
-          <label className={labelClass} htmlFor="id">Post ID (URL slug)</label>
-          <input id="id" name="id" required readOnly={!isNew} defaultValue={defaults?.id} placeholder="b7" className={`${shortInputClass} ${!isNew ? "bg-ink-50 text-ink-400" : ""}`} />
+    <form action={formAction} className="mt-6 w-full space-y-6">
+      <FormSection title="Basic details">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+          <div>
+            <label className={labelClass} htmlFor="id">Post ID (URL slug)</label>
+            <input
+              id="id"
+              name="id"
+              required
+              readOnly={!isNew}
+              defaultValue={defaults?.id}
+              placeholder="b7"
+              className={`${inputClass} ${!isNew ? "bg-ink-50 text-ink-400" : ""}`}
+            />
+          </div>
+          {/* Two columns: a blog title is a full sentence ("A First-Timer's
+              Guide to..."), not a short label like the post ID. */}
+          <div className="sm:col-span-2">
+            <label className={labelClass} htmlFor="title">Title</label>
+            <input id="title" name="title" required defaultValue={defaults?.title} className={inputClass} />
+          </div>
         </div>
-        <div>
-          <label className={labelClass} htmlFor="title">Title</label>
-          {/* Wider than the other short fields on purpose - a blog title is
-              a full sentence ("A First-Timer's Guide to..."), not a short
-              label like a post ID, so it gets more room to show at once. */}
-          <input id="title" name="title" required defaultValue={defaults?.title} className={`${inputClass} max-w-xl`} />
+
+        <div className="mt-5">
+          <label className={labelClass} htmlFor="excerpt">Excerpt</label>
+          <textarea id="excerpt" name="excerpt" rows={3} required defaultValue={defaults?.excerpt} className={inputClass} />
         </div>
-      </div>
+      </FormSection>
 
-      <div className="max-w-2xl">
-        <label className={labelClass} htmlFor="excerpt">Excerpt</label>
-        <textarea id="excerpt" name="excerpt" rows={2} required defaultValue={defaults?.excerpt} className={inputClass} />
-      </div>
+      <FormSection title="Post details">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div>
+            <label className={labelClass} htmlFor="category">Category</label>
+            <input id="category" name="category" required defaultValue={defaults?.category} className={inputClass} />
+          </div>
+          <div>
+            <label className={labelClass} htmlFor="author">Author</label>
+            <input id="author" name="author" required defaultValue={defaults?.author} className={inputClass} />
+          </div>
+          <div>
+            <label className={labelClass} htmlFor="date">Date</label>
+            <input id="date" name="date" type="date" required defaultValue={defaults?.date?.slice(0, 10)} className={inputClass} />
+          </div>
+          <div>
+            <label className={labelClass} htmlFor="readTime">Read Time</label>
+            <input id="readTime" name="readTime" required placeholder="6 min read" defaultValue={defaults?.readTime} className={inputClass} />
+          </div>
+        </div>
+      </FormSection>
 
-      <div className="max-w-xl">
+      <FormSection title="Cover image">
         <ImageUrlField name="image" label="Cover Image URL" defaultValue={defaults?.image} required />
-      </div>
+      </FormSection>
 
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-4">
-        <div>
-          <label className={labelClass} htmlFor="category">Category</label>
-          <input id="category" name="category" required defaultValue={defaults?.category} className={shortInputClass} />
-        </div>
-        <div>
-          <label className={labelClass} htmlFor="readTime">Read Time</label>
-          <input id="readTime" name="readTime" required placeholder="6 min read" defaultValue={defaults?.readTime} className={shortInputClass} />
-        </div>
-        <div>
-          <label className={labelClass} htmlFor="author">Author</label>
-          <input id="author" name="author" required defaultValue={defaults?.author} className={shortInputClass} />
-        </div>
-        <div>
-          <label className={labelClass} htmlFor="date">Date</label>
-          <input id="date" name="date" type="date" required defaultValue={defaults?.date?.slice(0, 10)} className={shortInputClass} />
-        </div>
-      </div>
-
-      <div>
-        <p className={labelClass}>Content Sections</p>
-        <div className="max-w-3xl">
-          <RepeatableRows
-            name="content"
-            addLabel="Add Section"
-            stacked
-            fields={[
-              { key: "heading", label: "Heading (optional)", type: "text" },
-              { key: "body", label: "Body", type: "textarea" },
-            ]}
-            initialRows={defaults?.content ?? []}
-          />
-        </div>
-      </div>
+      <FormSection title="Content">
+        <RepeatableRows
+          name="content"
+          addLabel="Add Section"
+          stacked
+          fields={[
+            { key: "heading", label: "Heading (optional)", type: "text" },
+            { key: "body", label: "Body", type: "textarea" },
+          ]}
+          initialRows={defaults?.content ?? []}
+        />
+      </FormSection>
 
       {state?.error && <p className="rounded-lg bg-red-50 px-4 py-2.5 text-sm font-medium text-red-600">{state.error}</p>}
 
