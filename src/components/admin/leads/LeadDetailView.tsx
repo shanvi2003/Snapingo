@@ -2,11 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, CalendarPlus, Download, FileText, Users } from "lucide-react";
 import { db } from "@/lib/db";
-import { getSession } from "@/lib/dal";
+import { canUseStaffFeature, getSession } from "@/lib/dal";
 import { getActiveMasterList } from "@/lib/masterData";
 import {
   noteStatusLabels,
-  noteStatusStyles,
+  noteStatusTextStyles,
   sourceLabels,
   statusLabels,
   statusStyles,
@@ -34,7 +34,7 @@ function toDateInput(value: Date | null): string {
 const str = (v: string | number | null | undefined) => (v === null || v === undefined ? "" : String(v));
 
 export default async function LeadDetailView({ basePath, leadId }: { basePath: string; leadId: string }) {
-  const [lead, staff, session, roomCategories, hotelCategories] = await Promise.all([
+  const [lead, staff, session, roomCategories, hotelCategories, canQuote] = await Promise.all([
     db.lead.findUnique({
       where: { id: leadId },
       include: {
@@ -52,6 +52,9 @@ export default async function LeadDetailView({ basePath, leadId }: { basePath: s
     getSession(),
     getActiveMasterList("ROOM_CATEGORY"),
     getActiveMasterList("HOTEL_CATEGORY"),
+    // Edit opens the full quotation form only for those allowed to save one;
+    // anyone else (e.g. BDE) keeps the inline details form.
+    canUseStaffFeature("customPackages"),
   ]);
 
   if (!lead) notFound();
@@ -174,10 +177,13 @@ export default async function LeadDetailView({ basePath, leadId }: { basePath: s
         </div>
       )}
 
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1.4fr_1fr]">
-        <div className="rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
+      {/* Details and notes share one card, side by side, split by a divider
+          (stacked on narrow screens). */}
+      <div className="mt-6 grid grid-cols-1 divide-y divide-ink-100 rounded-2xl border border-ink-100 bg-white shadow-sm lg:grid-cols-[1.4fr_1fr] lg:divide-x lg:divide-y-0">
+        <div className="p-6">
           <LeadEditForm
             leadId={lead.id}
+            editHref={canQuote ? `${basePath}/${lead.id}/edit` : undefined}
             roomCategories={toOptions(roomCategories)}
             hotelCategories={toOptions(hotelCategories)}
             defaults={{
@@ -206,24 +212,31 @@ export default async function LeadDetailView({ basePath, leadId }: { basePath: s
           />
         </div>
 
-        <div className="rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
+        <div className="p-6">
           <h2 className="font-heading text-base font-bold text-ink-900">Notes</h2>
-          <div className="mt-4 space-y-3">
-            {lead.notes.map((note) => (
-              <div key={note.id} className="rounded-xl bg-ink-50/60 p-3">
-                {note.status && (
-                  <span
-                    className={`mb-1.5 inline-block rounded-full px-2.5 py-0.5 text-[11px] font-bold ${noteStatusStyles[note.status]}`}
-                  >
-                    {noteStatusLabels[note.status]}
-                  </span>
-                )}
-                <p className="text-sm text-ink-900">{note.body}</p>
-                <p className="mt-1 text-xs text-ink-500">
-                  {note.author.name} · {fmtDateTime(note.createdAt)}
-                </p>
-              </div>
-            ))}
+          <div className="mt-4">
+            {/* A plain log: the note first, then who/when on one quiet line,
+                rows split by hairlines - no per-note boxes or badges. */}
+            {lead.notes.length > 0 && (
+              <ol className="divide-y divide-ink-100">
+                {lead.notes.map((note) => (
+                  <li key={note.id} className="py-3 first:pt-0">
+                    <p className="whitespace-pre-line text-sm leading-relaxed text-black">{note.body}</p>
+                    <p className="mt-1 text-xs text-ink-500">
+                      {note.status && (
+                        <>
+                          <span className={`font-semibold ${noteStatusTextStyles[note.status]}`}>
+                            {noteStatusLabels[note.status]}
+                          </span>
+                          {" · "}
+                        </>
+                      )}
+                      {note.author.name} · {fmtDateTime(note.createdAt)}
+                    </p>
+                  </li>
+                ))}
+              </ol>
+            )}
             {lead.notes.length === 0 && <p className="text-sm text-ink-500">No notes yet.</p>}
           </div>
 

@@ -86,7 +86,7 @@ export default function NotificationBell({
             <div className="border-b border-ink-100 px-4 py-3">
               <p className="text-sm font-bold text-ink-900">Notifications</p>
             </div>
-            <div className="max-h-96 overflow-y-auto">
+            <div className="scrollbar-thin max-h-96 overflow-y-auto">
               {items.length === 0 ? (
                 <p className="px-4 py-8 text-center text-sm text-ink-500">No notifications yet.</p>
               ) : (

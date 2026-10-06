@@ -55,7 +55,7 @@ export default function PanelShell({
             <NotificationBell leadsBasePath={leadsBasePath} align="left" />
           </div>
 
-          <div className="flex-1 overflow-y-auto">
+          <div className="scrollbar-thin flex-1 overflow-y-auto">
             <PanelNav sections={sections} rootHref={rootHref} />
           </div>
 

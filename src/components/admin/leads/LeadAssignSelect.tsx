@@ -16,7 +16,8 @@ export default function LeadAssignSelect({
   const [pending, startTransition] = useTransition();
 
   return (
-    <div className={pending ? "pointer-events-none opacity-60" : undefined}>
+    // Fixed width, like LeadStatusSelect, so the staff menu has room to read.
+    <div className={`w-48 ${pending ? "pointer-events-none opacity-60" : ""}`}>
       <CustomSelect
         value={assignedToId ?? ""}
         onChange={(next) => startTransition(() => assignLeadAction(leadId, next || null))}

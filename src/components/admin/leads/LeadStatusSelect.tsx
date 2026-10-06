@@ -14,7 +14,9 @@ export default function LeadStatusSelect({ leadId, status }: { leadId: string; s
   const [pending, startTransition] = useTransition();
 
   return (
-    <div className={pending ? "pointer-events-none opacity-60" : undefined}>
+    // A fixed width: sized to its label alone ("New"), the trigger - and the
+    // menu, which opens at the trigger's width - were too narrow to read.
+    <div className={`w-44 ${pending ? "pointer-events-none opacity-60" : ""}`}>
       <CustomSelect
         value={status}
         onChange={(next) => startTransition(() => updateLeadStatusAction(leadId, next as LeadStatus))}

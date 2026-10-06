@@ -2,7 +2,8 @@ import Link from "next/link";
 import { Activity, PenLine, ShieldCheck, UserPlus2 } from "lucide-react";
 import { db } from "@/lib/db";
 import { LeadActivityType } from "@/generated/prisma/enums";
-import FilterSelect from "@/components/admin/FilterSelect";
+import AutoSearchInput from "@/components/admin/AutoSearchInput";
+import { AutoFilterSelect } from "@/components/admin/AutoFilter";
 
 const icons: Record<LeadActivityType, typeof Activity> = {
   CREATED: Activity,
@@ -51,18 +52,11 @@ export default async function LeadActivitiesPage({
       <h1 className="font-heading text-2xl font-bold text-ink-900">Lead Activities</h1>
       <p className="mt-1 text-sm text-ink-500">Recent activity across every lead.</p>
 
-      <form className="mt-6 flex flex-wrap gap-3" action={`${basePath}/activities`} method="get">
-        <input
-          type="text"
-          name="q"
-          defaultValue={q}
-          placeholder="Search lead name, phone or activity..."
-          className="min-w-[240px] flex-1 rounded-xl border border-ink-200 bg-white px-4 py-2.5 text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
-        />
+      <div className="mt-6 flex flex-wrap gap-3">
+        <AutoSearchInput placeholder="Search lead name, phone or activity..." />
         <div className="w-52">
-          <FilterSelect
-            name="type"
-            defaultValue={type ?? ""}
+          <AutoFilterSelect
+            paramName="type"
             placeholder="All activity types"
             options={[
               { value: "", label: "All activity types" },
@@ -70,10 +64,7 @@ export default async function LeadActivitiesPage({
             ]}
           />
         </div>
-        <button type="submit" className="rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-700">
-          Filter
-        </button>
-      </form>
+      </div>
 
       <div className="mt-6 space-y-2">
         {activities.map((a) => {

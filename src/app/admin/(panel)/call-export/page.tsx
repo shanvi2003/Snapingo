@@ -2,7 +2,7 @@ import { Download } from "lucide-react";
 import { db } from "@/lib/db";
 import { LeadSource, LeadStatus } from "@/generated/prisma/enums";
 import { sourceLabels, statusLabels } from "@/components/admin/leads/statusStyles";
-import FilterSelect from "@/components/admin/FilterSelect";
+import { AutoFilterSelect } from "@/components/admin/AutoFilter";
 
 export default async function CallExportPage({
   searchParams,
@@ -31,11 +31,10 @@ export default async function CallExportPage({
       <p className="mt-1 text-sm text-ink-500">Export lead contact details as a CSV file for calling campaigns.</p>
 
       <div className="mt-6 max-w-lg rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
-        <form className="flex flex-wrap gap-3" action="/admin/call-export" method="get">
+        <div className="flex flex-wrap gap-3">
           <div className="w-48">
-            <FilterSelect
-              name="source"
-              defaultValue={source ?? ""}
+            <AutoFilterSelect
+              paramName="source"
               placeholder="All sources"
               options={[
                 { value: "", label: "All sources" },
@@ -44,9 +43,8 @@ export default async function CallExportPage({
             />
           </div>
           <div className="w-44">
-            <FilterSelect
-              name="status"
-              defaultValue={status ?? ""}
+            <AutoFilterSelect
+              paramName="status"
               placeholder="All statuses"
               options={[
                 { value: "", label: "All statuses" },
@@ -54,10 +52,7 @@ export default async function CallExportPage({
               ]}
             />
           </div>
-          <button type="submit" className="rounded-xl border border-ink-200 px-5 py-2.5 text-sm font-semibold text-ink-700 hover:bg-ink-50">
-            Apply Filter
-          </button>
-        </form>
+        </div>
 
         <p className="mt-5 text-sm text-ink-700">
           <span className="font-heading text-2xl font-extrabold text-ink-900">{count}</span> lead{count === 1 ? "" : "s"} match this filter.

@@ -44,6 +44,21 @@ export async function requireSession(
 // are honored immediately - this is what every gated Server Action calls to
 // actually enforce a mutation; see proxy.ts for why the page-level story is
 // different.
+/**
+ * Whether the signed-in user may use a feature, without redirecting - for
+ * pages that show a control only to those who can act on it. Not a security
+ * check: the Server Action behind the control still calls requireStaffFeature.
+ */
+export async function canUseStaffFeature(feature: StaffFeature): Promise<boolean> {
+  const session = await getSession();
+  if (!session) return false;
+  if (session.role === "ADMIN") return true;
+
+  const user = await db.staffUser.findUnique({ where: { id: session.userId }, select: { jobRole: true } });
+  const features = user?.jobRole ? await getRolePermissions(user.jobRole) : [];
+  return hasFeature(features, feature);
+}
+
 export async function requireStaffFeature(feature: StaffFeature): Promise<SessionPayload> {
   const session = await requireSession(["ADMIN", "STAFF"], "/staff/login");
   if (session.role === "ADMIN") return session;

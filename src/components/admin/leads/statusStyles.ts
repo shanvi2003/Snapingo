@@ -57,3 +57,13 @@ export const noteStatusStyles: Record<LeadNoteStatus, string> = {
   TRAVELER_WILL_FINALIZE: "bg-indigo-50 text-indigo-700",
   MY_HOT: "bg-brand-50 text-brand-700",
 };
+
+// Text colour alone, for places that name the status inline rather than as a
+// tinted pill (the lead page's notes list).
+export const noteStatusTextStyles: Record<LeadNoteStatus, string> = {
+  TRAVELER_NOT_REACHABLE: "text-amber-700",
+  WONT_BOOK_WITH_ME: "text-red-700",
+  TALK_IN_PROGRESS_WITH_TRAVELER: "text-blue-700",
+  TRAVELER_WILL_FINALIZE: "text-indigo-700",
+  MY_HOT: "text-brand-700",
+};

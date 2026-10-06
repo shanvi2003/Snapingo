@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
+import AutoSearchInput from "@/components/admin/AutoSearchInput";
 
 export default async function AdminPaymentsPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const { q } = await searchParams;
@@ -23,18 +24,9 @@ export default async function AdminPaymentsPage({ searchParams }: { searchParams
         {payments.length} payment{payments.length === 1 ? "" : "s"} · ₹{totalCollected.toLocaleString("en-IN")} collected
       </p>
 
-      <form className="mt-6 flex gap-3" action="/admin/payments" method="get">
-        <input
-          type="text"
-          name="q"
-          defaultValue={q}
-          placeholder="Search traveler name or payment mode..."
-          className="min-w-[240px] flex-1 rounded-xl border border-ink-200 bg-white px-4 py-2.5 text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
-        />
-        <button type="submit" className="rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-700">
-          Search
-        </button>
-      </form>
+      <div className="mt-6 flex gap-3">
+        <AutoSearchInput placeholder="Search traveler name or payment mode..." />
+      </div>
 
       <div className="mt-6 overflow-x-auto rounded-2xl border border-ink-100 bg-white shadow-sm">
         <table className="w-full min-w-[640px] text-left text-sm">

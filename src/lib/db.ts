@@ -54,11 +54,52 @@ const adapter = new PrismaPg({
   idleTimeoutMillis: 60_000,
 });
 
-const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
+// Reads that are safe to simply run again: they change nothing, so a second
+// attempt can't duplicate or half-apply anything.
+const READ_OPERATIONS = new Set([
+  "findUnique",
+  "findUniqueOrThrow",
+  "findFirst",
+  "findFirstOrThrow",
+  "findMany",
+  "count",
+  "aggregate",
+  "groupBy",
+]);
+
+// The Supabase pooler closes connections that sit idle, and the pool only
+// finds out when the next query is sent down one - which then fails with
+// "Connection terminated unexpectedly" (seen on the admin layout's lead
+// count). The broken connection is discarded by then, so one retry runs on a
+// fresh one. Writes are never retried: whether the first attempt reached the
+// database is unknown, and running a create twice would duplicate it.
+function isDroppedConnection(error: unknown): boolean {
+  const text = error instanceof Error ? `${error.message} ${String(error.cause ?? "")}` : String(error);
+  return /Connection terminated|terminating connection|ECONNRESET|socket hang up/i.test(text);
+}
+
+function createClient() {
+  return new PrismaClient({ adapter }).$extends({
+    query: {
+      async $allOperations({ operation, args, query }) {
+        try {
+          return await query(args);
+        } catch (error) {
+          if (!READ_OPERATIONS.has(operation) || !isDroppedConnection(error)) throw error;
+          return query(args);
+        }
+      },
+    },
+  });
+}
+
+type DbClient = ReturnType<typeof createClient>;
+
+const globalForPrisma = globalThis as unknown as { prisma?: DbClient };
 
 // Cached on globalThis so warm serverless invocations (and Next dev's hot
 // reload) reuse the same client instead of opening a fresh pool every time.
-export const db = globalForPrisma.prisma ?? new PrismaClient({ adapter });
+export const db = globalForPrisma.prisma ?? createClient();
 
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = db;

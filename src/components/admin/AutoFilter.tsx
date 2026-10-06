@@ -4,12 +4,9 @@ import CustomSelect, { type SelectOption } from "@/components/CustomSelect";
 import { useUrlFilters } from "@/hooks/useUrlFilters";
 
 /**
- * Dropdown filter that applies the moment it changes.
- *
- * FilterSelect (the older sibling) is for filter bars that are a native GET
- * form with a Filter button; these apply instantly, which is what the client
- * asked for on the leads list. No `name` is passed to CustomSelect on purpose
- * - the value travels through the URL, not a form submission.
+ * Dropdown filter that applies the moment it changes - no Filter button.
+ * No `name` is passed to CustomSelect on purpose - the value travels through
+ * the URL, not a form submission.
  */
 export function AutoFilterSelect({
   paramName,

@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { Search } from "lucide-react";
 import { db } from "@/lib/db";
+import AutoSearchInput from "@/components/admin/AutoSearchInput";
 
 // One row per matching lead or booking - `type` is kept (not just for
 // display) since it's what decides which detail page this row's link
@@ -75,22 +75,9 @@ export default async function CustomerSearchPage({
       <h1 className="font-heading text-2xl font-bold text-ink-900">Customer Search</h1>
       <p className="mt-1 text-sm text-ink-500">Search by name, phone or email across leads and bookings.</p>
 
-      <form className="mt-6 flex gap-3" action={`${basePath}/search`} method="get">
-        <div className="relative flex-1">
-          <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
-          <input
-            type="text"
-            name="q"
-            defaultValue={q}
-            autoFocus
-            placeholder="Search customer..."
-            className="w-full rounded-xl border border-ink-200 bg-white py-2.5 pl-11 pr-4 text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
-          />
-        </div>
-        <button type="submit" className="rounded-xl bg-brand-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-brand-700">
-          Search
-        </button>
-      </form>
+      <div className="mt-6 flex gap-3">
+        <AutoSearchInput placeholder="Search customer..." />
+      </div>
 
       {query && (
         <div className="mt-8 overflow-x-auto rounded-2xl border border-ink-100 bg-white shadow-sm">

@@ -5,7 +5,8 @@ import { BookingStatus } from "@/generated/prisma/enums";
 import { bookingStatusLabels, bookingStatusStyles } from "@/components/admin/bookingStyles";
 import DeleteButton from "@/components/admin/cms/DeleteButton";
 import { deleteBookingAction } from "@/lib/actions/bookings";
-import FilterSelect from "@/components/admin/FilterSelect";
+import AutoSearchInput from "@/components/admin/AutoSearchInput";
+import { AutoFilterSelect } from "@/components/admin/AutoFilter";
 import { formatBalance } from "@/lib/money";
 import Pagination, { PAGE_SIZE } from "@/components/admin/Pagination";
 
@@ -65,19 +66,12 @@ export default async function BookingsListPage({
         </Link>
       </div>
 
-      <form className="mt-6 flex flex-wrap gap-3" action={listPath} method="get">
-        <input
-          type="text"
-          name="q"
-          defaultValue={q}
-          placeholder="Search traveler name or phone..."
-          className="min-w-[220px] flex-1 rounded-xl border border-ink-200 bg-white px-4 py-2.5 text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
-        />
+      <div className="mt-6 flex flex-wrap gap-3">
+        <AutoSearchInput placeholder="Search traveler name or phone..." />
         {!fixedStatus && (
           <div className="w-44">
-            <FilterSelect
-              name="status"
-              defaultValue={params.status ?? ""}
+            <AutoFilterSelect
+              paramName="status"
               placeholder="All statuses"
               options={[
                 { value: "", label: "All statuses" },
@@ -86,10 +80,7 @@ export default async function BookingsListPage({
             />
           </div>
         )}
-        <button type="submit" className="rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-700">
-          {fixedStatus ? "Search" : "Filter"}
-        </button>
-      </form>
+      </div>
 
       <div className="mt-6 overflow-x-auto rounded-2xl border border-ink-100 bg-white shadow-sm">
         <table className="w-full min-w-[820px] text-left text-sm">

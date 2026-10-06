@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import Link from "next/link";
 import { Pencil, X } from "lucide-react";
 import { updateLeadDetailsAction, type FormState } from "@/lib/actions/admin-leads";
 import { statusLabels } from "@/components/admin/leads/statusStyles";
@@ -9,7 +10,7 @@ import type { LeadStatus } from "@/generated/prisma/enums";
 
 const inputClass =
   "w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100";
-const labelClass = "mb-1 block text-xs font-bold uppercase tracking-wide text-ink-500";
+const labelClass = "mb-1 block text-xs font-bold uppercase tracking-wide text-black";
 
 export type LeadEditDefaults = {
   name: string;
@@ -51,11 +52,15 @@ export default function LeadEditForm({
   defaults,
   roomCategories,
   hotelCategories,
+  editHref,
 }: {
   leadId: string;
   defaults: LeadEditDefaults;
   roomCategories: Option[];
   hotelCategories: Option[];
+  // When set, Edit opens the full quotation form for this lead instead of the
+  // inline form below - given to everyone allowed to build quotations.
+  editHref?: string;
 }) {
   const [state, formAction, pending] = useActionState<FormState, FormData>(
     (prevState, formData) => updateLeadDetailsAction(leadId, prevState, formData),
@@ -118,14 +123,24 @@ export default function LeadEditForm({
       <div>
         <div className="flex items-center justify-between gap-3">
           <h2 className="font-heading text-base font-bold text-ink-900">Submitted details</h2>
-          <button
-            type="button"
-            onClick={() => setEditing(true)}
-            className="flex items-center gap-1.5 rounded-full border border-ink-200 px-3 py-1.5 text-xs font-semibold text-ink-700 transition hover:border-brand-400 hover:text-brand-600"
-          >
-            <Pencil className="h-3.5 w-3.5" />
-            Edit
-          </button>
+          {editHref ? (
+            <Link
+              href={editHref}
+              className="flex items-center gap-1.5 rounded-full border border-ink-200 px-3 py-1.5 text-xs font-semibold text-ink-700 transition hover:border-brand-400 hover:text-brand-600"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+              Edit
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setEditing(true)}
+              className="flex items-center gap-1.5 rounded-full border border-ink-200 px-3 py-1.5 text-xs font-semibold text-ink-700 transition hover:border-brand-400 hover:text-brand-600"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+              Edit
+            </button>
+          )}
         </div>
 
         <dl className="mt-4 grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
@@ -134,7 +149,7 @@ export default function LeadEditForm({
             .map(([label, value]) => (
               <div key={label}>
                 <dt className={labelClass}>{label}</dt>
-                <dd className="text-sm text-ink-900">{value}</dd>
+                <dd className="text-sm text-black">{value}</dd>
               </div>
             ))}
         </dl>
@@ -142,7 +157,7 @@ export default function LeadEditForm({
         {defaults.message && (
           <div className="mt-5 border-t border-ink-100 pt-4">
             <p className={labelClass}>Message</p>
-            <p className="text-sm leading-relaxed text-ink-900">{defaults.message}</p>
+            <p className="text-sm leading-relaxed text-black">{defaults.message}</p>
           </div>
         )}
 

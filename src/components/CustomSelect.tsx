@@ -173,7 +173,7 @@ export default function CustomSelect({
                 exit={{ opacity: 0, y: -6, scale: 0.98 }}
                 transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
                 style={{ position: "fixed", top: rect.top, left: rect.left, width: rect.width }}
-                className="z-[100] max-h-64 overflow-auto rounded-xl border border-brand-100 bg-white p-1.5 shadow-soft"
+                className="scrollbar-thin z-[100] max-h-64 overflow-auto rounded-xl border border-brand-100 bg-white p-1.5 shadow-soft"
               >
             {options.map((opt, i) => (
               <li key={opt.value} role="option" aria-selected={opt.value === value}>
