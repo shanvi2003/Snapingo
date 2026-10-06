@@ -3,6 +3,7 @@ import Image from "next/image";
 import { LogOut, MonitorSmartphone } from "lucide-react";
 import { logoutAction } from "@/lib/actions/auth";
 import PanelNav from "@/components/admin/PanelNav";
+import DesktopOnlyBrandBar from "@/components/admin/DesktopOnlyBrandBar";
 import AutoRefresh from "@/components/admin/AutoRefresh";
 import NotificationBell from "@/components/admin/NotificationBell";
 import { NotificationProvider } from "@/components/admin/NotificationCenter";
@@ -82,10 +83,8 @@ export default function PanelShell({
           <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 print:h-auto print:overflow-visible">{children}</main>
         </div>
 
-        <div className="print-hide flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center lg:hidden">
-          <span className="relative block h-11 w-11">
-            <Image src="/snapingo-icon.png" alt="Snapingo" fill sizes="44px" className="object-contain" unoptimized />
-          </span>
+        <div className="print-hide relative flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center lg:hidden">
+          <DesktopOnlyBrandBar />
           <MonitorSmartphone className="h-10 w-10 text-ink-300" aria-hidden />
           <div>
             <h1 className="font-heading text-lg font-bold text-ink-900">Desktop Only</h1>

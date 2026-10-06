@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { MonitorSmartphone } from "lucide-react";
 import LoginForm from "@/components/admin/LoginForm";
+import DesktopOnlyBrandBar from "@/components/admin/DesktopOnlyBrandBar";
 
 export const metadata: Metadata = {
   title: "Staff Portal | Snapingo",
@@ -16,16 +17,14 @@ export const metadata: Metadata = {
 // instead of ever showing this form).
 export default function StaffLoginPage() {
   return (
-    <section className="flex min-h-screen items-center justify-center bg-ink-50/60 px-4 py-16">
+    <section className="relative flex min-h-screen items-center justify-center bg-ink-50/60 px-4 py-16">
+      <DesktopOnlyBrandBar />
       {/* The staff panel itself is desktop-only (see PanelShell's own
           "Desktop Only" screen) - showing the sign-in form on a phone would
           let someone log in only to be blocked right after, for no reason.
           This mirrors that message before any credentials are entered,
           instead of the login form, on the same lg breakpoint. */}
       <div className="flex w-full max-w-sm flex-col items-center gap-4 text-center lg:hidden">
-        <span className="relative block h-11 w-11">
-          <Image src="/snapingo-icon.png" alt="Snapingo" fill sizes="44px" className="object-contain" unoptimized />
-        </span>
         <MonitorSmartphone className="h-10 w-10 text-ink-300" aria-hidden />
         <div>
           <h1 className="font-heading text-lg font-bold text-ink-900">Desktop Only</h1>
