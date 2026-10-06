@@ -3,7 +3,8 @@ import { db } from "@/lib/db";
 import { getActiveMasterList } from "@/lib/masterData";
 import { getGstPercent } from "@/lib/settings";
 import { getSuggestionSets } from "@/lib/suggestions";
-import CustomPackageForm from "@/components/admin/customPackages/CustomPackageForm";
+import CustomPackageForm, { type CustomPackageDefaults } from "@/components/admin/customPackages/CustomPackageForm";
+import { parseDuration } from "@/lib/durationHelpers";
 
 // <input type="date"> only accepts yyyy-mm-dd, and toISOString() would shift
 // the day backwards for anyone east of UTC (which is everyone here) - so the
@@ -16,22 +17,91 @@ function toDateInput(value: Date | null): string | undefined {
   return `${year}-${month}-${day}`;
 }
 
+type LeadRow = NonNullable<Awaited<ReturnType<typeof loadLead>>>;
+
+function loadLead(id: string) {
+  return db.lead.findUnique({
+    where: { id },
+    include: {
+      // The lead's most recent quotation is the one its Edit screen opens.
+      customPackages: { orderBy: { createdAt: "desc" }, take: 1, select: { id: true } },
+    },
+  });
+}
+
+/**
+ * A lead's own details as the quotation form's starting values, so a
+ * quotation raised from a lead starts with everything the customer already
+ * told us instead of a blank form.
+ */
+function defaultsFromLead(lead: LeadRow): CustomPackageDefaults {
+  // Leads from the flight form store "round-trip"/"one-way" here - only the
+  // two values the quotation form offers are carried over.
+  const tripType =
+    lead.tripType === "domestic" || lead.tripType === "international" ? lead.tripType : undefined;
+
+  // Both dates known: the duration follows from them, as it does in the form.
+  // Otherwise fall back to whatever duration text the enquiry carried.
+  let duration: { nights: number; days: number } | null = null;
+  if (lead.startDate && lead.endDate) {
+    const nights = Math.round((lead.endDate.getTime() - lead.startDate.getTime()) / 86_400_000);
+    if (nights >= 0) duration = { nights, days: nights + 1 };
+  }
+  duration ??= lead.days ? parseDuration(lead.days) : null;
+
+  return {
+    leadId: lead.id,
+    customerName: lead.name ?? undefined,
+    customerPhone: lead.phone ?? undefined,
+    customerEmail: lead.email ?? undefined,
+    tripType,
+    destinationName: lead.destinationName ?? lead.packageTitle ?? undefined,
+    startDate: toDateInput(lead.startDate),
+    endDate: toDateInput(lead.endDate),
+    durationNights: duration?.nights,
+    durationDays: duration?.days,
+    adults: lead.adults ?? undefined,
+    children: lead.children ?? undefined,
+    infants: lead.infants ?? undefined,
+    childAges: lead.childAges,
+    rooms: lead.rooms ?? undefined,
+    extraBeds: lead.extraBeds ?? undefined,
+    extraMattresses: lead.extraMattresses ?? undefined,
+    roomCategory: lead.roomCategory ?? undefined,
+    hotelCategory: lead.hotelCategory ?? undefined,
+    notes: lead.message ?? undefined,
+  };
+}
+
 export default async function CustomPackageFormPage({
-  isNew,
-  customPackageId,
+  isNew: isNewProp = false,
+  customPackageId: customPackageIdProp,
   leadId,
+  editLeadId,
 }: {
-  isNew: boolean;
+  isNew?: boolean;
   customPackageId?: string;
+  // "New quotation" from a lead: a fresh quotation, pre-filled from the lead.
   leadId?: string;
+  // A lead's Edit screen: opens the lead's latest quotation if it has one,
+  // otherwise a new one pre-filled from the lead. Saving also updates the
+  // lead's own details and returns to the lead.
+  editLeadId?: string;
 }) {
-  const [suggestions, inclusions, roomCategories, hotelCategories, gstPercent] = await Promise.all([
+  const sourceLeadId = editLeadId ?? leadId;
+  const [suggestions, inclusions, roomCategories, hotelCategories, gstPercent, lead] = await Promise.all([
     getSuggestionSets(["destinationName", "hotelName", "city", "vehicleName"] as const),
     getActiveMasterList("PACKAGE_INCLUSION"),
     getActiveMasterList("ROOM_CATEGORY"),
     getActiveMasterList("HOTEL_CATEGORY"),
     getGstPercent(),
+    sourceLeadId ? loadLead(sourceLeadId) : null,
   ]);
+
+  if (sourceLeadId && !lead) notFound();
+
+  const customPackageId = editLeadId ? lead?.customPackages[0]?.id : customPackageIdProp;
+  const isNew = editLeadId ? !customPackageId : isNewProp;
 
   const quotation = customPackageId
     ? await db.customPackage.findUnique({
@@ -42,19 +112,24 @@ export default async function CustomPackageFormPage({
 
   if (customPackageId && !quotation) notFound();
 
+  const heading = editLeadId
+    ? `Edit Lead${lead?.name ? ` — ${lead.name}` : ""}`
+    : isNew
+      ? "New Customized Package"
+      : `Edit ${quotation?.tripId}`;
+
   const toOptions = (list: { value: string; label: string; freeText: boolean }[]) =>
     list.map((o) => ({ value: o.value, label: o.label, freeText: o.freeText }));
 
   return (
     <div>
-      <h1 className="font-heading text-2xl font-bold text-ink-900">
-        {isNew ? "New Customized Package" : `Edit ${quotation?.tripId}`}
-      </h1>
-      <p className="mt-1 text-sm text-ink-500">
-        A quotation for one customer. This never appears on the website - it only produces a PDF.
-      </p>
+      <h1 className="font-heading text-2xl font-bold text-ink-900">{heading}</h1>
+      {editLeadId && quotation && (
+        <p className="mt-1 font-mono text-sm font-semibold text-brand-600">{quotation.tripId}</p>
+      )}
       <CustomPackageForm
         isNew={isNew}
+        returnToLead={Boolean(editLeadId)}
         destinationSuggestions={suggestions.destinationName}
         hotelSuggestions={suggestions.hotelName}
         citySuggestions={suggestions.city}
@@ -71,6 +146,7 @@ export default async function CustomPackageFormPage({
                 customerPhone: quotation.customerPhone ?? undefined,
                 customerEmail: quotation.customerEmail ?? undefined,
                 leadId: quotation.leadId ?? undefined,
+                tripType: quotation.tripType ?? undefined,
                 destinationName: quotation.destinationName,
                 startDate: toDateInput(quotation.startDate),
                 endDate: toDateInput(quotation.endDate),
@@ -98,17 +174,13 @@ export default async function CustomPackageFormPage({
                 })),
                 stays: quotation.stays.map((s) => ({
                   city: s.city ?? "",
-                  nights: s.nights != null ? String(s.nights) : "",
                   hotelName: s.hotelName,
-                  hotelCategory: s.hotelCategory ?? "",
-                  roomCategory: s.roomCategory ?? "",
-                  rooms: String(s.rooms),
-                  extraBed: s.extraBed ? "true" : "",
-                  extraMattress: s.extraMattress ? "true" : "",
+                  nights: s.nights != null ? String(s.nights) : "",
+                  days: s.days != null ? String(s.days) : "",
                 })),
               }
-            : leadId
-              ? { leadId }
+            : lead
+              ? defaultsFromLead(lead)
               : undefined
         }
       />

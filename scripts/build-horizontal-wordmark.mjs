@@ -14,7 +14,10 @@ const input = path.join(root, "public", "snapingo-logo.png");
 const iconInput = path.join(root, "public", "snapingo-icon.png");
 const output = path.join(root, "public", "snapingo-wordmark-horizontal.png");
 
-const brand = [0xd1, 0x0e, 0x68]; // --color-brand-600
+// The logo's own pink - the background of snapingo-logo.png and the fill of
+// snapingo-icon.png. The text used to be brand-600 (#d10e68), a darker
+// shade, so the icon and the word beside it visibly didn't match.
+const brand = [0xeb, 0x0c, 0x8e];
 
 const { data, info } = await sharp(input).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
 const { width, height, channels } = info;

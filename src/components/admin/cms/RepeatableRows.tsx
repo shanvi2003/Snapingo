@@ -26,6 +26,7 @@ export default function RepeatableRows({
   addLabel,
   stacked = false,
   textareaRows = 3,
+  bare = false,
 }: {
   name: string;
   fields: RowField[];
@@ -45,6 +46,9 @@ export default function RepeatableRows({
   // value. Only affects the caller that passes it; every other RepeatableRows
   // usage keeps the default.
   textareaRows?: number;
+  // Rows sit directly in the surrounding section instead of each in its own
+  // bordered card, for short rows that read as part of the form around them.
+  bare?: boolean;
 }) {
   const [rows, setRows] = useState<Record<string, string>[]>(
     initialRows.length > 0 ? initialRows : [Object.fromEntries(fields.map((f) => [f.key, ""]))]
@@ -71,23 +75,30 @@ export default function RepeatableRows({
   const textWidth = stacked ? "w-full max-w-2xl" : "w-full";
   const shortWidth = stacked ? "w-full max-w-xs" : "w-full";
 
+  // Bare rows sit among the section's ordinary fields, so their labels and
+  // boxes match those fields' size instead of the compact card styling.
+  const labelClass = bare
+    ? "mb-1.5 block text-xs font-bold uppercase tracking-wide text-ink-900"
+    : "mb-1 block text-[10px] font-bold uppercase tracking-wide text-ink-500";
+  const boxClass = bare ? "rounded-xl px-4 py-2.5" : "rounded-lg px-3 py-2";
+
   return (
     <div>
       <input type="hidden" name={name} value={JSON.stringify(rows)} />
       <div className="space-y-3">
         {rows.map((row, index) => (
-          <div key={index} className="flex gap-2 rounded-xl border border-ink-200 bg-ink-50/40 p-3">
-            <GripVertical className="mt-2.5 h-4 w-4 shrink-0 text-ink-300" />
+          <div key={index} className={bare ? "flex gap-3" : "flex gap-2 rounded-xl border border-ink-200 bg-ink-50/40 p-3"}>
+            {!bare && <GripVertical className="mt-2.5 h-4 w-4 shrink-0 text-ink-300" />}
             <div
               className={
                 stacked
                   ? "flex flex-1 flex-col gap-3"
-                  : "grid flex-1 grid-cols-1 items-stretch gap-2 sm:grid-cols-[repeat(auto-fit,minmax(180px,1fr))]"
+                  : `grid flex-1 grid-cols-1 items-stretch sm:grid-cols-[repeat(auto-fit,minmax(180px,1fr))] ${bare ? "gap-5" : "gap-2"}`
               }
             >
               {fields.map((field) => (
                 <div key={field.key} className="flex flex-col">
-                  <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-ink-500">
+                  <label className={labelClass}>
                     {field.label}
                   </label>
                   {field.type === "textarea" ? (
@@ -119,7 +130,7 @@ export default function RepeatableRows({
                       suggestions={field.suggestions}
                       value={row[field.key] ?? ""}
                       onChange={(next) => updateField(index, field.key, next)}
-                      className={`${textWidth} rounded-lg border border-ink-200 bg-white px-3 py-2 text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 ${stacked ? "" : "flex-1"}`}
+                      className={`${textWidth} ${boxClass} border border-ink-200 bg-white text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 ${stacked ? "" : "flex-1"}`}
                     />
                   ) : field.type === "checkbox" ? (
                     // Stored as the string "true"/"" so a row stays a flat
@@ -140,7 +151,7 @@ export default function RepeatableRows({
                       min={field.type === "number" ? 0 : undefined}
                       value={row[field.key] ?? ""}
                       onChange={(e) => updateField(index, field.key, e.target.value)}
-                      className={`${shortWidth} rounded-lg border border-ink-200 bg-white px-3 py-2 text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 ${stacked ? "" : "flex-1"}`}
+                      className={`${shortWidth} ${boxClass} border border-ink-200 bg-white text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 ${stacked ? "" : "flex-1"}`}
                     />
                   ) : (
                     // flex-1 (not just w-full) so a single-line input
@@ -163,7 +174,10 @@ export default function RepeatableRows({
               type="button"
               onClick={() => removeRow(index)}
               aria-label="Remove row"
-              className="mt-1 grid h-7 w-7 shrink-0 place-items-center self-start rounded-full text-ink-400 hover:bg-red-50 hover:text-red-600"
+              className={`grid shrink-0 place-items-center rounded-full text-ink-400 hover:bg-red-50 hover:text-red-600 ${
+                // Bare: centred on the inputs (label above, so align to the bottom).
+                bare ? "h-[42px] w-9 self-end" : "mt-1 h-7 w-7 self-start"
+              }`}
             >
               <Trash2 className="h-3.5 w-3.5" />
             </button>

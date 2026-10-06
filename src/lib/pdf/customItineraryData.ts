@@ -52,6 +52,7 @@ export async function loadCustomItinerary(
   return {
     data: {
       tripId: quotation.tripId,
+      tripType: quotation.tripType,
       customerName: quotation.customerName,
       customerPhone: quotation.customerPhone,
       customerEmail: quotation.customerEmail,
@@ -89,6 +90,7 @@ export async function loadCustomItinerary(
       stays: quotation.stays.map((s) => ({
         city: s.city,
         nights: s.nights,
+        days: s.days,
         hotelName: s.hotelName,
         hotelCategoryLabel: s.hotelCategory ? hotelLabels.get(s.hotelCategory) ?? null : null,
         roomCategoryLabel: s.roomCategory ? roomLabels.get(s.roomCategory) ?? null : null,
@@ -98,8 +100,8 @@ export async function loadCustomItinerary(
       })),
     },
     context: {
-      // The disclaimer belongs in the footer of the website PDF; on a
-      // quotation every block is printed in order, disclaimer included.
+      // Printed in order as sections, except the disclaimer, which closes
+      // the footer as on the website PDF.
       blocks,
       operationHead: {
         name: settings.operation_head_name,

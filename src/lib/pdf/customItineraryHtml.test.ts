@@ -37,6 +37,7 @@ function makeData(overrides: Partial<CustomItineraryData> = {}): CustomItinerary
       {
         city: "Manali",
         nights: 5,
+        days: 6,
         hotelName: "Snow Valley Resort",
         hotelCategoryLabel: "4 Star",
         roomCategoryLabel: "Deluxe",
@@ -63,14 +64,18 @@ describe("buildCustomItineraryHtml", () => {
     expect(html).toContain("SNP-2026-0042");
     expect(html).toContain("Asha Menon");
     expect(html).toContain("Snow Valley Resort");
+    expect(html).toContain("Manali — 5 Nights / 6 Days");
     expect(html).toContain("Innova Crysta");
   });
 
-  it("prints the price, GST and total", async () => {
+  // The customer only ever sees the GST-inclusive total, never the split.
+  it("prints only the total, without the GST breakdown", async () => {
     const html = await buildCustomItineraryHtml(makeData(), context);
-    expect(html).toContain("₹60,000");
-    expect(html).toContain("₹3,000");
     expect(html).toContain("₹63,000");
+    expect(html).not.toContain("₹60,000");
+    expect(html).not.toContain("₹3,000");
+    // Inlined images/fonts are base64, which can spell "GST" by chance.
+    expect(html.replace(/data:[^")]+/g, "")).not.toMatch(/GST/);
   });
 
   // The quotation is a customer-facing document assembled by string
@@ -84,6 +89,7 @@ describe("buildCustomItineraryHtml", () => {
           {
             city: "A & B",
             nights: 1,
+            days: null,
             hotelName: 'The "Grand" <Hotel>',
             hotelCategoryLabel: null,
             roomCategoryLabel: null,
@@ -114,20 +120,26 @@ describe("buildCustomItineraryHtml", () => {
       ...context,
       operationHead: { name: "", phone: "", email: "" },
     });
-    expect(html).not.toContain("Your Trip Coordinator");
+    expect(html).not.toContain("Operation Head</p>");
   });
 
+  // No hotels entered: like the website PDF, a "handpicked hotels" line
+  // stands in for the table rather than an empty one.
   it("still produces a document when there are no stays or inclusions", async () => {
     const html = await buildCustomItineraryHtml(
       makeData({ stays: [], inclusions: [], exclusions: [] }),
       context
     );
     expect(html).toContain("<!doctype html>");
-    expect(html).not.toContain("Accommodation</h2>");
+    expect(html).not.toContain('<table class="stays">');
+    expect(html).toContain("Handpicked");
   });
 
-  it("inlines the logo so the renderer needs no network or base URL", async () => {
+  it("inlines the logo, watermarks and font so the renderer needs no network", async () => {
     const html = await buildCustomItineraryHtml(makeData(), context);
     expect(html).toContain("data:image/png;base64,");
+    expect(html).toContain('class="wm-icon"');
+    expect(html).toContain('class="wm-mountains"');
+    expect(html).toContain("data:font/ttf;base64,");
   });
 });

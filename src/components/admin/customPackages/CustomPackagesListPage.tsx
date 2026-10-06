@@ -5,6 +5,7 @@ import { formatRupees } from "@/lib/gst";
 import DeleteButton from "@/components/admin/cms/DeleteButton";
 import { deleteCustomPackageAction } from "@/lib/actions/customPackages";
 import Pagination, { PAGE_SIZE } from "@/components/admin/Pagination";
+import AutoSearchInput from "@/components/admin/AutoSearchInput";
 
 const fmtDate = (d: Date) =>
   d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
@@ -46,12 +47,7 @@ export default async function CustomPackagesListPage({
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="font-heading text-2xl font-bold text-ink-900">Customized Packages</h1>
-          <p className="mt-1 text-sm text-ink-500">
-            {total} quotation{total === 1 ? "" : "s"} · never shown on the website
-          </p>
-        </div>
+        <h1 className="font-heading text-2xl font-bold text-ink-900">Customized Packages</h1>
         <Link
           href={`${basePath}/custom-packages/new`}
           className="flex items-center gap-1.5 rounded-full bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700"
@@ -61,18 +57,9 @@ export default async function CustomPackagesListPage({
         </Link>
       </div>
 
-      <form className="mt-6 flex flex-wrap gap-3" action={`${basePath}/custom-packages`} method="get">
-        <input
-          type="text"
-          name="q"
-          defaultValue={q}
-          placeholder="Search Trip ID, customer, phone, email or destination..."
-          className="min-w-[260px] flex-1 rounded-xl border border-ink-200 bg-white px-4 py-2.5 text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
-        />
-        <button type="submit" className="rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-700">
-          Search
-        </button>
-      </form>
+      <div className="mt-6 flex flex-wrap gap-3">
+        <AutoSearchInput placeholder="Search Trip ID, customer, phone, email or destination..." />
+      </div>
 
       <div className="mt-6 overflow-x-auto rounded-2xl border border-ink-100 bg-white shadow-sm">
         <table className="w-full min-w-[860px] text-left text-sm">
@@ -117,17 +104,20 @@ export default async function CustomPackagesListPage({
                   <p>{quotation.createdBy.name}</p>
                 </td>
                 <td className="px-4 py-3">
-                  <div className="flex items-center gap-3">
+                  {/* Each action gets the same h-8 padded hit area as the
+                      delete icon button, so the gaps between all three read
+                      evenly instead of the text links bunching together. */}
+                  <div className="flex items-center justify-end gap-2">
                     <a
                       href={`/api/admin/custom-packages/${quotation.id}/pdf`}
-                      className="flex items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-700"
+                      className="flex h-8 items-center gap-1.5 rounded-full border border-brand-200 px-3 text-xs font-semibold text-brand-600 transition hover:bg-brand-50"
                     >
                       <Download className="h-3.5 w-3.5" />
                       PDF
                     </a>
                     <Link
                       href={`${basePath}/custom-packages/${quotation.id}/edit`}
-                      className="flex items-center gap-1 text-xs font-semibold text-ink-500 hover:text-brand-600"
+                      className="flex h-8 items-center gap-1.5 rounded-full border border-ink-200 px-3 text-xs font-semibold text-ink-700 transition hover:border-brand-300 hover:text-brand-600"
                     >
                       <Pencil className="h-3.5 w-3.5" />
                       Edit

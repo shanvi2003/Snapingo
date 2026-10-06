@@ -468,6 +468,9 @@ model CustomPackage {
   lead   Lead?   @relation(fields: [leadId], references: [id], onDelete: SetNull)
   leadId String?
 
+  // "domestic" | "international", the same values Lead.tripType uses.
+  // Nullable only because quotations saved before this field existed have none.
+  tripType        String?
   destinationName String
   startDate       DateTime?
   endDate         DateTime?
@@ -543,6 +546,7 @@ model CustomPackageStay {
   order           Int           @default(0)
   city            String?
   nights          Int?
+  days            Int?
   hotelName       String
   hotelCategory   String?
   roomCategory    String?

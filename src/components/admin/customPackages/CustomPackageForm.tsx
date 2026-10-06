@@ -1,12 +1,23 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import {
+  startTransition,
+  useActionState,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
+import { useRouter } from "next/navigation";
 import { saveCustomPackageAction, type FormState } from "@/lib/actions/customPackages";
 import RepeatableRows from "@/components/admin/cms/RepeatableRows";
 import CustomSelect from "@/components/CustomSelect";
-import { dayOptions, nightOptions } from "@/lib/durationHelpers";
+import { dayOptions, MAX_DURATION_NIGHTS, nightOptions } from "@/lib/durationHelpers";
 import { calculateGst, formatRupees } from "@/lib/gst";
 import SuggestInput from "@/components/admin/SuggestInput";
+import ItineraryDays, { datesFromStart, type DayRow } from "@/components/admin/customPackages/ItineraryDays";
 
 const inputClass =
   "w-full rounded-xl border border-ink-200 bg-white px-4 py-2.5 text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100";
@@ -16,12 +27,30 @@ const cardClass = "rounded-2xl border border-ink-100 bg-white p-6 shadow-sm";
 
 export type Option = { value: string; label: string; freeText?: boolean };
 
+// The server accepts at most 20 ages (customPackageSchema.childAges).
+const MAX_AGE_ROWS = 20;
+
+const AGE_OPTIONS: Option[] = Array.from({ length: 13 }, (_, n) => {
+  const label = n === 0 ? "Below 1 year" : n === 1 ? "1 year" : `${n} years`;
+  return { value: label, label };
+});
+
+// Quotations saved before the dropdowns hold free text ("18 months"); keep
+// such a value selectable so editing them doesn't silently blank the age.
+const ageOptionsFor = (current: string | undefined): Option[] =>
+  current && !AGE_OPTIONS.some((o) => o.value === current)
+    ? [{ value: current, label: current }, ...AGE_OPTIONS]
+    : AGE_OPTIONS;
+
+const countOf = (value: string) => Math.min(MAX_AGE_ROWS, Math.max(0, Math.floor(Number(value) || 0)));
+
 export type CustomPackageDefaults = {
   id?: string;
   customerName?: string;
   customerPhone?: string;
   customerEmail?: string;
   leadId?: string;
+  tripType?: string;
   destinationName?: string;
   startDate?: string;
   endDate?: string;
@@ -49,26 +78,19 @@ export type CustomPackageDefaults = {
 function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
     <section className={cardClass}>
-      <h2 className="font-heading text-base font-bold text-ink-900">{title}</h2>
-      {hint && <p className="mt-1 text-sm text-ink-500">{hint}</p>}
-      <div className="mt-4">{children}</div>
+      <div className="border-b border-ink-100 pb-3">
+        <h2 className="font-heading text-xl font-extrabold text-ink-900">{title}</h2>
+        {hint && <p className="mt-1 text-sm text-ink-500">{hint}</p>}
+      </div>
+      <div className="mt-5">{children}</div>
     </section>
   );
 }
 
-export default function CustomPackageForm({
-  isNew,
-  defaults,
-  destinationSuggestions,
-  hotelSuggestions,
-  citySuggestions,
-  vehicleSuggestions,
-  inclusionOptions,
-  roomCategories,
-  hotelCategories,
-  gstPercent,
-}: {
+type FormProps = {
   isNew: boolean;
+  // Opened as a lead's Edit screen: after saving, go back to that lead.
+  returnToLead?: boolean;
   defaults?: CustomPackageDefaults;
   destinationSuggestions: string[];
   hotelSuggestions: string[];
@@ -78,14 +100,242 @@ export default function CustomPackageForm({
   roomCategories: Option[];
   hotelCategories: Option[];
   gstPercent: number;
-}) {
-  const [state, formAction, pending] = useActionState<FormState, FormData>(
-    (prevState, formData) => saveCustomPackageAction(isNew, prevState, formData),
-    undefined
+};
+
+type Draft = { savedAt: number; values: CustomPackageDefaults };
+
+const noopSubscribe = () => () => {};
+
+function readDraft(key: string): Draft | null {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as Draft) : null;
+  } catch {
+    // Storage blocked or a corrupt entry - just start from the defaults.
+    return null;
+  }
+}
+
+/**
+ * Reads the whole form back into the same shape the server page passes in as
+ * `defaults`, so a saved draft can be fed straight back in as the starting
+ * values - every field already knows how to start from `defaults`.
+ */
+function formToDefaults(form: HTMLFormElement): CustomPackageDefaults {
+  const fd = new FormData(form);
+  const str = (key: string) => {
+    const v = fd.get(key);
+    return typeof v === "string" ? v : undefined;
+  };
+  const num = (key: string) => {
+    const v = str(key);
+    return v === undefined || v === "" ? undefined : Number(v);
+  };
+  const rows = (key: string): Record<string, string>[] => {
+    try {
+      const parsed = JSON.parse(str(key) ?? "[]");
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  };
+
+  return {
+    id: str("id"),
+    leadId: str("leadId"),
+    customerName: str("customerName"),
+    customerPhone: str("customerPhone"),
+    customerEmail: str("customerEmail"),
+    tripType: str("tripType"),
+    destinationName: str("destinationName"),
+    startDate: str("startDate"),
+    endDate: str("endDate"),
+    durationNights: num("durationNights"),
+    durationDays: num("durationDays"),
+    vehicleName: str("vehicleName"),
+    adults: num("adults"),
+    children: num("children"),
+    infants: num("infants"),
+    // Not filtered: position N is infant N's age, blanks included.
+    childAges: (str("childAges") ?? "").split("\n"),
+    rooms: num("rooms"),
+    extraBeds: num("extraBeds"),
+    extraMattresses: num("extraMattresses"),
+    hotelCategory: str("hotelCategory"),
+    roomCategory: str("roomCategory"),
+    roomCategoryOther: str("roomCategoryOther"),
+    stays: rows("stays"),
+    days: rows("days"),
+    inclusions: fd.getAll("inclusions").filter((v): v is string => typeof v === "string"),
+    customInclusions: (str("customInclusions") ?? "").split("\n").filter(Boolean),
+    price: num("price"),
+    notes: str("notes"),
+  };
+}
+
+/**
+ * Keeps an in-progress quotation in this browser until it's saved, so leaving
+ * the page halfway (or a failed save) never costs the staff member what they
+ * typed. Per quotation: new ones, new ones raised from a lead, and each edit
+ * have separate drafts. Browser-only on purpose - nothing reaches the server
+ * until "Create" / "Save" is pressed.
+ */
+export default function CustomPackageForm(props: FormProps) {
+  const leadSuffix = props.defaults?.leadId ? `:lead-${props.defaults.leadId}` : "";
+  const draftKey = `snapingo:custom-package-draft:${props.isNew ? `new${leadSuffix}` : props.defaults?.id}`;
+
+  // False on the server and during hydration, true right after: the server
+  // has no localStorage, so a draft can only be applied once in the browser
+  // without the two renders disagreeing.
+  const inBrowser = useSyncExternalStore(
+    noopSubscribe,
+    () => true,
+    () => false
+  );
+  const [discarded, setDiscarded] = useState(false);
+
+  // Read once per page visit - the form keeps rewriting this key while
+  // editing, and re-reading it would remount the form on every keystroke.
+  const draft = useMemo(
+    () => (inBrowser && !discarded ? readDraft(draftKey) : null),
+    [inBrowser, discarded, draftKey]
   );
 
+  const discardDraft = () => {
+    try {
+      localStorage.removeItem(draftKey);
+    } catch {}
+    setDiscarded(true);
+  };
+
+  return (
+    <CustomPackageFormBody
+      // Remounting is what makes every field (controlled or not) pick the
+      // draft up as its starting value.
+      key={draft ? `draft-${draft.savedAt}` : "base"}
+      {...props}
+      defaults={draft ? { ...props.defaults, ...draft.values } : props.defaults}
+      draftKey={draftKey}
+      restoredAt={draft?.savedAt}
+      onDiscardDraft={discardDraft}
+    />
+  );
+}
+
+function CustomPackageFormBody({
+  isNew,
+  returnToLead = false,
+  defaults,
+  destinationSuggestions,
+  hotelSuggestions,
+  citySuggestions,
+  vehicleSuggestions,
+  inclusionOptions,
+  roomCategories,
+  hotelCategories,
+  gstPercent,
+  draftKey,
+  restoredAt,
+  onDiscardDraft,
+}: FormProps & { draftKey: string; restoredAt?: number; onDiscardDraft: () => void }) {
+  const router = useRouter();
+  const [state, formAction, pending] = useActionState<FormState, FormData>(async (prevState, formData) => {
+    try {
+      return await saveCustomPackageAction(isNew, prevState, formData);
+    } catch (error) {
+      // An unexpected server failure shows as a message here instead of
+      // replacing the page, so nothing typed is lost and it can be retried.
+      console.error(error);
+      return { error: "Couldn't save the quotation. Your entries are still here - please try again." };
+    }
+  }, undefined);
+
+  const saved = Boolean(state && "savedPath" in state);
+
+  const formRef = useRef<HTMLFormElement>(null);
+  // Only a form someone has actually touched is worth keeping as a draft;
+  // otherwise just opening the page would leave one behind.
+  const dirty = useRef(false);
+  // Between pressing Save and hearing back, nothing is written - a successful
+  // save redirects away, and must not leave the draft it just cleared behind.
+  const submitting = useRef(false);
+
+  const saveDraft = useCallback(() => {
+    if (!dirty.current || submitting.current || !formRef.current) return;
+    try {
+      const draft: Draft = { savedAt: Date.now(), values: formToDefaults(formRef.current) };
+      localStorage.setItem(draftKey, JSON.stringify(draft));
+    } catch {
+      // Storage full or blocked: the form still works, it just isn't kept.
+    }
+  }, [draftKey]);
+
+  const markDirty = () => {
+    dirty.current = true;
+    saveDraft();
+  };
+
+  // Saved: only now is the draft dropped, then on to the quotation. Failed:
+  // the typed values stay on screen (see onSubmit) and keep being drafted.
+  useEffect(() => {
+    if (!state) return;
+    if ("savedPath" in state) {
+      try {
+        localStorage.removeItem(draftKey);
+      } catch {}
+      router.push(state.savedPath);
+      return;
+    }
+    submitting.current = false;
+    saveDraft();
+  }, [state, saveDraft, draftKey, router]);
+
+  // After every render, so changes held in React state (dropdowns, itinerary
+  // rows, dates) are captured as well as plain typing.
+  useEffect(() => {
+    saveDraft();
+  });
+
+  // Submitting through onSubmit instead of <form action>: React resets a form
+  // after an `action` completes, which wiped every field whenever the server
+  // sent back an error like "Add at least one day to the itinerary."
+  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    submitting.current = true;
+    startTransition(() => formAction(formData));
+  };
+
+  const [tripType, setTripType] = useState(defaults?.tripType ?? "domestic");
+  const [infants, setInfants] = useState(String(defaults?.infants ?? 0));
+  const [childAges, setChildAges] = useState<string[]>(defaults?.childAges ?? []);
+
+  const ageSlots = Array.from({ length: countOf(infants) }, (_, i) => `Infant ${i + 1}`);
+  const [startDate, setStartDate] = useState(defaults?.startDate ?? "");
+  const [endDate, setEndDate] = useState(defaults?.endDate ?? "");
+  const [dayRows, setDayRows] = useState<DayRow[]>(() =>
+    defaults?.days?.length
+      ? defaults.days.map((d) => ({ date: d.date ?? "", title: d.title ?? "", desc: d.desc ?? "" }))
+      : [{ date: defaults?.startDate ?? "", title: "", desc: "" }]
+  );
   const [nights, setNights] = useState(String(defaults?.durationNights ?? ""));
   const [days, setDays] = useState(String(defaults?.durationDays ?? ""));
+
+  // Picking both travel dates fills Nights/Days (a 5 -> 10 Oct trip is
+  // 5 nights / 6 days). Both dropdowns stay editable afterwards for the odd
+  // trip that doesn't fit that shape.
+  const onDatesChange = (start: string, end: string) => {
+    // A new start date re-dates the itinerary: Day 1 on it, each day after
+    // one date later. Changing only the end date leaves the days alone.
+    if (start && start !== startDate) setDayRows((rows) => datesFromStart(rows, start));
+    setStartDate(start);
+    setEndDate(end);
+    if (!start || !end) return;
+    const diff = Math.round((Date.parse(end) - Date.parse(start)) / 86_400_000);
+    if (diff < 0 || diff > MAX_DURATION_NIGHTS) return;
+    setNights(String(diff));
+    setDays(String(diff + 1));
+  };
   const [roomCategory, setRoomCategory] = useState(defaults?.roomCategory ?? "");
   const [hotelCategory, setHotelCategory] = useState(defaults?.hotelCategory ?? "");
   const [price, setPrice] = useState(String(defaults?.price ?? ""));
@@ -109,14 +359,43 @@ export default function CustomPackageForm({
     });
   };
 
-  const categoryOptions = (list: Option[]) => [{ value: "", label: "—" }, ...list];
+  // The empty option keeps a category clearable after one has been picked.
+  const categoryOptions = (list: Option[], placeholder: string) => [{ value: "", label: placeholder }, ...list];
 
   return (
-    <form action={formAction} className="mt-6 space-y-6">
+    <form
+      ref={formRef}
+      onSubmit={onSubmit}
+      onInput={markDirty}
+      onChange={markDirty}
+      onClick={markDirty}
+      className="mt-6 space-y-6"
+    >
+      {restoredAt && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gold-400 bg-gold-400/10 px-4 py-3 text-sm text-ink-900">
+          <p>
+            Unsaved changes restored from{" "}
+            {new Date(restoredAt).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}.
+          </p>
+          <button
+            type="button"
+            onClick={(e) => {
+              // Not up to the form's onClick, which would save the draft
+              // straight back after it's been removed.
+              e.stopPropagation();
+              onDiscardDraft();
+            }}
+            className="font-semibold text-ink-700 underline underline-offset-2 hover:text-red-600"
+          >
+            Discard and start over
+          </button>
+        </div>
+      )}
       {!isNew && <input type="hidden" name="id" value={defaults?.id ?? ""} />}
       {defaults?.leadId && <input type="hidden" name="leadId" value={defaults.leadId} />}
+      {returnToLead && <input type="hidden" name="returnTo" value="lead" />}
 
-      <Section title="Customer" hint="Who this quotation is being prepared for.">
+      <Section title="Customer">
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
           <div>
             <label className={labelClass} htmlFor="customerName">Name</label>
@@ -134,6 +413,29 @@ export default function CustomPackageForm({
       </Section>
 
       <Section title="Trip">
+        <div className="mb-5">
+          <p className={labelClass}>Type</p>
+          <input type="hidden" name="tripType" value={tripType} />
+          <div className="inline-flex rounded-full border border-ink-200 bg-ink-50 p-1">
+            {[
+              { value: "domestic", label: "Domestic" },
+              { value: "international", label: "International" },
+            ].map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setTripType(opt.value)}
+                aria-pressed={tripType === opt.value}
+                className={`rounded-full px-5 py-2 text-sm font-semibold transition ${
+                  tripType === opt.value ? "bg-brand-600 text-white shadow-brand" : "text-ink-900 hover:text-brand-600"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
           <div>
             <label className={labelClass} htmlFor="destinationName">Destination</label>
@@ -151,11 +453,26 @@ export default function CustomPackageForm({
           </div>
           <div>
             <label className={labelClass} htmlFor="startDate">Travel start date</label>
-            <input id="startDate" name="startDate" type="date" defaultValue={defaults?.startDate} className={inputClass} />
+            <input
+              id="startDate"
+              name="startDate"
+              type="date"
+              value={startDate}
+              onChange={(e) => onDatesChange(e.target.value, endDate)}
+              className={inputClass}
+            />
           </div>
           <div>
             <label className={labelClass} htmlFor="endDate">Travel end date</label>
-            <input id="endDate" name="endDate" type="date" defaultValue={defaults?.endDate} className={inputClass} />
+            <input
+              id="endDate"
+              name="endDate"
+              type="date"
+              value={endDate}
+              min={startDate || undefined}
+              onChange={(e) => onDatesChange(startDate, e.target.value)}
+              className={inputClass}
+            />
           </div>
         </div>
 
@@ -168,6 +485,11 @@ export default function CustomPackageForm({
             <label className={labelClass} htmlFor="durationDays">Days</label>
             <CustomSelect name="durationDays" required value={days} onChange={setDays} placeholder="Select days" options={dayOptions} />
           </div>
+        </div>
+      </Section>
+
+      <Section title="Vehicle">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
           <div>
             <label className={labelClass} htmlFor="vehicleName">Vehicle name</label>
             <SuggestInput
@@ -182,8 +504,8 @@ export default function CustomPackageForm({
         </div>
       </Section>
 
-      <Section title="Travellers & rooms">
-        <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-6">
+      <Section title="Travellers">
+        <div className="grid grid-cols-2 gap-5 sm:grid-cols-3">
           <div>
             <label className={labelClass} htmlFor="adults">Adults</label>
             <input id="adults" name="adults" type="number" min={0} defaultValue={defaults?.adults ?? 1} className={inputClass} />
@@ -194,8 +516,47 @@ export default function CustomPackageForm({
           </div>
           <div>
             <label className={labelClass} htmlFor="infants">Infants</label>
-            <input id="infants" name="infants" type="number" min={0} defaultValue={defaults?.infants ?? 0} className={inputClass} />
+            <input
+              id="infants"
+              name="infants"
+              type="number"
+              min={0}
+              max={MAX_AGE_ROWS}
+              value={infants}
+              onChange={(e) => setInfants(e.target.value)}
+              className={inputClass}
+            />
           </div>
+        </div>
+
+        {/* One age dropdown per infant, joined into the same newline-separated
+            childAges field the server already parses. */}
+        <input type="hidden" name="childAges" value={ageSlots.map((_, i) => childAges[i] ?? "").join("\n")} />
+        {ageSlots.length > 0 && (
+          <div className="mt-5 grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-6">
+            {ageSlots.map((label, i) => (
+              <div key={label}>
+                <label className={labelClass}>{label} age</label>
+                <CustomSelect
+                  value={childAges[i] ?? ""}
+                  onChange={(v) =>
+                    setChildAges((prev) => {
+                      const next = [...prev];
+                      next[i] = v;
+                      return next;
+                    })
+                  }
+                  placeholder="Select age"
+                  options={ageOptionsFor(childAges[i])}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+      </Section>
+
+      <Section title="Accommodation">
+        <div className="grid grid-cols-2 gap-5 sm:grid-cols-3">
           <div>
             <label className={labelClass} htmlFor="rooms">Rooms</label>
             <input id="rooms" name="rooms" type="number" min={0} defaultValue={defaults?.rooms ?? 1} className={inputClass} />
@@ -212,68 +573,52 @@ export default function CustomPackageForm({
 
         <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
           <div>
-            <label className={labelClass} htmlFor="childAges">Child / infant ages (one per line)</label>
-            <textarea id="childAges" name="childAges" rows={3} defaultValue={defaults?.childAges?.join("\n")} placeholder={"6\n18 months"} className={inputClass} />
-          </div>
-          <div>
             <label className={labelClass} htmlFor="hotelCategory">Hotel category</label>
-            <CustomSelect name="hotelCategory" value={hotelCategory} onChange={setHotelCategory} placeholder="—" options={categoryOptions(hotelCategories)} />
+            <CustomSelect name="hotelCategory" value={hotelCategory} onChange={setHotelCategory} placeholder="Select hotel category" options={categoryOptions(hotelCategories, "Select hotel category")} />
           </div>
           <div>
             <label className={labelClass} htmlFor="roomCategory">Room category</label>
-            <CustomSelect name="roomCategory" value={roomCategory} onChange={setRoomCategory} placeholder="—" options={categoryOptions(roomCategories)} />
-            {roomCategoryIsOther && (
+            <CustomSelect name="roomCategory" value={roomCategory} onChange={setRoomCategory} placeholder="Select room category" options={categoryOptions(roomCategories, "Select room category")} />
+            {!roomCategoryIsOther && <input type="hidden" name="roomCategoryOther" value="" />}
+          </div>
+          {roomCategoryIsOther && (
+            <div>
+              <label className={labelClass} htmlFor="roomCategoryOther">Specify room category</label>
               <input
+                id="roomCategoryOther"
                 name="roomCategoryOther"
                 defaultValue={defaults?.roomCategoryOther}
                 placeholder="Specify the room category"
-                className={`${inputClass} mt-2`}
+                className={inputClass}
               />
-            )}
-            {!roomCategoryIsOther && <input type="hidden" name="roomCategoryOther" value="" />}
-          </div>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-6">
+          <RepeatableRows
+            name="stays"
+            addLabel="Add hotel"
+            bare
+            initialRows={defaults?.stays ?? []}
+            fields={[
+              { key: "city", label: "City", type: "suggest", suggestions: citySuggestions },
+              { key: "hotelName", label: "Hotel Name", type: "suggest", suggestions: hotelSuggestions },
+              { key: "nights", label: "Nights", type: "number" },
+              { key: "days", label: "Days", type: "number" },
+            ]}
+          />
         </div>
       </Section>
 
-      <Section
-        title="Accommodation"
-        hint="One block per hotel. A multi-city trip gets a row for each city, in order of travel."
-      >
-        <RepeatableRows
-          name="stays"
-          addLabel="Add hotel"
-          initialRows={defaults?.stays ?? []}
-          fields={[
-            { key: "city", label: "City", type: "suggest", suggestions: citySuggestions },
-            { key: "nights", label: "Nights", type: "number" },
-            { key: "hotelName", label: "Hotel Name", type: "suggest", suggestions: hotelSuggestions },
-            { key: "hotelCategory", label: "Hotel Category", type: "options", options: hotelCategories },
-            { key: "roomCategory", label: "Room Category", type: "options", options: roomCategories },
-            { key: "rooms", label: "Rooms", type: "number" },
-            { key: "extraBed", label: "Extra Bed", type: "checkbox" },
-            { key: "extraMattress", label: "Extra Mattress", type: "checkbox" },
-          ]}
-        />
-      </Section>
-
-      <Section title="Itinerary" hint="Each day carries its own date, title and description.">
-        <RepeatableRows
-          name="days"
-          addLabel="Add Day"
-          stacked
-          initialRows={defaults?.days ?? []}
-          fields={[
-            { key: "date", label: "Date", type: "date" },
-            { key: "title", label: "Day Title", type: "text" },
-            { key: "desc", label: "Description", type: "textarea" },
-          ]}
-        />
+      <Section title="Itinerary">
+        <ItineraryDays rows={dayRows} onChange={setDayRows} startDate={startDate} />
       </Section>
 
       <Section title="Inclusions">
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-x-8 gap-y-3 sm:grid-cols-2">
           {inclusionOptions.map((opt) => (
-            <label key={opt.value} className="flex items-start gap-2 text-sm text-ink-900">
+            <label key={opt.value} className="flex items-center gap-2 whitespace-nowrap text-sm text-ink-900">
               <input
                 type="checkbox"
                 name="inclusions"
@@ -341,16 +686,18 @@ export default function CustomPackageForm({
         </div>
       </Section>
 
-      {state?.error && (
+      {state && "error" in state && (
         <p className="rounded-lg bg-red-50 px-4 py-2.5 text-sm font-medium text-red-600">{state.error}</p>
       )}
 
       <button
         type="submit"
-        disabled={pending}
+        // Stays disabled after a successful save while the page navigates
+        // away, so a second click can't create a duplicate quotation.
+        disabled={pending || saved}
         className="rounded-full bg-brand-600 px-6 py-3 text-sm font-semibold text-white shadow-brand transition hover:bg-brand-700 disabled:opacity-60"
       >
-        {pending ? "Saving..." : isNew ? "Create & Generate PDF" : "Save Changes"}
+        {pending || saved ? "Saving..." : isNew ? "Create & Generate PDF" : "Save Changes"}
       </button>
     </form>
   );

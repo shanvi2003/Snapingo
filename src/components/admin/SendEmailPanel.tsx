@@ -18,6 +18,7 @@ export default function SendEmailPanel({
   defaultTo,
   label,
   disabledReason,
+  bare = false,
 }: {
   action: (prevState: FormState, formData: FormData) => Promise<FormState>;
   defaultTo: string;
@@ -25,15 +26,18 @@ export default function SendEmailPanel({
   // Set when email isn't configured, so the reason is visible rather than the
   // button simply failing when pressed.
   disabledReason?: string;
+  // Drops the panel's own card, for pages that already place it inside one.
+  bare?: boolean;
 }) {
   const [state, formAction, pending] = useActionState<FormState, FormData>(action, undefined);
   const [open, setOpen] = useState(false);
 
   const sent = state && "success" in state;
+  const wrapperClass = bare ? "" : "rounded-2xl border border-ink-100 bg-white p-6 shadow-sm";
 
   if (disabledReason) {
     return (
-      <div className="rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
+      <div className={wrapperClass}>
         <h2 className="flex items-center gap-2 font-heading text-base font-bold text-ink-900">
           <Mail className="h-4 w-4 text-ink-400" />
           {label}
@@ -44,7 +48,7 @@ export default function SendEmailPanel({
   }
 
   return (
-    <div className="rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
+    <div className={wrapperClass}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="flex items-center gap-2 font-heading text-base font-bold text-ink-900">
           <Mail className="h-4 w-4 text-ink-400" />

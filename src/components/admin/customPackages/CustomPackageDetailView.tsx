@@ -12,10 +12,12 @@ import { sendItineraryEmailAction } from "@/lib/actions/email";
 const fmtDate = (d: Date) =>
   d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
+// One section of the single page card - sections are split by dividers
+// rather than each sitting in a card of its own.
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
-      <h2 className="font-heading text-base font-bold text-ink-900">{title}</h2>
+    <section className="p-6">
+      <h2 className="font-heading text-xl font-extrabold text-ink-900">{title}</h2>
       <div className="mt-4">{children}</div>
     </section>
   );
@@ -59,6 +61,10 @@ export default async function CustomPackageDetailView({
     ["Customer", quotation.customerName],
     ["Phone", quotation.customerPhone ?? "—"],
     ["Email", quotation.customerEmail ?? "—"],
+    [
+      "Trip type",
+      quotation.tripType === "international" ? "International" : quotation.tripType === "domestic" ? "Domestic" : "—",
+    ],
     ["Destination", quotation.destinationName],
     [
       "Travel dates",
@@ -137,78 +143,125 @@ export default async function CustomPackageDetailView({
         </div>
       </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1.5fr_1fr]">
-        <div className="space-y-6">
-          <Card title="Trip details">
-            <dl className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
-              {facts.map(([label, value]) => (
-                <div key={label}>
-                  <dt className="text-xs font-bold uppercase tracking-wide text-ink-500">{label}</dt>
-                  <dd className="mt-0.5 text-sm text-ink-900">{value || "—"}</dd>
-                </div>
-              ))}
-            </dl>
-          </Card>
-
-          {quotation.stays.length > 0 && (
-            <Card title="Accommodation">
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[540px] text-left text-sm">
-                  <thead>
-                    <tr className="border-b border-ink-100 text-xs font-bold uppercase tracking-wide text-ink-500">
-                      <th className="py-2 pr-3">City</th>
-                      <th className="py-2 pr-3">Hotel</th>
-                      <th className="py-2 pr-3">Category</th>
-                      <th className="py-2 pr-3">Room</th>
-                      <th className="py-2 pr-3">Rooms</th>
-                      <th className="py-2">Extras</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {quotation.stays.map((stay) => (
-                      <tr key={stay.id} className="border-b border-ink-50 last:border-0">
-                        <td className="py-2 pr-3 text-ink-700">
-                          {[stay.city, stay.nights ? `${stay.nights}N` : ""].filter(Boolean).join(" · ") || "—"}
-                        </td>
-                        <td className="py-2 pr-3 font-semibold text-ink-900">{stay.hotelName}</td>
-                        <td className="py-2 pr-3 text-ink-700">
-                          {stay.hotelCategory ? hotelLabels.get(stay.hotelCategory) ?? "—" : "—"}
-                        </td>
-                        <td className="py-2 pr-3 text-ink-700">
-                          {stay.roomCategory ? roomLabels.get(stay.roomCategory) ?? "—" : "—"}
-                        </td>
-                        <td className="py-2 pr-3 text-ink-700">{stay.rooms}</td>
-                        <td className="py-2 text-ink-700">
-                          {[stay.extraBed ? "Extra bed" : "", stay.extraMattress ? "Extra mattress" : ""]
-                            .filter(Boolean)
-                            .join(", ") || "—"}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+      <div className="mt-6 divide-y divide-ink-100 rounded-2xl border border-ink-100 bg-white shadow-sm">
+        <Section title="Trip details">
+          <dl className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+            {facts.map(([label, value]) => (
+              <div key={label}>
+                <dt className="text-xs font-bold uppercase tracking-wide text-ink-500">{label}</dt>
+                <dd className="mt-0.5 text-sm text-ink-900">{value || "—"}</dd>
               </div>
-            </Card>
-          )}
+            ))}
+          </dl>
+        </Section>
 
-          <Card title="Itinerary">
-            <ol className="space-y-4">
-              {quotation.days.map((day) => (
-                <li key={day.id} className="border-l-2 border-brand-200 pl-4">
-                  <p className="text-xs font-bold uppercase tracking-wide text-brand-600">
-                    Day {day.day}
-                    {day.date && <span className="ml-2 text-ink-500">{fmtDate(day.date)}</span>}
-                  </p>
-                  <p className="mt-0.5 font-semibold text-ink-900">{day.title}</p>
-                  {day.desc && <p className="mt-1 text-sm text-ink-700">{day.desc}</p>}
-                </li>
+        {quotation.stays.length > 0 && (
+          <Section title="Accommodation">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[540px] text-left text-sm">
+                <thead>
+                  <tr className="border-b border-ink-100 text-xs font-bold uppercase tracking-wide text-ink-500">
+                    <th className="py-2 pr-3">City</th>
+                    <th className="py-2 pr-3">Hotel</th>
+                    <th className="py-2 pr-3">Category</th>
+                    <th className="py-2 pr-3">Room</th>
+                    <th className="py-2 pr-3">Rooms</th>
+                    <th className="py-2">Extras</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {quotation.stays.map((stay) => (
+                    <tr key={stay.id} className="border-b border-ink-50 last:border-0">
+                      <td className="py-2 pr-3 text-ink-700">
+                        {[
+                          stay.city,
+                          [stay.nights ? `${stay.nights}N` : "", stay.days ? `${stay.days}D` : ""].filter(Boolean).join(" / "),
+                        ]
+                          .filter(Boolean)
+                          .join(" · ") || "—"}
+                      </td>
+                      <td className="py-2 pr-3 font-semibold text-ink-900">{stay.hotelName}</td>
+                      <td className="py-2 pr-3 text-ink-700">
+                        {stay.hotelCategory ? hotelLabels.get(stay.hotelCategory) ?? "—" : "—"}
+                      </td>
+                      <td className="py-2 pr-3 text-ink-700">
+                        {stay.roomCategory ? roomLabels.get(stay.roomCategory) ?? "—" : "—"}
+                      </td>
+                      <td className="py-2 pr-3 text-ink-700">{stay.rooms}</td>
+                      <td className="py-2 text-ink-700">
+                        {[stay.extraBed ? "Extra bed" : "", stay.extraMattress ? "Extra mattress" : ""]
+                          .filter(Boolean)
+                          .join(", ") || "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Section>
+        )}
+
+        <Section title="Itinerary">
+          <ol className="space-y-4">
+            {quotation.days.map((day) => (
+              <li key={day.id} className="border-l-2 border-brand-200 pl-4">
+                <p className="text-xs font-bold uppercase tracking-wide text-brand-600">
+                  Day {day.day}
+                  {day.date && <span className="ml-2 text-ink-500">{fmtDate(day.date)}</span>}
+                </p>
+                <p className="mt-0.5 font-semibold text-ink-900">{day.title}</p>
+                {day.desc && <p className="mt-1 text-sm text-ink-700">{day.desc}</p>}
+              </li>
+            ))}
+          </ol>
+        </Section>
+
+        <div className="grid grid-cols-1 divide-y divide-ink-100 sm:grid-cols-2 sm:divide-x sm:divide-y-0">
+          <Section title="Inclusions">
+            <ul className="space-y-1 text-sm text-ink-800">
+              {inclusions.map((i) => (
+                <li key={i.value}>• {i.label}</li>
               ))}
-            </ol>
-          </Card>
+              {inclusions.length === 0 && <li className="text-ink-500">None selected.</li>}
+            </ul>
+          </Section>
+
+          <Section title="Exclusions (automatic)">
+            <ul className="space-y-1 text-sm text-ink-800">
+              {exclusions.map((e) => (
+                <li key={e}>• {e}</li>
+              ))}
+              {exclusions.length === 0 && <li className="text-ink-500">Nothing excluded.</li>}
+            </ul>
+          </Section>
         </div>
 
-        <div className="space-y-6">
+        <Section title="Pricing">
+          <dl className="max-w-md space-y-2 text-sm">
+            <div className="flex justify-between">
+              <dt className="text-ink-500">Package price</dt>
+              <dd className="text-ink-900">{formatRupees(quotation.price)}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-ink-500">GST ({quotation.gstPercent}%)</dt>
+              <dd className="text-ink-900">{formatRupees(quotation.gstAmount)}</dd>
+            </div>
+            <div className="flex justify-between border-t border-ink-100 pt-2 font-bold">
+              <dt className="text-ink-900">Total</dt>
+              <dd className="text-brand-600">{formatRupees(quotation.totalAmount)}</dd>
+            </div>
+          </dl>
+        </Section>
+
+        {quotation.notes && (
+          <Section title="Internal notes">
+            <p className="whitespace-pre-line text-sm text-ink-700">{quotation.notes}</p>
+          </Section>
+        )}
+
+        <div className="p-6">
           <SendEmailPanel
+            bare
             action={sendItineraryEmailAction.bind(null, quotation.id)}
             defaultTo={quotation.customerEmail ?? ""}
             label="Email itinerary to customer"
@@ -216,47 +269,6 @@ export default async function CustomPackageDetailView({
               isEmailConfigured() ? undefined : "Email isn't connected yet. Ask an admin to set it up."
             }
           />
-
-          <Card title="Pricing">
-            <dl className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <dt className="text-ink-500">Package price</dt>
-                <dd className="text-ink-900">{formatRupees(quotation.price)}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-ink-500">GST ({quotation.gstPercent}%)</dt>
-                <dd className="text-ink-900">{formatRupees(quotation.gstAmount)}</dd>
-              </div>
-              <div className="flex justify-between border-t border-ink-100 pt-2 font-bold">
-                <dt className="text-ink-900">Total</dt>
-                <dd className="text-brand-600">{formatRupees(quotation.totalAmount)}</dd>
-              </div>
-            </dl>
-          </Card>
-
-          <Card title="Inclusions">
-            <ul className="space-y-1 text-sm text-ink-800">
-              {inclusions.map((i) => (
-                <li key={i.value}>• {i.label}</li>
-              ))}
-              {inclusions.length === 0 && <li className="text-ink-500">None selected.</li>}
-            </ul>
-          </Card>
-
-          <Card title="Exclusions (automatic)">
-            <ul className="space-y-1 text-sm text-ink-800">
-              {exclusions.map((e) => (
-                <li key={e}>• {e}</li>
-              ))}
-              {exclusions.length === 0 && <li className="text-ink-500">Nothing excluded.</li>}
-            </ul>
-          </Card>
-
-          {quotation.notes && (
-            <Card title="Internal notes">
-              <p className="whitespace-pre-line text-sm text-ink-700">{quotation.notes}</p>
-            </Card>
-          )}
         </div>
       </div>
     </div>

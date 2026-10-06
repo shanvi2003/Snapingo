@@ -39,6 +39,7 @@ export const customPackageSchema = z.object({
   customerEmail: z.union([z.literal(""), z.email().max(200)]).optional(),
   leadId: optionalText(60),
 
+  tripType: z.enum(["domestic", "international"], "Choose Domestic or International."),
   destinationName: z.string().trim().min(1, "Destination is required.").max(200),
   startDate: optionalText(40),
   endDate: optionalText(40),
@@ -88,12 +89,8 @@ export const customPackageSchema = z.object({
         order: i,
         city: (r.city ?? "").trim() || null,
         nights: r.nights ? toInt(r.nights) : null,
+        days: r.days ? toInt(r.days) : null,
         hotelName: (r.hotelName ?? "").trim(),
-        hotelCategory: (r.hotelCategory ?? "").trim() || null,
-        roomCategory: (r.roomCategory ?? "").trim() || null,
-        rooms: toInt(r.rooms, 1),
-        extraBed: r.extraBed === "true",
-        extraMattress: r.extraMattress === "true",
       }))
       .filter((s) => s.hotelName)
   ),

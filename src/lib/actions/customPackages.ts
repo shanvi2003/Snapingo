@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { requireStaffFeature } from "@/lib/dal";
 import type { SessionPayload } from "@/lib/session";
@@ -9,8 +8,12 @@ import { customPackageSchema } from "@/lib/validation/customPackage";
 import { withNewTripId } from "@/lib/tripIdServer";
 import { getGstPercent } from "@/lib/settings";
 import { calculateGst } from "@/lib/gst";
+import { formatDuration } from "@/lib/durationHelpers";
 
-export type FormState = { error: string } | undefined;
+// `savedPath` instead of a server-side redirect: the form keeps a browser
+// draft and must only drop it once the save has really gone through, which
+// it can't know if the action navigates away on its own.
+export type FormState = { error: string } | { savedPath: string } | undefined;
 
 function basePathFor(session: SessionPayload): string {
   return session.role === "ADMIN" ? "/admin" : "/staff";
@@ -48,6 +51,11 @@ export async function saveCustomPackageAction(
   if (days.length === 0) {
     return { error: "Add at least one day to the itinerary." };
   }
+  // Checked up front so a deleted lead gives a clear message, not a failed
+  // save with the quotation half-written.
+  if (leadId && !(await db.lead.findUnique({ where: { id: leadId }, select: { id: true } }))) {
+    return { error: "The lead this quotation belongs to no longer exists." };
+  }
 
   // Master-list values are re-checked server-side: a Server Action is a plain
   // POST endpoint, so "the dropdown only offered valid options" is not a
@@ -71,14 +79,19 @@ export async function saveCustomPackageAction(
   if (data.hotelCategory && !allowedHotels.has(data.hotelCategory)) {
     return { error: "Choose a hotel category from the list." };
   }
-  for (const stay of stays) {
-    if (stay.roomCategory && !allowedRooms.has(stay.roomCategory)) {
-      return { error: `"${stay.hotelName}" has a room category that isn't on the list.` };
-    }
-    if (stay.hotelCategory && !allowedHotels.has(stay.hotelCategory)) {
-      return { error: `"${stay.hotelName}" has a hotel category that isn't on the list.` };
-    }
-  }
+
+  // The form now asks for hotel/room category, rooms and extras once, in the
+  // Accommodation section, and each hotel row only for city, name and
+  // duration. Every stay carries those shared values so the PDF and detail
+  // page, which print them per hotel, keep showing them.
+  const stayRows = stays.map((stay) => ({
+    ...stay,
+    hotelCategory: data.hotelCategory || null,
+    roomCategory: data.roomCategory || null,
+    rooms: data.rooms,
+    extraBed: data.extraBeds > 0,
+    extraMattress: data.extraMattresses > 0,
+  }));
 
   // The rate is read here, not taken from the form, and then frozen onto the
   // row - reprinting a quotation years later must show the tax the customer
@@ -104,7 +117,7 @@ export async function saveCustomPackageAction(
             tripId,
             createdById: session.userId,
             days: { create: days },
-            stays: { create: stays },
+            stays: { create: stayRows },
           },
           select: { id: true },
         })
@@ -117,15 +130,58 @@ export async function saveCustomPackageAction(
         data: {
           ...shared,
           days: { deleteMany: {}, create: days },
-          stays: { deleteMany: {}, create: stays },
+          stays: { deleteMany: {}, create: stayRows },
         },
         select: { id: true },
       });
 
+  // A quotation raised from a lead keeps that lead's own details in step:
+  // the lead's Edit screen *is* this form, so what staff correct here (a
+  // misspelt name, the real dates, the party size) is the lead's truth too.
+  // Only the fields a lead has are written; itinerary, hotels and price
+  // belong to the quotation alone.
+  if (leadId) {
+    await db.lead.update({
+      where: { id: leadId },
+      data: {
+        name: data.customerName,
+        phone: data.customerPhone || null,
+        email: customerEmail || null,
+        tripType: data.tripType,
+        destinationName: data.destinationName,
+        startDate: shared.startDate,
+        endDate: shared.endDate,
+        days: formatDuration({ nights: data.durationNights, days: data.durationDays }),
+        adults: data.adults,
+        children: data.children,
+        infants: data.infants,
+        childAges: data.childAges,
+        rooms: data.rooms,
+        extraBeds: data.extraBeds,
+        extraMattresses: data.extraMattresses,
+        roomCategory: data.roomCategory || null,
+        hotelCategory: data.hotelCategory || null,
+      },
+    });
+  }
+
   const basePath = basePathFor(session);
   revalidatePath(`${basePath}/custom-packages`);
   revalidatePath(`${basePath}/custom-packages/${saved.id}`);
-  redirect(`${basePath}/custom-packages/${saved.id}`);
+  if (leadId) {
+    // Lead screens exist under both panels; either may be showing this lead.
+    for (const panel of ["/admin", "/staff"]) {
+      revalidatePath(`${panel}/leads`);
+      revalidatePath(`${panel}/leads/${leadId}`);
+    }
+  }
+
+  // Opened from a lead's Edit button: back to that lead, where the quotation
+  // is listed with its PDF download.
+  if (leadId && formData.get("returnTo") === "lead") {
+    return { savedPath: `${basePath}/leads/${leadId}` };
+  }
+  return { savedPath: `${basePath}/custom-packages/${saved.id}` };
 }
 
 export async function deleteCustomPackageAction(id: string): Promise<void> {

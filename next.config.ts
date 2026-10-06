@@ -21,6 +21,19 @@ const nextConfig: NextConfig = {
   // runtime on the server while working perfectly in dev. Keeping them
   // external leaves them as plain node_modules requires.
   serverExternalPackages: ["@sparticuz/chromium", "puppeteer-core"],
+  // The quotation PDF reads its logo, watermarks and Lexend font from
+  // /public at runtime (src/lib/pdf/customItineraryHtml.ts) to inline them.
+  // /public is served from the CDN, not shipped inside server functions, so
+  // without this they'd be missing on the deployed server and the PDF would
+  // quietly lose its watermarks and font.
+  outputFileTracingIncludes: {
+    "/api/admin/custom-packages/[id]/pdf": [
+      "./public/snapingo-wordmark-horizontal.png",
+      "./public/snapingo-icon.png",
+      "./public/snapingo-mountain-hills.png",
+      "./public/fonts/Lexend-Variable.ttf",
+    ],
+  },
   // The site has no legitimate reason to ever render inside someone else's
   // page - blocking all framing is what stops a third party from iframing
   // snapingo.com behind their own URL and having it look like the site
