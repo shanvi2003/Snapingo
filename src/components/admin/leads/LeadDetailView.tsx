@@ -60,6 +60,10 @@ export default async function LeadDetailView({ basePath, leadId }: { basePath: s
   if (!lead) notFound();
 
   const isAdmin = session?.role === "ADMIN";
+  // basePath is the leads list ("/admin/leads"); quotations live beside it at
+  // the panel root ("/admin/custom-packages"), not under it - linking them off
+  // basePath produced /admin/leads/custom-packages/..., a 404.
+  const panelPath = basePath.replace(/\/leads$/, "");
 
   const duplicates = lead.phone
     ? await db.lead.findMany({
@@ -103,7 +107,7 @@ export default async function LeadDetailView({ basePath, leadId }: { basePath: s
             </span>
           )}
           <Link
-            href={`${basePath}/custom-packages/new?leadId=${lead.id}`}
+            href={`${panelPath}/custom-packages/new?leadId=${lead.id}`}
             className="flex items-center gap-1.5 rounded-full border border-ink-200 px-4 py-2 text-sm font-semibold text-ink-700 transition hover:border-brand-400 hover:text-brand-600"
           >
             <FileText className="h-4 w-4" />
@@ -152,7 +156,7 @@ export default async function LeadDetailView({ basePath, leadId }: { basePath: s
               >
                 <div>
                   <Link
-                    href={`${basePath}/custom-packages/${quotation.id}`}
+                    href={`${panelPath}/custom-packages/${quotation.id}`}
                     className="font-mono text-xs font-semibold text-brand-600 hover:text-brand-700"
                   >
                     {quotation.tripId}
