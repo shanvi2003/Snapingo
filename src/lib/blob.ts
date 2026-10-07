@@ -44,13 +44,27 @@ export const ACCEPTED_DOCUMENT_TYPES = [
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ] as const;
 
+// Two stores, because Vercel sets public/private on the whole store, not per
+// file ("Private storage requires a private Blob store"):
+//   - images    -> the public store, BLOB_READ_WRITE_TOKEN (Vercel's default
+//                  name when a store is connected to the project)
+//   - documents -> the private store, BLOB_PRIVATE_READ_WRITE_TOKEN (the same
+//                  store connected a second time with the "BLOB_PRIVATE"
+//                  prefix, so the two tokens can't overwrite each other)
+const privateToken = () => process.env.BLOB_PRIVATE_READ_WRITE_TOKEN;
+
 /**
- * Whether a blob store is wired up. Every upload path checks this so a
- * deployment without the token degrades to the URL-only field it had before,
- * rather than showing staff an upload button that always fails.
+ * Whether the image store is wired up. Every image upload path checks this so
+ * a deployment without the token degrades to the URL-only field it had
+ * before, rather than showing staff an upload button that always fails.
  */
 export function isBlobConfigured(): boolean {
   return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+}
+
+/** Whether the private document store (booking vouchers) is wired up. */
+export function isPrivateBlobConfigured(): boolean {
+  return Boolean(privateToken());
 }
 
 export type UploadResult = { url: string; pathname: string; contentType: string; size: number };
@@ -182,7 +196,7 @@ export async function uploadImage(file: File): Promise<UploadResult | UploadFail
  * `readPrivateDocument`.
  */
 export async function uploadDocument(file: File): Promise<UploadResult | UploadFailure> {
-  if (!isBlobConfigured()) {
+  if (!isPrivateBlobConfigured()) {
     return { error: "File uploads aren't set up yet." };
   }
   if (file.size === 0) return { error: "That file is empty." };
@@ -203,6 +217,7 @@ export async function uploadDocument(file: File): Promise<UploadResult | UploadF
     access: "private",
     addRandomSuffix: true,
     contentType,
+    token: privateToken(),
   });
 
   return { url: blob.url, pathname: blob.pathname, contentType, size: file.size };
@@ -212,7 +227,7 @@ export async function uploadDocument(file: File): Promise<UploadResult | UploadF
 export async function readPrivateDocument(url: string) {
   // useCache:false - a voucher is fetched rarely and re-uploaded when it
   // changes, so correctness matters more than shaving a CDN round trip.
-  return get(url, { access: "private", useCache: false });
+  return get(url, { access: "private", useCache: false, token: privateToken() });
 }
 
 /**
@@ -222,9 +237,12 @@ export async function readPrivateDocument(url: string) {
  * up a file.
  */
 export async function deleteBlob(url: string): Promise<void> {
-  if (!isBlobConfigured() || !isBlobUrl(url)) return;
+  if (!isBlobUrl(url)) return;
+  // A private-store URL can only be deleted with that store's own token.
+  const isPrivate = new URL(url).hostname.includes(".private.");
+  if (isPrivate ? !isPrivateBlobConfigured() : !isBlobConfigured()) return;
   try {
-    await del(url);
+    await del(url, isPrivate ? { token: privateToken() } : undefined);
   } catch {
     // Nothing to do: the file is either already gone or unreachable, and
     // neither is worth surfacing to whoever pressed Delete.

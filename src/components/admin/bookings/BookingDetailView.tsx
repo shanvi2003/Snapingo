@@ -7,7 +7,7 @@ import BookingStatusSelect from "@/components/admin/bookings/BookingStatusSelect
 import DeleteBookingButton from "@/components/admin/bookings/DeleteBookingButton";
 import { addPaymentAction } from "@/lib/actions/bookings";
 import { formatBalance } from "@/lib/money";
-import { isBlobConfigured } from "@/lib/blob";
+import { isPrivateBlobConfigured } from "@/lib/blob";
 import { isEmailConfigured } from "@/lib/email";
 import VoucherPanel from "@/components/admin/bookings/VoucherPanel";
 import SendEmailPanel from "@/components/admin/SendEmailPanel";
@@ -175,7 +175,7 @@ export default async function BookingDetailView({ bookingId, basePath = "/admin"
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <VoucherPanel
           bookingId={booking.id}
-          uploadsEnabled={isBlobConfigured()}
+          uploadsEnabled={isPrivateBlobConfigured()}
           vouchers={booking.vouchers.map((v) => ({
             id: v.id,
             label: v.label,

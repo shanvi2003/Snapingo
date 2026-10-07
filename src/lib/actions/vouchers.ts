@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireStaffFeature } from "@/lib/dal";
-import { deleteBlob, isBlobConfigured, uploadDocument } from "@/lib/blob";
+import { deleteBlob, isPrivateBlobConfigured, uploadDocument } from "@/lib/blob";
 
 export type FormState = { error: string } | { success: string } | undefined;
 
@@ -27,7 +27,7 @@ export async function uploadVoucherAction(
 ): Promise<FormState> {
   const session = await requireStaffFeature("bookings");
 
-  if (!isBlobConfigured()) {
+  if (!isPrivateBlobConfigured()) {
     return { error: "File uploads aren't set up yet. Ask an admin to connect blob storage." };
   }
 
