@@ -50,3 +50,6 @@ next-env.d.ts
 skills-lock.json
 /CLAUDE.md
 /AGENTS.md
+
+.vercel
+.env*
