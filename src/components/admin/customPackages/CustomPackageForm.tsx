@@ -69,6 +69,7 @@ export type CustomPackageDefaults = {
   hotelCategory?: string;
   inclusions?: string[];
   customInclusions?: string[];
+  exclusions?: string[];
   vehicleName?: string;
   price?: number;
   notes?: string;
@@ -163,6 +164,7 @@ function formToDefaults(form: HTMLFormElement): CustomPackageDefaults {
     days: rows("days"),
     inclusions: fd.getAll("inclusions").filter((v): v is string => typeof v === "string"),
     customInclusions: (str("customInclusions") ?? "").split("\n").filter(Boolean),
+    exclusions: (str("exclusions") ?? "").split("\n").filter(Boolean),
     price: num("price"),
     notes: str("notes"),
     contentBlocks: rows("contentBlocks") as EditableContentBlock[],
@@ -338,8 +340,11 @@ function CustomPackageFormBody({
   const [price, setPrice] = useState(String(defaults?.price ?? ""));
 
   const [inclusions, setInclusions] = useState<Set<string>>(new Set(defaults?.inclusions ?? []));
-  const freeTextValues = inclusionOptions.filter((o) => o.freeText).map((o) => o.value);
-  const showCustomBox = freeTextValues.some((v) => inclusions.has(v));
+  // The automatic half of the PDF's Exclusions: every regular inclusion left
+  // unticked (the free-text "Other" row is never an exclusion).
+  const derivedExclusions = inclusionOptions
+    .filter((o) => !o.freeText && !inclusions.has(o.value))
+    .map((o) => o.label);
 
   // Mirrors what the server will compute and store, so staff see the tax and
   // the grand total before saving instead of typing GST in by hand.
@@ -628,14 +633,41 @@ function CustomPackageFormBody({
             </label>
           ))}
         </div>
-        {showCustomBox ? (
-          <div className="mt-4">
-            <label className={labelClass} htmlFor="customInclusions">Other inclusions (one per line)</label>
-            <textarea id="customInclusions" name="customInclusions" rows={3} defaultValue={defaults?.customInclusions?.join("\n")} className={inputClass} />
-          </div>
-        ) : (
-          <input type="hidden" name="customInclusions" value="" />
-        )}
+        {/* Always visible, as on the package form: every line typed here is
+            printed whether or not "Other (Specify)" is ticked, so hiding the
+            box behind that tick only hid where to type it. */}
+        <div className="mt-6">
+          <label className={labelClass} htmlFor="customInclusions">Other inclusions (one per line)</label>
+          <textarea
+            id="customInclusions"
+            name="customInclusions"
+            rows={3}
+            defaultValue={defaults?.customInclusions?.join("\n")}
+            placeholder={"Airport lounge access\nProfessional photoshoot"}
+            className={inputClass}
+          />
+        </div>
+      </Section>
+
+      <Section title="Exclusions">
+        {/* What the PDF will list under Exclusions, shown live: every
+            inclusion left unticked, then the extra lines below. */}
+        <p className={labelClass}>Added automatically (not ticked under Inclusions)</p>
+        <p className="text-sm leading-relaxed text-ink-700">
+          {derivedExclusions.length > 0 ? derivedExclusions.join(", ") : "None - every inclusion is ticked."}
+        </p>
+
+        <div className="mt-6">
+          <label className={labelClass} htmlFor="exclusions">Additional exclusions (one per line)</label>
+          <textarea
+            id="exclusions"
+            name="exclusions"
+            rows={3}
+            defaultValue={defaults?.exclusions?.join("\n")}
+            placeholder={"GST and government taxes\nPersonal expenses, tips & shopping\nTravel insurance"}
+            className={inputClass}
+          />
+        </div>
       </Section>
 
       <Section title="Pricing">

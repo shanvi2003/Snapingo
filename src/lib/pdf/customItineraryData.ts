@@ -80,9 +80,9 @@ export async function loadCustomItinerary(
       gstAmount: quotation.gstAmount,
       totalAmount: quotation.totalAmount,
       inclusions,
-      // A quotation has no curated exclusion list of its own, so this always
-      // derives from what wasn't ticked - the rule the client asked for.
-      exclusions: getEffectiveExclusions([], quotation.inclusions, inclusionOptions),
+      // Everything not ticked, then whatever extra the staff member typed -
+      // the same rule packages follow.
+      exclusions: getEffectiveExclusions(quotation.exclusions, quotation.inclusions, inclusionOptions),
       days: quotation.days.map((d) => ({
         day: d.day,
         date: d.date,

@@ -62,6 +62,8 @@ export const customPackageSchema = z.object({
 
   inclusions: z.array(z.string().max(120)),
   customInclusions: z.string().transform(linesToArray).pipe(z.array(z.string().max(200)).max(20)),
+  // Extra exclusions, one per line - printed after the automatic ones.
+  exclusions: z.string().optional().transform(linesToArray).pipe(z.array(z.string().max(200)).max(20)),
 
   vehicleName: optionalText(200),
 

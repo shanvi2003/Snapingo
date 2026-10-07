@@ -55,7 +55,7 @@ export default async function CustomPackageDetailView({
     inclusionOptions,
     quotation.customInclusions
   );
-  const exclusions = getEffectiveExclusions([], quotation.inclusions, inclusionOptions);
+  const exclusions = getEffectiveExclusions(quotation.exclusions, quotation.inclusions, inclusionOptions);
 
   const facts: [string, string][] = [
     ["Customer", quotation.customerName],

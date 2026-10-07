@@ -175,6 +175,7 @@ export default async function CustomPackageFormPage({
                 hotelCategory: quotation.hotelCategory ?? undefined,
                 inclusions: quotation.inclusions,
                 customInclusions: quotation.customInclusions,
+                exclusions: quotation.exclusions,
                 vehicleName: quotation.vehicleName ?? undefined,
                 price: quotation.price,
                 notes: quotation.notes ?? undefined,
