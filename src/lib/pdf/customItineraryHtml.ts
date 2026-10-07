@@ -155,7 +155,10 @@ function renderBlock(block: ContentBlockView): string {
     ? `<ul class="content-ul">${bullets.map((l) => `<li>&bull; ${esc(l.text)}</li>`).join("")}</ul>`
     : "";
 
-  return `<section class="content"><h2 class="section-heading">${esc(block.title)}</h2>${paragraphs}${list}</section>`;
+  // Terms & Conditions runs to several pages; at the body size the other
+  // sections use, it dwarfed the actual trip. Smaller here only.
+  const sizeClass = block.key === "PDF_TERMS" ? " content-small" : "";
+  return `<section class="content${sizeClass}"><h2 class="section-heading">${esc(block.title)}</h2>${paragraphs}${list}</section>`;
 }
 
 function renderPartyLine(data: CustomItineraryData): string {
@@ -453,6 +456,8 @@ export async function buildCustomItineraryHtml(
   .content-ul { margin-top: 8px; font-size: 19px; color: ${INK_800}; }
   .content-ul li { break-inside: avoid; }
   .content-ul li + li { margin-top: 4px; }
+  .content-small .content-p, .content-small .content-ul { font-size: 15px; }
+  .content-small .content-ul li + li { margin-top: 3px; }
 
   .help { margin-top: 24px; border: 1px solid ${BRAND_200}; border-radius: 12px; background: ${BRAND_50}; padding: 16px; }
   .help h2 { font-size: 17px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.025em; color: ${BRAND_700}; }

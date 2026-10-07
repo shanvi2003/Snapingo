@@ -48,17 +48,20 @@ function ContentSection({ block, className = "mt-6" }: { block: ContentBlockView
 
   const paragraphs = lines.filter((l) => l.type === "paragraph");
   const bullets = lines.filter((l) => l.type === "bullet");
+  // Terms & Conditions runs to several pages; at the body size the other
+  // sections use, it dwarfed the actual trip. Smaller here only.
+  const textSize = block.key === "PDF_TERMS" ? "text-[15px]" : "text-[19px]";
 
   return (
     <section className={className}>
       <SectionHeading>{block.title}</SectionHeading>
       {paragraphs.map((line, i) => (
-        <p key={i} className="mt-2 text-[19px] leading-relaxed text-ink-800">
+        <p key={i} className={`mt-2 ${textSize} leading-relaxed text-ink-800`}>
           {line.text}
         </p>
       ))}
       {bullets.length > 0 && (
-        <ul className="mt-2 space-y-1 text-[19px] text-ink-800">
+        <ul className={`mt-2 space-y-1 ${textSize} text-ink-800`}>
           {bullets.map((line, i) => (
             <li key={i} className="break-inside-avoid">
               &bull; {line.text}
