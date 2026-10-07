@@ -22,8 +22,10 @@ export default function PackagesTable({
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return packages;
-    return packages.filter(
-      (p) => p.title.toLowerCase().includes(q) || p.destination.toLowerCase().includes(q)
+    // The staff-facing code (SNP-2026-149) and the URL id (goa-beach-bliss)
+    // are searchable too, so a package quoted by its ID can be found directly.
+    return packages.filter((p) =>
+      [p.code ?? "", p.id, p.title, p.destination].some((field) => field.toLowerCase().includes(q))
     );
   }, [packages, query]);
 
@@ -35,7 +37,7 @@ export default function PackagesTable({
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search title or destination..."
+          placeholder="Search package ID, title or destination..."
           className="w-full bg-transparent text-sm text-ink-900 placeholder:text-ink-400 focus:outline-none"
         />
       </label>
@@ -49,6 +51,7 @@ export default function PackagesTable({
         <table className="w-full min-w-[720px] text-left text-sm">
           <thead>
             <tr className="border-b border-ink-100 text-xs font-bold uppercase tracking-wide text-ink-500">
+              <th className="px-4 py-3">Package ID</th>
               <th className="px-4 py-3">Title</th>
               <th className="px-4 py-3">Destination</th>
               <th className="px-4 py-3">Type</th>
@@ -59,6 +62,9 @@ export default function PackagesTable({
           <tbody>
             {filtered.map((p) => (
               <tr key={p.id} className="border-b border-ink-50 last:border-0 hover:bg-ink-50/60">
+                <td className="whitespace-nowrap px-4 py-3 font-mono text-xs font-semibold text-brand-600">
+                  {p.code ?? "—"}
+                </td>
                 <td className="px-4 py-3">
                   <p className="font-semibold text-ink-900">{p.title}</p>
                   {p.featured && <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[10px] font-bold uppercase text-brand-600">Featured</span>}
@@ -78,7 +84,7 @@ export default function PackagesTable({
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-10 text-center text-sm text-ink-500">
+                <td colSpan={6} className="px-4 py-10 text-center text-sm text-ink-500">
                   {query ? `No packages match "${query}".` : "No packages found."}
                 </td>
               </tr>
