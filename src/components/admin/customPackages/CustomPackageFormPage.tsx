@@ -5,18 +5,8 @@ import { getGstPercent } from "@/lib/settings";
 import { getSuggestionSets } from "@/lib/suggestions";
 import CustomPackageForm, { type CustomPackageDefaults } from "@/components/admin/customPackages/CustomPackageForm";
 import { parseDuration } from "@/lib/durationHelpers";
-import { getContentBlocks, resolveContentBlocks } from "@/lib/contentBlocks";
-
-// <input type="date"> only accepts yyyy-mm-dd, and toISOString() would shift
-// the day backwards for anyone east of UTC (which is everyone here) - so the
-// date is formatted from its local parts instead.
-function toDateInput(value: Date | null): string | undefined {
-  if (!value) return undefined;
-  const year = value.getFullYear();
-  const month = String(value.getMonth() + 1).padStart(2, "0");
-  const day = String(value.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
+import { getContentBlocks } from "@/lib/contentBlocks";
+import { defaultsFromQuotation, loadQuotation, toDateInput } from "@/lib/customPackageDefaults";
 
 type LeadRow = NonNullable<Awaited<ReturnType<typeof loadLead>>>;
 
@@ -104,20 +94,15 @@ export default async function CustomPackageFormPage({
   const customPackageId = editLeadId ? lead?.customPackages[0]?.id : customPackageIdProp;
   const isNew = editLeadId ? !customPackageId : isNewProp;
 
-  const quotation = customPackageId
-    ? await db.customPackage.findUnique({
-        where: { id: customPackageId },
-        include: { days: { orderBy: { day: "asc" } }, stays: { orderBy: { order: "asc" } } },
-      })
-    : null;
+  const quotation = customPackageId ? await loadQuotation(customPackageId) : null;
 
   if (customPackageId && !quotation) notFound();
 
-  // The quotation's own PDF sections where it saved some; a new quotation
-  // starts from the standard ones (passed separately, below).
-  const [standardContentBlocks, quotationContentBlocks] = await Promise.all([
+  // A new quotation starts from the standard PDF sections (passed separately,
+  // below); an existing one carries its own.
+  const [standardContentBlocks, quotationDefaults] = await Promise.all([
     getContentBlocks(),
-    quotation ? resolveContentBlocks(quotation.contentBlocks) : null,
+    quotation ? defaultsFromQuotation(quotation) : null,
   ]);
   const toEditable = (list: { key: string; title: string; body: string }[]) =>
     list.map((b) => ({ key: b.key, title: b.title, body: b.body }));
@@ -133,11 +118,15 @@ export default async function CustomPackageFormPage({
 
   return (
     <div>
-      <h1 className="font-heading text-2xl font-bold text-ink-900">{heading}</h1>
-      {editLeadId && quotation && (
-        <p className="mt-1 font-mono text-sm font-semibold text-brand-600">{quotation.tripId}</p>
-      )}
       <CustomPackageForm
+        header={
+          <>
+            <h1 className="font-heading text-2xl font-bold text-ink-900">{heading}</h1>
+            {editLeadId && quotation && (
+              <p className="mt-1 font-mono text-sm font-semibold text-brand-600">{quotation.tripId}</p>
+            )}
+          </>
+        }
         isNew={isNew}
         returnToLead={Boolean(editLeadId)}
         destinationSuggestions={suggestions.destinationName}
@@ -150,48 +139,8 @@ export default async function CustomPackageFormPage({
         gstPercent={gstPercent}
         standardContentBlocks={toEditable(standardContentBlocks)}
         defaults={
-          quotation
-            ? {
-                id: quotation.id,
-                customerName: quotation.customerName,
-                customerPhone: quotation.customerPhone ?? undefined,
-                customerEmail: quotation.customerEmail ?? undefined,
-                leadId: quotation.leadId ?? undefined,
-                tripType: quotation.tripType ?? undefined,
-                destinationName: quotation.destinationName,
-                startDate: toDateInput(quotation.startDate),
-                endDate: toDateInput(quotation.endDate),
-                durationNights: quotation.durationNights,
-                durationDays: quotation.durationDays,
-                adults: quotation.adults,
-                children: quotation.children,
-                infants: quotation.infants,
-                childAges: quotation.childAges,
-                rooms: quotation.rooms,
-                extraBeds: quotation.extraBeds,
-                extraMattresses: quotation.extraMattresses,
-                roomCategory: quotation.roomCategory ?? undefined,
-                roomCategoryOther: quotation.roomCategoryOther ?? undefined,
-                hotelCategory: quotation.hotelCategory ?? undefined,
-                inclusions: quotation.inclusions,
-                customInclusions: quotation.customInclusions,
-                exclusions: quotation.exclusions,
-                vehicleName: quotation.vehicleName ?? undefined,
-                price: quotation.price,
-                notes: quotation.notes ?? undefined,
-                contentBlocks: quotationContentBlocks ? toEditable(quotationContentBlocks) : undefined,
-                days: quotation.days.map((d) => ({
-                  date: toDateInput(d.date) ?? "",
-                  title: d.title,
-                  desc: d.desc,
-                })),
-                stays: quotation.stays.map((s) => ({
-                  city: s.city ?? "",
-                  hotelName: s.hotelName,
-                  nights: s.nights != null ? String(s.nights) : "",
-                  days: s.days != null ? String(s.days) : "",
-                })),
-              }
+          quotationDefaults
+            ? quotationDefaults
             : lead
               ? defaultsFromLead(lead)
               : undefined

@@ -30,9 +30,13 @@ const quoteDateFormatter = new Intl.DateTimeFormat("en-IN", {
 // paragraph/list below it to jump as one indivisible block - which was
 // leaving large blank gaps whenever that whole block didn't fit in the
 // room left on the page.
-function SectionHeading({ children }: { children: React.ReactNode }) {
+function SectionHeading({ children, small = false }: { children: React.ReactNode; small?: boolean }) {
   return (
-    <h2 className="inline-block break-after-avoid border-b-2 border-brand-600 pb-1 text-[28px] font-extrabold uppercase tracking-wide text-brand-600">
+    <h2
+      className={`inline-block break-after-avoid border-b-2 border-brand-600 pb-1 ${
+        small ? "text-[22px]" : "text-[28px]"
+      } font-extrabold uppercase tracking-wide text-brand-600`}
+    >
       {children}
     </h2>
   );
@@ -48,13 +52,14 @@ function ContentSection({ block, className = "mt-6" }: { block: ContentBlockView
 
   const paragraphs = lines.filter((l) => l.type === "paragraph");
   const bullets = lines.filter((l) => l.type === "bullet");
-  // Terms & Conditions runs to several pages; at the body size the other
-  // sections use, it dwarfed the actual trip. Smaller here only.
-  const textSize = block.key === "PDF_TERMS" ? "text-[15px]" : "text-[19px]";
+  // The policy sections (Terms runs to several pages) dwarfed the actual
+  // trip at the body size the other sections use, so they print smaller.
+  const small = ["PDF_TERMS", "PDF_PAYMENT_POLICY", "PDF_CANCELLATION_POLICY", "PDF_ACCOUNT_DETAILS"].includes(block.key);
+  const textSize = small ? "text-[15px]" : "text-[19px]";
 
   return (
     <section className={className}>
-      <SectionHeading>{block.title}</SectionHeading>
+      <SectionHeading small={small}>{block.title}</SectionHeading>
       {paragraphs.map((line, i) => (
         <p key={i} className={`mt-2 ${textSize} leading-relaxed text-ink-800`}>
           {line.text}

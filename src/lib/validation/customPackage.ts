@@ -51,7 +51,17 @@ export const customPackageSchema = z.object({
   children: z.coerce.number().int().min(0).max(99),
   infants: z.coerce.number().int().min(0).max(99),
   // One age per line, kept as text: "8 months" is as valid an answer as "2".
-  childAges: z.string().transform(linesToArray).pipe(z.array(z.string().max(40)).max(20)),
+  // Blanks are kept, not filtered: the list is children's ages then infants'
+  // (see splitTravellerAges), so a skipped child age must still hold its
+  // place. Only trailing blanks are dropped.
+  childAges: z
+    .string()
+    .transform((v) => {
+      const ages = v.split("\n").map((s) => s.trim());
+      while (ages.length > 0 && !ages[ages.length - 1]) ages.pop();
+      return ages;
+    })
+    .pipe(z.array(z.string().max(40)).max(40)),
   rooms: z.coerce.number().int().min(0).max(99),
   extraBeds: z.coerce.number().int().min(0).max(99),
   extraMattresses: z.coerce.number().int().min(0).max(99),

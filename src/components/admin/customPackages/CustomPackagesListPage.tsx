@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Download, FileText, Pencil, Plus } from "lucide-react";
+import { Download, FileText, Plus } from "lucide-react";
 import { db } from "@/lib/db";
 import { formatRupees } from "@/lib/gst";
 import DeleteButton from "@/components/admin/cms/DeleteButton";
@@ -76,11 +76,14 @@ export default async function CustomPackagesListPage({
           </thead>
           <tbody>
             {quotations.map((quotation) => (
-              <tr key={quotation.id} className="border-b border-ink-50 last:border-0 hover:bg-ink-50/60">
+              <tr key={quotation.id} className="relative cursor-pointer border-b border-ink-50 last:border-0 hover:bg-ink-50/60">
+                {/* The Trip ID link stretches over the whole row (after:inset-0),
+                    so a click anywhere opens the quotation; the PDF and delete
+                    buttons sit above it (relative z-10) and keep their own clicks. */}
                 <td className="px-4 py-3">
                   <Link
                     href={`${basePath}/custom-packages/${quotation.id}`}
-                    className="font-mono text-xs font-semibold text-brand-600 hover:text-brand-700"
+                    className="font-mono text-sm font-bold text-brand-600 after:absolute after:inset-0 hover:text-brand-700"
                   >
                     {quotation.tripId}
                   </Link>
@@ -104,10 +107,9 @@ export default async function CustomPackagesListPage({
                   <p>{quotation.createdBy.name}</p>
                 </td>
                 <td className="px-4 py-3">
-                  {/* Each action gets the same h-8 padded hit area as the
-                      delete icon button, so the gaps between all three read
-                      evenly instead of the text links bunching together. */}
-                  <div className="flex items-center justify-end gap-2">
+                  {/* The PDF link gets the same h-8 padded hit area as the
+                      delete icon button, so the two read evenly. */}
+                  <div className="relative z-10 flex items-center justify-end gap-2">
                     <a
                       href={`/api/admin/custom-packages/${quotation.id}/pdf`}
                       className="flex h-8 items-center gap-1.5 rounded-full border border-brand-200 px-3 text-xs font-semibold text-brand-600 transition hover:bg-brand-50"
@@ -115,13 +117,6 @@ export default async function CustomPackagesListPage({
                       <Download className="h-3.5 w-3.5" />
                       PDF
                     </a>
-                    <Link
-                      href={`${basePath}/custom-packages/${quotation.id}/edit`}
-                      className="flex h-8 items-center gap-1.5 rounded-full border border-ink-200 px-3 text-xs font-semibold text-ink-700 transition hover:border-brand-300 hover:text-brand-600"
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                      Edit
-                    </Link>
                     <DeleteButton
                       id={quotation.id}
                       action={deleteCustomPackageAction}

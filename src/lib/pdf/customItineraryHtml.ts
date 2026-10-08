@@ -5,6 +5,7 @@ import type { ContentBlockView } from "@/lib/contentBlocks";
 import { parseContentBody } from "@/lib/contentBlocks";
 import { formatRupees } from "@/lib/gst";
 import { siteConfig } from "@/lib/siteConfig";
+import { splitTravellerAges } from "@/lib/travellerAges";
 
 // Why this template is plain CSS rather than the Tailwind-based
 // ItineraryPrintView the website uses: this HTML is handed straight to a
@@ -28,7 +29,6 @@ const BRAND_300 = "#fd8fc9";
 const INK_900 = "#180f17";
 const INK_800 = "#261a24";
 const INK_700 = "#3a2b37";
-const INK_600 = "#513e4c";
 const INK_500 = "#715769";
 const INK_400 = "#9c7d94";
 const INK_200 = "#e5d7e0";
@@ -47,6 +47,8 @@ export type CustomItineraryData = {
   customerPhone: string | null;
   customerEmail: string | null;
   destinationName: string;
+  // The destination photo as a data URI, or "" to print without one.
+  photo?: string;
   startDate: Date | null;
   endDate: Date | null;
   durationNights: number;
@@ -113,6 +115,11 @@ const longDateFormatter = new Intl.DateTimeFormat("en-IN", {
   year: "numeric",
 });
 
+// "Fri" - prefixed to the usual date for the day-by-day headings, giving
+// "Fri, 16 Oct 2026" (en-IN would put a comma before the year if asked for
+// all parts at once).
+const weekdayFormatter = new Intl.DateTimeFormat("en-IN", { weekday: "short" });
+
 function fmtDate(value: Date | null): string {
   return value ? dateFormatter.format(value) : "";
 }
@@ -142,6 +149,13 @@ function dataUri(file: string): Promise<string> {
 // One admin-edited block (About, Terms, Payment Policy...): paragraphs first,
 // then "• " bullets, as ItineraryPrintView's ContentSection lays them out. An
 // empty body prints nothing, not an orphan heading.
+const SMALL_TEXT_BLOCKS = new Set<string>([
+  "PDF_TERMS",
+  "PDF_PAYMENT_POLICY",
+  "PDF_CANCELLATION_POLICY",
+  "PDF_ACCOUNT_DETAILS",
+]);
+
 function renderBlock(block: ContentBlockView): string {
   const lines = parseContentBody(block.body);
   if (lines.length === 0) return "";
@@ -155,9 +169,9 @@ function renderBlock(block: ContentBlockView): string {
     ? `<ul class="content-ul">${bullets.map((l) => `<li>&bull; ${esc(l.text)}</li>`).join("")}</ul>`
     : "";
 
-  // Terms & Conditions runs to several pages; at the body size the other
-  // sections use, it dwarfed the actual trip. Smaller here only.
-  const sizeClass = block.key === "PDF_TERMS" ? " content-small" : "";
+  // The policy sections (Terms runs to several pages) dwarfed the actual
+  // trip at the body size the other sections use, so they print smaller.
+  const sizeClass = SMALL_TEXT_BLOCKS.has(block.key) ? " content-small" : "";
   return `<section class="content${sizeClass}"><h2 class="section-heading">${esc(block.title)}</h2>${paragraphs}${list}</section>`;
 }
 
@@ -179,6 +193,9 @@ function renderRoomsLine(data: CustomItineraryData): string {
 // Lucide's "user" glyph, inline: the website PDF's operation-head badge uses
 // the same icon from lucide-react, which isn't available to a string template.
 const USER_ICON = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+
+// Lucide's "calendar" glyph, inline, for the day-by-day date chips.
+const CALENDAR_ICON = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>`;
 
 export async function buildCustomItineraryHtml(
   data: CustomItineraryData,
@@ -202,12 +219,21 @@ export async function buildCustomItineraryHtml(
   const party = renderPartyLine(data);
   const categoryLine = [data.hotelCategoryLabel, data.roomCategoryLabel].filter(Boolean).join(" · ");
 
-  // ---- Trip details: who and when, in the same box style as Accommodation.
+  const ages = splitTravellerAges(data.childAges, data.children);
+
+  // ---- Trip details: everything about the trip in one card - who, when
+  // and how long - in the same box style as Accommodation. The price sits
+  // beside the photo at the top instead.
   const detailRows: [string, string][] = [
-    ["Guest", [data.customerName, data.customerPhone].filter(Boolean).join(" · ")],
+    ["Customer Name", data.customerName],
+    ["Phone Number", data.customerPhone ?? ""],
+    ["Email", data.customerEmail ?? ""],
     ["Travel Dates", travelWindow],
+    ["Duration", duration],
+    ["Trip Type", tripTypeLabel],
     ["Travellers", party],
-    ["Infant Ages", data.childAges.filter(Boolean).join(", ")],
+    ["Child Ages", ages.childAges.filter(Boolean).join(", ")],
+    ["Infant Ages", ages.infantAges.filter(Boolean).join(", ")],
     ["Rooms", renderRoomsLine(data)],
   ];
   const details = `<section class="box mt-4 avoid-break">
@@ -269,8 +295,16 @@ export async function buildCustomItineraryHtml(
   const itinerary = data.days
     .map(
       (day) => `<div class="day avoid-break">
-        <span class="day-pill">Day ${esc(day.day)}${day.title ? ` : ${esc(day.title)}` : ""}</span>
-        ${day.date ? `<span class="day-date">${esc(fmtDate(day.date))}</span>` : ""}
+        <div class="day-head">
+          ${
+            day.date
+              ? `<span class="day-date">${CALENDAR_ICON}<span><span class="day-weekday">${esc(
+                  weekdayFormatter.format(day.date)
+                )}</span><span class="day-full">${esc(fmtDate(day.date))}</span></span></span>`
+              : ""
+          }
+          <span class="day-pill">Day ${esc(day.day)}${day.title ? ` : ${esc(day.title)}` : ""}</span>
+        </div>
         ${day.desc ? `<p class="day-desc">${esc(day.desc)}</p>` : ""}
       </div>`
     )
@@ -379,29 +413,21 @@ export async function buildCustomItineraryHtml(
   .meta {
     margin-top: 12px; display: flex; justify-content: space-between;
     border-bottom: 1px solid ${INK_100}; padding-bottom: 8px;
-    font-size: 12px; line-height: 16px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.025em; color: ${INK_500};
+    font-size: 12px; line-height: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.025em; color: ${INK_900};
   }
 
-  .title { margin-top: 12px; }
-  .badge {
-    display: inline-block; border-radius: 6px; background: ${BRAND}; padding: 4px 12px;
-    font-size: 14px; line-height: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.025em; color: #fff;
-  }
-  h1 { margin-top: 6px; font-size: 20px; line-height: 1.25; font-weight: 800; color: ${INK_900}; }
-  .subtitle { margin-top: 2px; font-size: 14px; line-height: 20px; color: ${INK_600}; }
-  .bar {
-    margin-top: 8px; display: flex; align-items: center; justify-content: space-between; gap: 12px;
-    border-radius: 6px; background: ${BRAND}; padding: 8px 16px;
-  }
-  .bar span { white-space: nowrap; font-size: 11px; font-weight: 700; color: #fff; }
-
+  /* The website PDF's photo-and-title row: the same 189x125 photo frame. */
+  .intro { margin-top: 12px; display: flex; align-items: center; gap: 16px; }
+  .intro img { width: 189px; height: 125px; flex-shrink: 0; border: 1px solid ${INK_200}; border-radius: 12px; object-fit: cover; }
+  h1 { font-size: 24px; line-height: 1.25; font-weight: 800; color: ${INK_900}; }
+  .intro-text { flex: 1; min-width: 0; }
+  /* Total price on one line, in a box under the title. */
   .price {
-    margin-top: 12px; display: flex; align-items: center; justify-content: space-between;
-    border: 1px solid ${BRAND_200}; border-radius: 12px; background: ${BRAND_50}; padding: 12px 20px;
+    margin-top: 10px; display: inline-flex; align-items: baseline; gap: 12px;
+    border: 1px solid ${BRAND_200}; border-radius: 12px; background: ${BRAND_50}; padding: 8px 16px;
   }
   .price-label { font-size: 14px; line-height: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.025em; color: ${BRAND_700}; }
-  .price-amount { margin-top: 4px; font-size: 28px; font-weight: 800; color: ${BRAND}; }
-  .price-pill { border-radius: 9999px; background: ${BRAND}; padding: 8px 16px; font-size: 14px; line-height: 20px; font-weight: 700; color: #fff; }
+  .price-amount { font-size: 24px; line-height: 1.2; font-weight: 800; color: ${BRAND}; white-space: nowrap; }
 
   .box { border: 1px solid ${BRAND_200}; border-radius: 12px; padding: 12px; }
   .box-heading { font-size: 21px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.025em; color: ${INK_900}; }
@@ -429,8 +455,16 @@ export async function buildCustomItineraryHtml(
   .itinerary-heading h2 { font-size: 36px; line-height: 40px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.025em; color: ${BRAND}; }
   .days { margin-top: 20px; }
   .day + .day { margin-top: 16px; }
+  .day-head { display: flex; align-items: stretch; gap: 8px; }
+  /* A small calendar card: icon, weekday above, date below. */
+  .day-date {
+    display: flex; align-items: center; gap: 8px; border: 1.5px solid ${BRAND}; border-radius: 6px; background: #fff;
+    padding: 4px 12px; white-space: nowrap; color: ${BRAND};
+  }
+  .day-date > span { display: flex; flex-direction: column; line-height: 1.15; }
+  .day-weekday { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: ${BRAND_700}; }
+  .day-full { font-size: 16px; font-weight: 800; color: ${INK_900}; }
   .day-pill { display: inline-block; border-radius: 6px; background: ${BRAND}; padding: 6px 12px; font-size: 21px; font-weight: 700; color: #fff; }
-  .day-date { margin-left: 10px; font-size: 15px; font-weight: 600; color: ${INK_500}; }
   .day-desc { margin-top: 6px; font-size: 19px; line-height: 1.625; color: ${INK_800}; white-space: pre-line; }
 
   /* Flexbox, not grid: Chromium's print pagination can leave a ghost
@@ -456,6 +490,7 @@ export async function buildCustomItineraryHtml(
   .content-ul { margin-top: 8px; font-size: 19px; color: ${INK_800}; }
   .content-ul li { break-inside: avoid; }
   .content-ul li + li { margin-top: 4px; }
+  .content-small .section-heading { font-size: 22px; }
   .content-small .content-p, .content-small .content-ul { font-size: 15px; }
   .content-small .content-ul li + li { margin-top: 3px; }
 
@@ -494,23 +529,15 @@ export async function buildCustomItineraryHtml(
     <span>Trip ID: ${esc(data.tripId)}</span>
   </div>
 
-  <div class="title avoid-break">
-    <span class="badge">Customized Package</span>
-    <h1>${esc(data.destinationName)} Itinerary</h1>
-    <p class="subtitle">Prepared for ${esc(data.customerName)}</p>
-    <div class="bar">
-      <span>${esc(duration)}</span>
-      ${tripTypeLabel ? `<span>${esc(tripTypeLabel)}</span>` : ""}
-      <span>${esc(travelWindow)}</span>
+  <div class="intro avoid-break">
+    ${data.photo ? `<img src="${data.photo}" alt="${esc(data.destinationName)}">` : ""}
+    <div class="intro-text">
+      <h1>${esc(data.destinationName)} Itinerary</h1>
+      <div class="price">
+        <span class="price-label">Total Price</span>
+        <span class="price-amount">${esc(formatRupees(data.totalAmount))}</span>
+      </div>
     </div>
-  </div>
-
-  <div class="price avoid-break">
-    <div>
-      <p class="price-label">Total Price</p>
-      <p class="price-amount">${esc(formatRupees(data.totalAmount))}</p>
-    </div>
-    ${party ? `<p class="price-pill">${esc(party)}</p>` : ""}
   </div>
 
   ${details}

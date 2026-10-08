@@ -20,6 +20,11 @@ import SuggestInput from "@/components/admin/SuggestInput";
 import ItineraryDays, { datesFromStart, type DayRow } from "@/components/admin/customPackages/ItineraryDays";
 import ContentBlocksEditor, { type EditableContentBlock } from "@/components/admin/ContentBlocksEditor";
 import FormSection from "@/components/admin/FormSection";
+import { CHILD_AGES, INFANT_AGES, splitTravellerAges } from "@/lib/travellerAges";
+import CopyFromQuotation from "@/components/admin/customPackages/CopyFromQuotation";
+
+// Lets the copy search (outside the form) read what's been typed so far.
+const FORM_ID = "custom-package-form";
 
 const inputClass =
   "w-full rounded-xl border border-ink-200 bg-white px-4 py-2.5 text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100";
@@ -28,20 +33,16 @@ const labelClass = "mb-1.5 block text-xs font-bold uppercase tracking-wide text-
 
 export type Option = { value: string; label: string; freeText?: boolean };
 
-// The server accepts at most 20 ages (customPackageSchema.childAges).
+// Up to 20 age dropdowns each for children and infants; the server accepts
+// 40 ages in all (customPackageSchema.childAges).
 const MAX_AGE_ROWS = 20;
 
-const AGE_OPTIONS: Option[] = Array.from({ length: 13 }, (_, n) => {
-  const label = n === 0 ? "Below 1 year" : n === 1 ? "1 year" : `${n} years`;
-  return { value: label, label };
-});
-
-// Quotations saved before the dropdowns hold free text ("18 months"); keep
-// such a value selectable so editing them doesn't silently blank the age.
-const ageOptionsFor = (current: string | undefined): Option[] =>
-  current && !AGE_OPTIONS.some((o) => o.value === current)
-    ? [{ value: current, label: current }, ...AGE_OPTIONS]
-    : AGE_OPTIONS;
+// Ages prefilled from a lead can be free text ("18 months"); keep such a
+// value selectable so editing doesn't silently blank the age.
+const ageOptionsFor = (ages: string[], current: string | undefined): Option[] => {
+  const options = ages.map((a) => ({ value: a, label: a }));
+  return current && !ages.includes(current) ? [{ value: current, label: current }, ...options] : options;
+};
 
 const countOf = (value: string) => Math.min(MAX_AGE_ROWS, Math.max(0, Math.floor(Number(value) || 0)));
 
@@ -82,6 +83,8 @@ export type CustomPackageDefaults = {
 const Section = FormSection;
 
 type FormProps = {
+  // The page heading, shown beside the copy search.
+  header?: React.ReactNode;
   isNew: boolean;
   // Opened as a lead's Edit screen: after saving, go back to that lead.
   returnToLead?: boolean;
@@ -152,7 +155,8 @@ function formToDefaults(form: HTMLFormElement): CustomPackageDefaults {
     adults: num("adults"),
     children: num("children"),
     infants: num("infants"),
-    // Not filtered: position N is infant N's age, blanks included.
+    // Not filtered: positions line up with the child then infant dropdowns,
+    // blanks included.
     childAges: (str("childAges") ?? "").split("\n"),
     rooms: num("rooms"),
     extraBeds: num("extraBeds"),
@@ -199,24 +203,58 @@ export default function CustomPackageForm(props: FormProps) {
     [inBrowser, discarded, draftKey]
   );
 
+  // A package copied from another quotation (see CopyFromQuotation).
+  const [copy, setCopy] = useState<{ at: number; values: CustomPackageDefaults } | null>(null);
+
   const discardDraft = () => {
     try {
       localStorage.removeItem(draftKey);
     } catch {}
     setDiscarded(true);
+    setCopy(null);
+  };
+
+  const baseDefaults = draft ? { ...props.defaults, ...draft.values } : props.defaults;
+
+  // The copied trip replaces the form's contents, but who it's for stays:
+  // the customer's details (as typed so far), the notes, and which lead and
+  // quotation this is.
+  const copyIn = (values: CustomPackageDefaults) => {
+    const form = document.getElementById(FORM_ID);
+    const current = form instanceof HTMLFormElement ? formToDefaults(form) : {};
+    setCopy({
+      at: Date.now(),
+      values: {
+        ...values,
+        id: props.defaults?.id,
+        leadId: props.defaults?.leadId,
+        customerName: current.customerName,
+        customerPhone: current.customerPhone,
+        customerEmail: current.customerEmail,
+        notes: current.notes,
+      },
+    });
   };
 
   return (
-    <CustomPackageFormBody
-      // Remounting is what makes every field (controlled or not) pick the
-      // draft up as its starting value.
-      key={draft ? `draft-${draft.savedAt}` : "base"}
-      {...props}
-      defaults={draft ? { ...props.defaults, ...draft.values } : props.defaults}
-      draftKey={draftKey}
-      restoredAt={draft?.savedAt}
-      onDiscardDraft={discardDraft}
-    />
+    <>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>{props.header}</div>
+        <CopyFromQuotation excludeId={props.defaults?.id} onCopy={copyIn} />
+      </div>
+      <CustomPackageFormBody
+        // Remounting is what makes every field (controlled or not) pick the
+        // draft, or a copied package, up as its starting value.
+        key={copy ? `copy-${copy.at}` : draft ? `draft-${draft.savedAt}` : "base"}
+        {...props}
+        defaults={copy ? { ...baseDefaults, ...copy.values } : baseDefaults}
+        draftKey={draftKey}
+        restoredAt={copy ? undefined : draft?.savedAt}
+        // A copied package is unsaved work worth keeping as a draft.
+        startDirty={Boolean(copy)}
+        onDiscardDraft={discardDraft}
+      />
+    </>
   );
 }
 
@@ -235,8 +273,9 @@ function CustomPackageFormBody({
   standardContentBlocks,
   draftKey,
   restoredAt,
+  startDirty = false,
   onDiscardDraft,
-}: FormProps & { draftKey: string; restoredAt?: number; onDiscardDraft: () => void }) {
+}: FormProps & { draftKey: string; restoredAt?: number; startDirty?: boolean; onDiscardDraft: () => void }) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState<FormState, FormData>(async (prevState, formData) => {
     try {
@@ -254,7 +293,7 @@ function CustomPackageFormBody({
   const formRef = useRef<HTMLFormElement>(null);
   // Only a form someone has actually touched is worth keeping as a draft;
   // otherwise just opening the page would leave one behind.
-  const dirty = useRef(false);
+  const dirty = useRef(startDirty);
   // Between pressing Save and hearing back, nothing is written - a successful
   // save redirects away, and must not leave the draft it just cleared behind.
   const submitting = useRef(false);
@@ -306,10 +345,23 @@ function CustomPackageFormBody({
   };
 
   const [tripType, setTripType] = useState(defaults?.tripType ?? "domestic");
+  const [children, setChildren] = useState(String(defaults?.children ?? 0));
   const [infants, setInfants] = useState(String(defaults?.infants ?? 0));
-  const [childAges, setChildAges] = useState<string[]>(defaults?.childAges ?? []);
+  const [initialAges] = useState(() => splitTravellerAges(defaults?.childAges ?? [], defaults?.children ?? 0));
+  const [childAgeList, setChildAgeList] = useState<string[]>(initialAges.childAges);
+  const [infantAgeList, setInfantAgeList] = useState<string[]>(initialAges.infantAges);
 
-  const ageSlots = Array.from({ length: countOf(infants) }, (_, i) => `Infant ${i + 1}`);
+  // Children's ages first, then infants' - the order splitTravellerAges reads.
+  const childSlots = countOf(children);
+  const infantSlots = countOf(infants);
+  const allAges = [
+    ...Array.from({ length: childSlots }, (_, i) => childAgeList[i] ?? ""),
+    ...Array.from({ length: infantSlots }, (_, i) => infantAgeList[i] ?? ""),
+  ];
+  const ageGroups = [
+    { kind: "Child", slots: childSlots, list: childAgeList, setList: setChildAgeList, ages: CHILD_AGES },
+    { kind: "Infant", slots: infantSlots, list: infantAgeList, setList: setInfantAgeList, ages: INFANT_AGES },
+  ];
   const [startDate, setStartDate] = useState(defaults?.startDate ?? "");
   const [endDate, setEndDate] = useState(defaults?.endDate ?? "");
   const [dayRows, setDayRows] = useState<DayRow[]>(() =>
@@ -366,6 +418,7 @@ function CustomPackageFormBody({
 
   return (
     <form
+      id={FORM_ID}
       ref={formRef}
       onSubmit={onSubmit}
       onInput={markDirty}
@@ -514,7 +567,16 @@ function CustomPackageFormBody({
           </div>
           <div>
             <label className={labelClass} htmlFor="children">Children</label>
-            <input id="children" name="children" type="number" min={0} defaultValue={defaults?.children ?? 0} className={inputClass} />
+            <input
+              id="children"
+              name="children"
+              type="number"
+              min={0}
+              max={MAX_AGE_ROWS}
+              value={children}
+              onChange={(e) => setChildren(e.target.value)}
+              className={inputClass}
+            />
           </div>
           <div>
             <label className={labelClass} htmlFor="infants">Infants</label>
@@ -531,29 +593,34 @@ function CustomPackageFormBody({
           </div>
         </div>
 
-        {/* One age dropdown per infant, joined into the same newline-separated
-            childAges field the server already parses. */}
-        <input type="hidden" name="childAges" value={ageSlots.map((_, i) => childAges[i] ?? "").join("\n")} />
-        {ageSlots.length > 0 && (
-          <div className="mt-5 grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-6">
-            {ageSlots.map((label, i) => (
-              <div key={label}>
-                <label className={labelClass}>{label} age</label>
-                <CustomSelect
-                  value={childAges[i] ?? ""}
-                  onChange={(v) =>
-                    setChildAges((prev) => {
-                      const next = [...prev];
-                      next[i] = v;
-                      return next;
-                    })
-                  }
-                  placeholder="Select age"
-                  options={ageOptionsFor(childAges[i])}
-                />
+        {/* One age dropdown per child and per infant, joined into the same
+            newline-separated childAges field the server already parses. */}
+        <input type="hidden" name="childAges" value={allAges.join("\n")} />
+        {ageGroups.map(
+          ({ kind, slots, list, setList, ages }) =>
+            slots > 0 && (
+              <div key={kind} className="mt-5 grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-6">
+                {Array.from({ length: slots }, (_, i) => (
+                  <div key={i}>
+                    <label className={labelClass}>
+                      {kind} {i + 1} age
+                    </label>
+                    <CustomSelect
+                      value={list[i] ?? ""}
+                      onChange={(v) =>
+                        setList((prev) => {
+                          const next = [...prev];
+                          next[i] = v;
+                          return next;
+                        })
+                      }
+                      placeholder="Select age"
+                      options={ageOptionsFor(ages, list[i])}
+                    />
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            )
         )}
       </Section>
 
