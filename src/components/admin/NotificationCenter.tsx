@@ -123,7 +123,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, x: 40 }}
               transition={{ duration: 0.2 }}
-              className="pointer-events-auto w-72 max-w-[85vw] rounded-xl border border-ink-100 bg-white px-4 py-3 shadow-2xl"
+              className="pointer-events-auto w-72 max-w-[85vw] rounded-xl border border-ink-200 bg-white px-4 py-3"
             >
               <p className="text-[11px] font-bold uppercase tracking-wide text-brand-600">
                 {n.type === "NEW_LEAD" ? "New Lead" : n.type === "LEAD_ASSIGNED" ? "Assigned to You" : "Lead Follow-up"}

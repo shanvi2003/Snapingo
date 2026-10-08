@@ -79,7 +79,7 @@ export default function NotificationBell({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.97 }}
             transition={{ duration: 0.15 }}
-            className={`absolute z-50 mt-2 w-80 max-w-[85vw] overflow-hidden rounded-2xl border border-ink-100 bg-white shadow-2xl ${
+            className={`absolute z-50 mt-2 w-80 max-w-[85vw] overflow-hidden rounded-2xl border border-ink-200 bg-white ${
               align === "left" ? "left-0" : "right-0"
             }`}
           >
