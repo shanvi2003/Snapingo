@@ -62,7 +62,7 @@ export default function PackagesTable({
           <tbody>
             {filtered.map((p) => (
               <tr key={p.id} className="border-b border-ink-50 last:border-0 hover:bg-ink-50/60">
-                <td className="whitespace-nowrap px-4 py-3 font-mono text-xs font-semibold text-brand-600">
+                <td className="whitespace-nowrap px-4 py-3 font-mono text-sm font-bold text-brand-600">
                   {p.code ?? "N/A"}
                 </td>
                 <td className="px-4 py-3">

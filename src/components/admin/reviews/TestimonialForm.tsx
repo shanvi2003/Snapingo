@@ -23,7 +23,7 @@ export default function TestimonialForm({
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div>
           <label className={labelClass} htmlFor="name">Customer Name</label>
-          <input id="name" name="name" required defaultValue={defaults?.name} placeholder="Priya Sharma" className={inputClass} />
+          <input id="name" name="name" required defaultValue={defaults?.name} placeholder="Full name" className={inputClass} />
         </div>
         <div>
           <label className={labelClass} htmlFor="location">Customer City</label>

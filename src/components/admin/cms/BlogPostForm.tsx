@@ -88,6 +88,7 @@ export default function BlogPostForm({ isNew, defaults }: { isNew: boolean; defa
           name="content"
           addLabel="Add Section"
           stacked
+          large
           fields={[
             { key: "heading", label: "Section Heading (optional)", type: "text" },
             { key: "body", label: "Section Text", type: "textarea" },

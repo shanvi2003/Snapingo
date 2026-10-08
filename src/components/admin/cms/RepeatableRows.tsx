@@ -27,6 +27,7 @@ export default function RepeatableRows({
   stacked = false,
   textareaRows = 3,
   bare = false,
+  large = false,
 }: {
   name: string;
   fields: RowField[];
@@ -49,6 +50,9 @@ export default function RepeatableRows({
   // Rows sit directly in the surrounding section instead of each in its own
   // bordered card, for short rows that read as part of the form around them.
   bare?: boolean;
+  // Full-size labels and boxes, matching the rest of the form, with a tall
+  // text box - for long-form writing like a blog post's content sections.
+  large?: boolean;
 }) {
   const [rows, setRows] = useState<Record<string, string>[]>(
     initialRows.length > 0 ? initialRows : [Object.fromEntries(fields.map((f) => [f.key, ""]))]
@@ -77,10 +81,12 @@ export default function RepeatableRows({
 
   // Bare rows sit among the section's ordinary fields, so their labels and
   // boxes match those fields' size instead of the compact card styling.
-  const labelClass = bare
-    ? "mb-1.5 block text-xs font-bold uppercase tracking-wide text-ink-900"
-    : "mb-1 block text-[10px] font-bold uppercase tracking-wide text-ink-500";
-  const boxClass = bare ? "rounded-xl px-4 py-2.5" : "rounded-lg px-3 py-2";
+  const labelClass =
+    bare || large
+      ? "mb-1.5 block text-xs font-bold uppercase tracking-wide text-ink-900"
+      : "mb-1 block text-[10px] font-bold uppercase tracking-wide text-ink-500";
+  const boxClass = bare || large ? "rounded-xl px-4 py-2.5" : "rounded-lg px-3 py-2";
+  const textBoxClass = large ? "rounded-xl px-4 py-3 text-base" : "rounded-lg px-3 py-2 text-sm";
 
   return (
     <div>
@@ -103,10 +109,10 @@ export default function RepeatableRows({
                   </label>
                   {field.type === "textarea" ? (
                     <textarea
-                      rows={stacked ? 6 : textareaRows}
+                      rows={large ? 12 : stacked ? 6 : textareaRows}
                       value={row[field.key] ?? ""}
                       onChange={(e) => updateField(index, field.key, e.target.value)}
-                      className={`w-full rounded-lg border border-ink-200 bg-white px-3 py-2 text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 ${stacked ? "" : "flex-1"}`}
+                      className={`w-full ${textBoxClass} border border-ink-200 bg-white text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 ${stacked ? "" : "flex-1"}`}
                     />
                   ) : field.type === "select" ? (
                     <CustomSelect
@@ -164,7 +170,7 @@ export default function RepeatableRows({
                       type="text"
                       value={row[field.key] ?? ""}
                       onChange={(e) => updateField(index, field.key, e.target.value)}
-                      className={`${textWidth} rounded-lg border border-ink-200 bg-white px-3 py-2 text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 ${stacked ? "" : "flex-1"}`}
+                      className={`${textWidth} ${textBoxClass} border border-ink-200 bg-white text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 ${stacked ? "" : "flex-1"}`}
                     />
                   )}
                 </div>
