@@ -183,6 +183,9 @@ model Lead {
 
   assignedTo     StaffUser?      @relation("AssignedTo", fields: [assignedToId], references: [id])
   assignedToId   String?
+  // A lead can be handed to a team (role) instead of one staff member; the
+  // admin's assign dropdown sets this and clears assignedToId.
+  assignedRole   StaffJobRole?
   // When assignment happened, which is what moves a lead out of "New". Kept
   // separate from updatedAt so an unrelated edit doesn't look like a
   // reassignment in reporting.

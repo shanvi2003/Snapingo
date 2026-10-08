@@ -28,16 +28,14 @@ const expectedMatrix: Record<StaffJobRole, StaffFeature[]> = {
   TRAVEL_EXECUTIVE: [
     "leads",
     "leadActivities",
-    "customerSearch",
     "bookings",
     "completeTrips",
     "customPackages",
   ],
-  BDE: ["leads", "leadActivities", "customerSearch"],
+  BDE: ["leads", "leadActivities"],
   SOCIAL_MEDIA_EXECUTIVE: [
     "leads",
     "leadActivities",
-    "customerSearch",
     "blogEdit",
     "reviewsEdit",
     "packagesEdit",
@@ -48,7 +46,6 @@ const expectedMatrix: Record<StaffJobRole, StaffFeature[]> = {
   DIGITAL_MARKETING: [
     "leads",
     "leadActivities",
-    "customerSearch",
     "packagesEdit",
     "destinationsEdit",
     "contentEdit",

@@ -13,6 +13,7 @@ import {
 } from "@/components/admin/leads/statusStyles";
 import LeadStatusSelect from "@/components/admin/leads/LeadStatusSelect";
 import LeadAssignSelect from "@/components/admin/leads/LeadAssignSelect";
+import { jobRoleLabels } from "@/lib/permissions";
 import LeadFavoriteButton from "@/components/admin/leads/LeadFavoriteButton";
 import LeadNoteForm from "@/components/admin/leads/LeadNoteForm";
 import LeadEditForm from "@/components/admin/leads/LeadEditForm";
@@ -34,7 +35,7 @@ function toDateInput(value: Date | null): string {
 const str = (v: string | number | null | undefined) => (v === null || v === undefined ? "" : String(v));
 
 export default async function LeadDetailView({ basePath, leadId }: { basePath: string; leadId: string }) {
-  const [lead, staff, session, roomCategories, hotelCategories, canQuote] = await Promise.all([
+  const [lead, session, roomCategories, hotelCategories, canQuote] = await Promise.all([
     db.lead.findUnique({
       where: { id: leadId },
       include: {
@@ -48,7 +49,6 @@ export default async function LeadDetailView({ basePath, leadId }: { basePath: s
         },
       },
     }),
-    db.staffUser.findMany({ where: { isActive: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
     getSession(),
     getActiveMasterList("ROOM_CATEGORY"),
     getActiveMasterList("HOTEL_CATEGORY"),
@@ -58,6 +58,10 @@ export default async function LeadDetailView({ basePath, leadId }: { basePath: s
   ]);
 
   if (!lead) notFound();
+
+  // Whoever owns the lead: a team (role) or, for website leads auto-assigned
+  // to one person, that staff member.
+  const assignee = lead.assignedRole ? jobRoleLabels[lead.assignedRole] : lead.assignedTo?.name ?? null;
 
   const isAdmin = session?.role === "ADMIN";
   // basePath is the leads list ("/admin/leads"); quotations live beside it at
@@ -91,7 +95,7 @@ export default async function LeadDetailView({ basePath, leadId }: { basePath: s
           </h1>
           <p className="mt-1 text-sm text-ink-500">
             {sourceLabels[lead.source]} · {fmtDateTime(lead.createdAt)}
-            {lead.assignedTo && ` · assigned to ${lead.assignedTo.name}`}
+            {assignee && ` · assigned to ${assignee}`}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -100,10 +104,14 @@ export default async function LeadDetailView({ basePath, leadId }: { basePath: s
           {/* Assignment is an admin decision (see assignLeadAction). Staff see
               who owns the lead in the subtitle above, but no control. */}
           {isAdmin ? (
-            <LeadAssignSelect leadId={lead.id} assignedToId={lead.assignedToId} staff={staff} />
+            <LeadAssignSelect
+              leadId={lead.id}
+              assignedRole={lead.assignedRole}
+              assignedToName={lead.assignedTo?.name ?? null}
+            />
           ) : (
             <span className="rounded-full bg-ink-50 px-4 py-2 text-sm font-semibold text-ink-500">
-              {lead.assignedTo ? lead.assignedTo.name : "Unassigned"}
+              {assignee ?? "Unassigned"}
             </span>
           )}
           <Link

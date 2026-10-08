@@ -1,30 +1,40 @@
 "use client";
 
 import { useTransition } from "react";
-import { assignLeadAction } from "@/lib/actions/admin-leads";
+import { assignLeadRoleAction } from "@/lib/actions/admin-leads";
 import CustomSelect from "@/components/CustomSelect";
+import { jobRoleOptions } from "@/lib/permissions";
+import type { StaffJobRole } from "@/generated/prisma/enums";
+
+// Leads are assigned to a team (job role). A lead the website auto-assigned
+// to one staff member shows that person until a role is picked.
+const PERSON = "person";
 
 export default function LeadAssignSelect({
   leadId,
-  assignedToId,
-  staff,
+  assignedRole,
+  assignedToName,
 }: {
   leadId: string;
-  assignedToId: string | null;
-  staff: { id: string; name: string }[];
+  assignedRole: StaffJobRole | null;
+  assignedToName: string | null;
 }) {
   const [pending, startTransition] = useTransition();
 
   return (
-    // Fixed width, like LeadStatusSelect, so the staff menu has room to read.
-    <div className={`w-48 ${pending ? "pointer-events-none opacity-60" : ""}`}>
+    // Fixed width, like LeadStatusSelect, so the role names have room to read.
+    <div className={`w-56 ${pending ? "pointer-events-none opacity-60" : ""}`}>
       <CustomSelect
-        value={assignedToId ?? ""}
-        onChange={(next) => startTransition(() => assignLeadAction(leadId, next || null))}
+        value={assignedRole ?? (assignedToName ? PERSON : "")}
+        onChange={(next) => {
+          if (next === PERSON) return;
+          startTransition(() => assignLeadRoleAction(leadId, (next || null) as StaffJobRole | null));
+        }}
         placeholder="Unassigned"
         options={[
           { value: "", label: "Unassigned" },
-          ...staff.map((s) => ({ value: s.id, label: s.name })),
+          ...(assignedToName && !assignedRole ? [{ value: PERSON, label: assignedToName }] : []),
+          ...jobRoleOptions,
         ]}
       />
     </div>

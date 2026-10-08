@@ -5,6 +5,7 @@ import { LeadSource, LeadStatus } from "@/generated/prisma/enums";
 import type { Prisma } from "@/generated/prisma/client";
 import { sourceLabels, statusLabels, statusStyles } from "@/components/admin/leads/statusStyles";
 import LeadFavoriteButton from "@/components/admin/leads/LeadFavoriteButton";
+import { jobRoleLabels } from "@/lib/permissions";
 import AutoSearchInput from "@/components/admin/AutoSearchInput";
 import {
   AutoFilterClear,
@@ -194,12 +195,15 @@ export default async function LeadsInboxPage({
           </thead>
           <tbody>
             {leads.map((lead) => (
-              <tr key={lead.id} className="border-b border-ink-50 last:border-0 hover:bg-ink-50/60">
-                <td className="px-3 py-3">
+              <tr key={lead.id} className="relative cursor-pointer border-b border-ink-50 last:border-0 hover:bg-ink-50/60">
+                {/* The name link stretches over the whole row (after:inset-0),
+                    so a click anywhere opens the lead; the favourite star sits
+                    above it (relative z-10) and keeps its own click. */}
+                <td className="relative z-10 px-3 py-3">
                   <LeadFavoriteButton leadId={lead.id} isFavorite={lead.isFavorite} variant="icon" />
                 </td>
                 <td className="px-4 py-3">
-                  <Link href={`${basePath}/${lead.id}`} className="font-semibold text-ink-900 hover:text-brand-600">
+                  <Link href={`${basePath}/${lead.id}`} className="font-semibold text-ink-900 after:absolute after:inset-0 hover:text-brand-600">
                     {lead.name || lead.phone || lead.email || "Anonymous"}
                   </Link>
                   {lead.phone && lead.name && <p className="text-xs text-ink-500">{lead.phone}</p>}
@@ -213,7 +217,7 @@ export default async function LeadsInboxPage({
                     {statusLabels[lead.status]}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-ink-700">{lead.assignedTo?.name ?? "N/A"}</td>
+                <td className="px-4 py-3 text-ink-700">{lead.assignedRole ? jobRoleLabels[lead.assignedRole] : lead.assignedTo?.name ?? "N/A"}</td>
                 <td className="px-4 py-3 whitespace-nowrap text-ink-500">
                   {lead.createdAt.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                 </td>

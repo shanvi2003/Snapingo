@@ -20,7 +20,6 @@ import {
   Plane,
   PlaneTakeoff,
   Receipt,
-  Search,
   Settings,
   ShieldCheck,
   Sparkles,
@@ -73,7 +72,6 @@ export default async function AdminLayout({ children }: { children: ReactNode })
         {
           heading: "Leads & Bookings",
           items: [
-            { href: "/admin/search", label: "Customer Search", icon: <Search className="h-full w-full" /> },
             { href: "/admin/leads", label: "Leads", icon: <Inbox className="h-full w-full" />, badge: newLeadCount },
             { href: "/admin/activities", label: "Lead Activities", icon: <Activity className="h-full w-full" /> },
             { href: "/admin/leads-converted", label: "Converted Leads", icon: <CheckCircle2 className="h-full w-full" /> },

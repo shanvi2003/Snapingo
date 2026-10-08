@@ -8,7 +8,6 @@ import type { StaffJobRole } from "@/generated/prisma/enums";
 export type StaffFeature =
   | "leads"
   | "leadActivities"
-  | "customerSearch"
   | "bookings"
   | "completeTrips"
   | "customPackages"
@@ -27,7 +26,7 @@ export type StaffFeature =
 export const staffFeatureGroups: { heading: string; features: StaffFeature[] }[] = [
   {
     heading: "Leads & Bookings",
-    features: ["leads", "leadActivities", "customerSearch", "bookings", "completeTrips", "customPackages"],
+    features: ["leads", "leadActivities", "bookings", "completeTrips", "customPackages"],
   },
   {
     heading: "Content",
@@ -48,7 +47,6 @@ export const staffFeatures: StaffFeature[] = staffFeatureGroups.flatMap((g) => g
 export const featureLabels: Record<StaffFeature, string> = {
   leads: "Leads",
   leadActivities: "Lead Activities",
-  customerSearch: "Customer Search",
   bookings: "Booking Management",
   completeTrips: "Complete Trips",
   customPackages: "Customized Packages",
@@ -64,7 +62,6 @@ export const featureLabels: Record<StaffFeature, string> = {
 export const featureDescriptions: Record<StaffFeature, string> = {
   leads: "See and manage the leads inbox.",
   leadActivities: "See the reverse-chronological activity feed across every lead.",
-  customerSearch: "Search customers by name, phone or email across leads and bookings.",
   bookings: "Create and manage bookings and record payments.",
   completeTrips: "Mark bookings as completed once travel is finished.",
   customPackages: "Create customer quotations and generate their itinerary PDFs. These never appear on the website.",
@@ -95,12 +92,11 @@ export const featuresWithViewFallback: StaffFeature[] = [
 // deployment (or a role an admin hasn't touched on /admin/permissions yet)
 // starts here, but an admin's actual edits always take priority over this.
 export const defaultRolePermissions: Record<StaffJobRole, StaffFeature[]> = {
-  TRAVEL_EXECUTIVE: ["leads", "leadActivities", "customerSearch", "bookings", "completeTrips", "customPackages"],
-  BDE: ["leads", "leadActivities", "customerSearch"],
+  TRAVEL_EXECUTIVE: ["leads", "leadActivities", "bookings", "completeTrips", "customPackages"],
+  BDE: ["leads", "leadActivities"],
   SOCIAL_MEDIA_EXECUTIVE: [
     "leads",
     "leadActivities",
-    "customerSearch",
     "blogEdit",
     "reviewsEdit",
     "packagesEdit",
@@ -111,7 +107,6 @@ export const defaultRolePermissions: Record<StaffJobRole, StaffFeature[]> = {
   DIGITAL_MARKETING: [
     "leads",
     "leadActivities",
-    "customerSearch",
     "packagesEdit",
     "destinationsEdit",
     "contentEdit",

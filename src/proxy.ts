@@ -39,7 +39,6 @@ const staffFeatureRoutes: { prefix: string; feature: StaffFeature }[] = [
   { prefix: "/api/admin/leads/export", feature: "leads" },
   { prefix: "/staff/leads", feature: "leads" },
   { prefix: "/staff/activities", feature: "leadActivities" },
-  { prefix: "/staff/search", feature: "customerSearch" },
   { prefix: "/staff/bookings", feature: "bookings" },
   { prefix: "/staff/trips", feature: "completeTrips" },
   { prefix: "/staff/cms/blog", feature: "blogEdit" },

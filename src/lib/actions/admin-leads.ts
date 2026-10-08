@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireSession, requireStaffFeature } from "@/lib/dal";
-import type { LeadNoteStatus, LeadStatus } from "@/generated/prisma/client";
+import type { LeadNoteStatus, LeadStatus, StaffJobRole } from "@/generated/prisma/client";
+import { jobRoleLabels } from "@/lib/permissions";
 import { logLeadActivity } from "@/lib/leadActivity";
 import { statusLabels, sourceLabels, noteStatusLabels } from "@/components/admin/leads/statusStyles";
 import { notifyLeadAssigned } from "@/lib/notifications";
@@ -66,6 +67,8 @@ export async function assignLeadAction(leadId: string, staffId: string | null): 
     where: { id: leadId },
     data: {
       assignedToId: staffId,
+      // A lead is owned by one person or one team, never both.
+      assignedRole: null,
       assignedAt: staffId ? new Date() : null,
       // Only the NEW -> ASSIGNED step is automatic. A lead already moved on to
       // Contacted/Quoted/Converted keeps that status when it's reassigned -
@@ -95,6 +98,39 @@ export async function assignLeadAction(leadId: string, staffId: string | null): 
       destinationName: lead.destinationName,
     });
   }
+
+  revalidateLead(leadId);
+}
+
+/**
+ * Hands a lead to a team (job role) rather than one staff member - what the
+ * admin's assign dropdown offers. Same admin-only rule and NEW <-> ASSIGNED
+ * status step as assignLeadAction; clears any individual assignee.
+ */
+export async function assignLeadRoleAction(leadId: string, role: StaffJobRole | null): Promise<void> {
+  const session = await requireSession(["ADMIN"]);
+  if (role && !(role in jobRoleLabels)) return;
+
+  const current = await db.lead.findUnique({ where: { id: leadId }, select: { status: true } });
+  if (!current) return;
+
+  await db.lead.update({
+    where: { id: leadId },
+    data: {
+      assignedRole: role,
+      assignedToId: null,
+      assignedAt: role ? new Date() : null,
+      ...(role && current.status === "NEW" ? { status: "ASSIGNED" as const } : {}),
+      ...(!role && current.status === "ASSIGNED" ? { status: "NEW" as const } : {}),
+    },
+  });
+
+  const actor = await actorName(session.userId);
+  await logLeadActivity(
+    leadId,
+    "ASSIGNED",
+    role ? `${actor} assigned this lead to ${jobRoleLabels[role]}` : `${actor} unassigned this lead`
+  );
 
   revalidateLead(leadId);
 }
