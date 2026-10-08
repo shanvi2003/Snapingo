@@ -1,7 +1,7 @@
 import { requireStaffFeature } from "@/lib/dal";
 import BookingsListPage from "@/components/admin/bookings/BookingsListPage";
 
-export default async function StaffBookingsPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
+export default async function StaffBookingsPage({ searchParams }: { searchParams: Promise<{ q?: string; page?: string }> }) {
   await requireStaffFeature("bookings");
   return (
     <BookingsListPage

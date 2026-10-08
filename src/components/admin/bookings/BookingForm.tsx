@@ -54,28 +54,28 @@ export default function BookingForm({
         <p className={sectionTitleClass}>Traveler Details</p>
         <div className="mt-3 grid grid-cols-1 gap-4 lg:grid-cols-3">
           <div>
-            <label className={labelClass} htmlFor="travelerName">Traveler Name</label>
-            <input id="travelerName" name="travelerName" required defaultValue={defaults?.travelerName} className={inputClass} />
+            <label className={labelClass} htmlFor="travelerName">Traveller Name</label>
+            <input id="travelerName" name="travelerName" required defaultValue={defaults?.travelerName} placeholder="Full name" className={inputClass} />
           </div>
           <div>
-            <label className={labelClass} htmlFor="phone">Phone</label>
-            <input id="phone" name="phone" required defaultValue={defaults?.phone} className={inputClass} />
+            <label className={labelClass} htmlFor="phone">Phone Number</label>
+            <input id="phone" name="phone" required defaultValue={defaults?.phone} placeholder="+91 XXXXX XXXXX" className={inputClass} />
           </div>
           <div>
-            <label className={labelClass} htmlFor="email">Email (optional)</label>
-            <input id="email" name="email" type="email" defaultValue={defaults?.email} className={inputClass} />
+            <label className={labelClass} htmlFor="email">Email Address</label>
+            <input id="email" name="email" type="email" required defaultValue={defaults?.email} placeholder="name@example.com" className={inputClass} />
           </div>
         </div>
       </div>
 
       <div className="border-t border-ink-100 py-5">
         <p className={sectionTitleClass}>Trip Details</p>
-        <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div>
-            <label className={labelClass} htmlFor="packageTitle">Package</label>
-            <input id="packageTitle" name="packageTitle" required defaultValue={defaults?.packageTitle} className={inputClass} />
-            {defaults?.packageId && <input type="hidden" name="packageId" value={defaults.packageId} />}
-          </div>
+        {/* No package field: a booking doesn't have to be for a listed
+            package. A package carried over from the lead (or already on a
+            booking being edited) still rides along unseen, so it isn't lost. */}
+        {defaults?.packageTitle && <input type="hidden" name="packageTitle" value={defaults.packageTitle} />}
+        {defaults?.packageId && <input type="hidden" name="packageId" value={defaults.packageId} />}
+        <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div>
             <label className={labelClass} htmlFor="destinationName">Destination</label>
             <CustomSelect
@@ -87,11 +87,11 @@ export default function BookingForm({
             />
           </div>
           <div>
-            <label className={labelClass} htmlFor="travelStartDate">Travel Start</label>
+            <label className={labelClass} htmlFor="travelStartDate">Travel Start Date</label>
             <input id="travelStartDate" name="travelStartDate" type="date" defaultValue={defaults?.travelStartDate} className={inputClass} />
           </div>
           <div>
-            <label className={labelClass} htmlFor="travelEndDate">Travel End</label>
+            <label className={labelClass} htmlFor="travelEndDate">Travel End Date</label>
             <input id="travelEndDate" name="travelEndDate" type="date" defaultValue={defaults?.travelEndDate} className={inputClass} />
           </div>
         </div>
@@ -101,19 +101,19 @@ export default function BookingForm({
         <p className={sectionTitleClass}>Pricing</p>
         <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className={labelClass} htmlFor="totalAmount">Package Amount (₹)</label>
-            <input id="totalAmount" name="totalAmount" type="number" min={0} required defaultValue={defaults?.totalAmount} className={inputClass} />
+            <label className={labelClass} htmlFor="totalAmount">Package Price (₹, before GST)</label>
+            <input id="totalAmount" name="totalAmount" type="number" min={0} required defaultValue={defaults?.totalAmount} placeholder="25000" className={inputClass} />
           </div>
           <div>
-            <label className={labelClass} htmlFor="taxAmount">GST / Tax (₹, optional)</label>
+            <label className={labelClass} htmlFor="taxAmount">GST Amount (₹, optional)</label>
             <input id="taxAmount" name="taxAmount" type="number" min={0} defaultValue={defaults?.taxAmount ?? 0} className={inputClass} />
           </div>
         </div>
       </div>
 
       <div className="border-t border-ink-100 pt-5">
-        <label className={labelClass} htmlFor="notes">Notes (optional)</label>
-        <textarea id="notes" name="notes" rows={2} defaultValue={defaults?.notes} className={inputClass} />
+        <label className={labelClass} htmlFor="notes">Notes for the Team (optional)</label>
+        <textarea id="notes" name="notes" rows={2} defaultValue={defaults?.notes} placeholder="Anything to remember, e.g. honeymoon couple, early check-in requested" className={inputClass} />
       </div>
 
       {state?.error && (

@@ -1,11 +1,14 @@
-import BookingsListPage from "@/components/admin/bookings/BookingsListPage";
+import { requireStaffFeature } from "@/lib/dal";
+import TripsStagePage from "@/components/admin/bookings/TripsStagePage";
 
-export default function AdminTripsPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+export default async function AdminTripsPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+  await requireStaffFeature("bookings");
   return (
-    <BookingsListPage
+    <TripsStagePage
+      basePath="/admin"
+      stage="COMPLETE"
       title="Complete Trips"
-      subtitle="Bookings marked as completed."
-      fixedStatus="COMPLETED"
+      subtitle="Trips whose travel dates are over"
       searchParams={searchParams}
     />
   );

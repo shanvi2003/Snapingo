@@ -7,13 +7,12 @@
 // finished trip sitting in Ongoing until someone noticed. Computing it means
 // the answer is right the moment anyone looks.
 //
-// A booking that has been explicitly CANCELLED or marked COMPLETED by staff
-// keeps that outcome - the dates only decide where an active booking sits.
+// Bookings carry no status staff pick by hand: once a booking exists, the
+// dates alone decide where it sits.
 
-export type TripStage = "UPCOMING" | "ONGOING" | "COMPLETE" | "CANCELLED" | "UNSCHEDULED";
+export type TripStage = "UPCOMING" | "ONGOING" | "COMPLETE" | "UNSCHEDULED";
 
 export type TripStageInput = {
-  status: "PENDING" | "CONFIRMED" | "COMPLETED" | "CANCELLED";
   travelStartDate: Date | null;
   travelEndDate: Date | null;
 };
@@ -24,9 +23,6 @@ function startOfDay(date: Date): Date {
 }
 
 export function getTripStage(booking: TripStageInput, now: Date = new Date()): TripStage {
-  if (booking.status === "CANCELLED") return "CANCELLED";
-  if (booking.status === "COMPLETED") return "COMPLETE";
-
   const { travelStartDate, travelEndDate } = booking;
   // No dates agreed yet - it is a real booking, but it can't be placed on a
   // timeline, so it shows under Booking Management only.
@@ -73,6 +69,5 @@ export const tripStageLabels: Record<TripStage, string> = {
   UPCOMING: "Upcoming",
   ONGOING: "Ongoing",
   COMPLETE: "Complete",
-  CANCELLED: "Cancelled",
   UNSCHEDULED: "Dates not set",
 };

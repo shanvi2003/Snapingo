@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { requireStaffFeature } from "@/lib/dal";
 import { createBookingSchema, addPaymentSchema } from "@/lib/validation/booking";
-import type { BookingStatus } from "@/generated/prisma/client";
 import type { SessionPayload } from "@/lib/session";
 import { withNewTripId } from "@/lib/tripIdServer";
 
@@ -41,7 +40,7 @@ function parseBookingForm(formData: FormData) {
   return createBookingSchema.safeParse({
     ...raw,
     leadId: raw.leadId || undefined,
-    email: raw.email || undefined,
+    packageTitle: raw.packageTitle || undefined,
     travelStartDate: raw.travelStartDate || undefined,
     travelEndDate: raw.travelEndDate || undefined,
     notes: raw.notes || undefined,
@@ -107,12 +106,6 @@ export async function updateBookingAction(bookingId: string, _prevState: FormSta
 export async function deleteBookingAction(bookingId: string): Promise<void> {
   await requireStaffFeature("bookings");
   await db.booking.delete({ where: { id: bookingId } });
-  revalidateBookingPaths(bookingId);
-}
-
-export async function updateBookingStatusAction(bookingId: string, status: BookingStatus): Promise<void> {
-  await requireStaffFeature("bookings");
-  await db.booking.update({ where: { id: bookingId }, data: { status } });
   revalidateBookingPaths(bookingId);
 }
 

@@ -10,6 +10,26 @@ export type SelectOption = {
   label: string;
 };
 
+type MenuRect = { left: number; width: number; maxHeight: number } & ({ top: number } | { bottom: number });
+
+// The list is 256px tall at most (max-h-64). It opens below the trigger
+// unless that would run off the bottom of the screen and there's more room
+// above, and it never grows past the room it has, so it always stays on
+// screen.
+const MENU_MAX = 256;
+const GAP = 4;
+const EDGE = 8;
+
+function measure(trigger: HTMLElement): MenuRect {
+  const r = trigger.getBoundingClientRect();
+  const below = window.innerHeight - r.bottom - GAP - EDGE;
+  const above = r.top - GAP - EDGE;
+  if (below < MENU_MAX && above > below) {
+    return { bottom: window.innerHeight - r.top + GAP, left: r.left, width: r.width, maxHeight: Math.min(MENU_MAX, above) };
+  }
+  return { top: r.bottom + GAP, left: r.left, width: r.width, maxHeight: Math.min(MENU_MAX, below) };
+}
+
 export default function CustomSelect({
   value,
   onChange,
@@ -28,7 +48,7 @@ export default function CustomSelect({
   const [open, setOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [mounted, setMounted] = useState(false);
-  const [rect, setRect] = useState<{ top: number; left: number; width: number } | null>(null);
+  const [rect, setRect] = useState<MenuRect | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLUListElement>(null);
@@ -43,10 +63,7 @@ export default function CustomSelect({
   const selected = selectedIndex >= 0 ? options[selectedIndex] : undefined;
 
   const openList = (startIndex?: number) => {
-    if (buttonRef.current) {
-      const r = buttonRef.current.getBoundingClientRect();
-      setRect({ top: r.bottom + 4, left: r.left, width: r.width });
-    }
+    if (buttonRef.current) setRect(measure(buttonRef.current));
     setHighlightedIndex(startIndex ?? (selectedIndex >= 0 ? selectedIndex : 0));
     setOpen(true);
   };
@@ -81,10 +98,7 @@ export default function CustomSelect({
   useEffect(() => {
     if (!open) return;
     const reposition = () => {
-      if (buttonRef.current) {
-        const r = buttonRef.current.getBoundingClientRect();
-        setRect({ top: r.bottom + 4, left: r.left, width: r.width });
-      }
+      if (buttonRef.current) setRect(measure(buttonRef.current));
     };
     window.addEventListener("scroll", reposition, true);
     window.addEventListener("resize", reposition);
@@ -168,12 +182,12 @@ export default function CustomSelect({
               <motion.ul
                 ref={dropdownRef}
                 role="listbox"
-                initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                initial={{ opacity: 0, y: "top" in rect ? -6 : 6, scale: 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                exit={{ opacity: 0, y: "top" in rect ? -6 : 6, scale: 0.98 }}
                 transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-                style={{ position: "fixed", top: rect.top, left: rect.left, width: rect.width }}
-                className="scrollbar-thin z-[100] max-h-64 overflow-auto rounded-xl border border-brand-100 bg-white p-1.5 shadow-soft"
+                style={{ position: "fixed", ...rect }}
+                className="scrollbar-thin z-[100] overflow-auto rounded-xl border border-brand-100 bg-white p-1.5 shadow-soft"
               >
             {options.map((opt, i) => (
               <li key={opt.value} role="option" aria-selected={opt.value === value}>

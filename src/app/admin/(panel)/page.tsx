@@ -3,7 +3,6 @@ import { ArrowRight, CalendarClock } from "lucide-react";
 import { db } from "@/lib/db";
 import { getLeadStats } from "@/lib/leads";
 import StatCard from "@/components/admin/StatCard";
-import { bookingStatusLabels, bookingStatusStyles } from "@/components/admin/bookingStyles";
 
 const fmtDate = (d: Date) => d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 
@@ -20,7 +19,7 @@ export default async function AdminDashboardPage() {
       db.blogPost.count(),
       db.staffUser.count({ where: { isActive: true, role: "STAFF" } }),
       db.booking.findMany({
-        where: { travelStartDate: { gte: now, lte: in14Days }, status: { in: ["CONFIRMED", "PENDING"] } },
+        where: { travelStartDate: { gte: now, lte: in14Days } },
         orderBy: { travelStartDate: "asc" },
         take: 6,
       }),
@@ -98,9 +97,6 @@ export default async function AdminDashboardPage() {
                   <p className="truncate text-sm font-semibold text-ink-900">{b.travelerName}</p>
                   <p className="text-xs text-ink-500">₹{(b.totalAmount + b.taxAmount).toLocaleString("en-IN")}</p>
                 </div>
-                <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${bookingStatusStyles[b.status]}`}>
-                  {bookingStatusLabels[b.status]}
-                </span>
               </Link>
             ))}
             {recentBookings.length === 0 && <p className="text-sm text-ink-500">No bookings yet.</p>}

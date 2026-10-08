@@ -5,7 +5,7 @@ const NOW = new Date(2026, 2, 10); // 10 March 2026, local
 const d = (day: number) => new Date(2026, 2, day);
 
 function booking(overrides: Partial<TripStageInput> = {}): TripStageInput {
-  return { status: "CONFIRMED", travelStartDate: d(12), travelEndDate: d(16), ...overrides };
+  return { travelStartDate: d(12), travelEndDate: d(16), ...overrides };
 }
 
 describe("getTripStage", () => {
@@ -34,11 +34,6 @@ describe("getTripStage", () => {
   it("treats a start-only booking as a single day", () => {
     expect(getTripStage(booking({ travelStartDate: d(10), travelEndDate: null }), NOW)).toBe("ONGOING");
     expect(getTripStage(booking({ travelStartDate: d(3), travelEndDate: null }), NOW)).toBe("COMPLETE");
-  });
-
-  it("keeps an explicit outcome whatever the dates say", () => {
-    expect(getTripStage(booking({ status: "CANCELLED" }), NOW)).toBe("CANCELLED");
-    expect(getTripStage(booking({ status: "COMPLETED" }), NOW)).toBe("COMPLETE");
   });
 
   it("does not place a booking with no dates on the timeline", () => {

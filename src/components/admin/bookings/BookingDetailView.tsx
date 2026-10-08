@@ -2,16 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Pencil, Receipt } from "lucide-react";
 import { db } from "@/lib/db";
-import { bookingStatusLabels, bookingStatusStyles } from "@/components/admin/bookingStyles";
-import BookingStatusSelect from "@/components/admin/bookings/BookingStatusSelect";
 import DeleteBookingButton from "@/components/admin/bookings/DeleteBookingButton";
 import { addPaymentAction } from "@/lib/actions/bookings";
 import { formatBalance } from "@/lib/money";
 import { isPrivateBlobConfigured } from "@/lib/blob";
-import { isEmailConfigured } from "@/lib/email";
 import VoucherPanel from "@/components/admin/bookings/VoucherPanel";
-import SendEmailPanel from "@/components/admin/SendEmailPanel";
-import { sendInvoiceEmailAction } from "@/lib/actions/email";
+import FormSelect from "@/components/admin/FormSelect";
+
+const PAYMENT_MODES = ["UPI", "Cash", "Bank Transfer", "Card", "Cheque"];
 
 const fmtDate = (d: Date) => d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 
@@ -46,7 +44,6 @@ export default async function BookingDetailView({ bookingId, basePath = "/admin"
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <BookingStatusSelect bookingId={booking.id} status={booking.status} />
           <Link
             href={`${basePath}/bookings/${booking.id}/invoice`}
             target="_blank"
@@ -71,8 +68,16 @@ export default async function BookingDetailView({ bookingId, basePath = "/admin"
           <h2 className="font-heading text-base font-bold text-ink-900">Trip Details</h2>
           <dl className="mt-4 grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
             <div>
-              <dt className="text-xs font-bold uppercase tracking-wide text-ink-500">Package</dt>
-              <dd className="mt-0.5 text-sm text-ink-900">{booking.packageTitle || "N/A"}</dd>
+              <dt className="text-xs font-bold uppercase tracking-wide text-ink-500">Name</dt>
+              <dd className="mt-0.5 text-sm text-ink-900">{booking.travelerName}</dd>
+            </div>
+            <div>
+              <dt className="text-xs font-bold uppercase tracking-wide text-ink-500">Phone Number</dt>
+              <dd className="mt-0.5 text-sm text-ink-900">{booking.phone}</dd>
+            </div>
+            <div>
+              <dt className="text-xs font-bold uppercase tracking-wide text-ink-500">Email</dt>
+              <dd className="mt-0.5 text-sm text-ink-900">{booking.email || "N/A"}</dd>
             </div>
             <div>
               <dt className="text-xs font-bold uppercase tracking-wide text-ink-500">Destination</dt>
@@ -84,10 +89,6 @@ export default async function BookingDetailView({ bookingId, basePath = "/admin"
                 {booking.travelStartDate ? fmtDate(booking.travelStartDate) : "N/A"}
                 {booking.travelEndDate ? ` – ${fmtDate(booking.travelEndDate)}` : ""}
               </dd>
-            </div>
-            <div>
-              <dt className="text-xs font-bold uppercase tracking-wide text-ink-500">Email</dt>
-              <dd className="mt-0.5 text-sm text-ink-900">{booking.email || "N/A"}</dd>
             </div>
           </dl>
           {booking.notes && (
@@ -117,9 +118,6 @@ export default async function BookingDetailView({ bookingId, basePath = "/admin"
               <p className={`mt-1 font-heading text-lg font-bold ${balanceDisplay.className}`}>{balanceDisplay.amount}</p>
             </div>
           </div>
-          <span className={`mt-4 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${bookingStatusStyles[booking.status]}`}>
-            {bookingStatusLabels[booking.status]}
-          </span>
         </div>
 
         <div className="rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
@@ -150,12 +148,7 @@ export default async function BookingDetailView({ bookingId, basePath = "/admin"
                 placeholder="Amount ₹"
                 className="rounded-xl border border-ink-200 bg-white px-3 py-2.5 text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
               />
-              <input
-                name="mode"
-                required
-                placeholder="UPI / Cash / Bank"
-                className="rounded-xl border border-ink-200 bg-white px-3 py-2.5 text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
-              />
+              <FormSelect name="mode" options={PAYMENT_MODES} defaultValue="UPI" />
             </div>
             <input
               name="notes"
@@ -172,7 +165,7 @@ export default async function BookingDetailView({ bookingId, basePath = "/admin"
         </div>
       </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="mt-6">
         <VoucherPanel
           bookingId={booking.id}
           uploadsEnabled={isPrivateBlobConfigured()}
@@ -184,15 +177,6 @@ export default async function BookingDetailView({ bookingId, basePath = "/admin"
             uploadedBy: v.uploadedBy.name,
             createdAt: fmtDate(v.createdAt),
           }))}
-        />
-
-        <SendEmailPanel
-          action={sendInvoiceEmailAction.bind(null, booking.id)}
-          defaultTo={booking.email ?? ""}
-          label="Email invoice to customer"
-          disabledReason={
-            isEmailConfigured() ? undefined : "Email isn't connected yet. Ask an admin to set it up."
-          }
         />
       </div>
     </div>

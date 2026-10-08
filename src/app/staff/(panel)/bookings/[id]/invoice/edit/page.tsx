@@ -46,6 +46,7 @@ export default async function StaffEditInvoicePage({ params }: { params: Promise
         <InvoiceForm
           bookingId={booking.id}
           expectedTotal={expectedTotal}
+          customer={{ tripId: booking.tripId, name: booking.travelerName, email: booking.email }}
           defaults={{
             // Pre-filled from the booking so staff don't retype what the
             // system already knows about the traveller.

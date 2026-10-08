@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { FilePlus2, Receipt } from "lucide-react";
 import { db } from "@/lib/db";
 import type { Prisma } from "@/generated/prisma/client";
 import { formatRupees } from "@/lib/gst";
@@ -86,7 +85,7 @@ export default async function InvoicesListPage({
                   <td className="px-4 py-3">
                     <Link
                       href={`${basePath}/bookings/${booking.id}`}
-                      className="font-mono text-xs font-semibold text-brand-600 hover:text-brand-700"
+                      className="font-mono text-sm font-bold text-brand-600 hover:text-brand-700"
                     >
                       {booking.tripId ?? `#${booking.id.slice(-10).toUpperCase()}`}
                     </Link>
@@ -113,17 +112,19 @@ export default async function InvoicesListPage({
                         <Link
                           href={`${basePath}/bookings/${booking.id}/invoice`}
                           target="_blank"
-                          className="flex items-center gap-1.5 text-xs font-semibold text-brand-600 hover:text-brand-700"
+                          className="rounded-lg border border-ink-200 px-4 py-2 text-sm font-semibold text-ink-700 transition hover:border-brand-300 hover:text-brand-600"
                         >
-                          <Receipt className="h-3.5 w-3.5" />
                           View
                         </Link>
                       ) : null}
                       <Link
                         href={`${basePath}/bookings/${booking.id}/invoice/edit`}
-                        className="flex items-center gap-1.5 text-xs font-semibold text-ink-500 hover:text-brand-600"
+                        className={`whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold transition ${
+                          booking.invoice
+                            ? "border border-ink-200 text-ink-700 hover:border-brand-300 hover:text-brand-600"
+                            : "bg-brand-600 text-white hover:bg-brand-700"
+                        }`}
                       >
-                        <FilePlus2 className="h-3.5 w-3.5" />
                         {booking.invoice ? "Edit" : "Create Invoice"}
                       </Link>
                     </div>

@@ -3,6 +3,18 @@
 import { useActionState, useRef, useState, useTransition } from "react";
 import { Download, FileText, Loader2, Trash2, Upload } from "lucide-react";
 import { deleteVoucherAction, uploadVoucherAction, type FormState } from "@/lib/actions/vouchers";
+import FormSelect from "@/components/admin/FormSelect";
+
+const VOUCHER_TYPES = [
+  "Hotel Voucher",
+  "Flight Ticket",
+  "Train Ticket",
+  "Cab Voucher",
+  "Activity Voucher",
+  "Visa",
+  "Travel Insurance",
+  "Other",
+];
 
 export type VoucherRow = {
   id: string;
@@ -39,9 +51,6 @@ export default function VoucherPanel({
   return (
     <section className="rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
       <h2 className="font-heading text-base font-bold text-ink-900">Booking Vouchers</h2>
-      <p className="mt-1 text-sm text-ink-500">
-        Hotel, flight and cab confirmations. Stored privately, only staff can open them.
-      </p>
 
       <div className="mt-4 space-y-2">
         {vouchers.map((voucher) => (
@@ -89,14 +98,9 @@ export default function VoucherPanel({
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-ink-900" htmlFor="label">
-                Label (optional)
+                Voucher Type
               </label>
-              <input
-                id="label"
-                name="label"
-                placeholder="Hotel voucher, Manali"
-                className="w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
-              />
+              <FormSelect name="label" options={VOUCHER_TYPES} placeholder="Select type" />
             </div>
             <div>
               <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-ink-900" htmlFor="file">

@@ -1,39 +1,29 @@
 import Link from "next/link";
 import { Pencil, Plus } from "lucide-react";
 import { db } from "@/lib/db";
-import { BookingStatus } from "@/generated/prisma/enums";
-import { bookingStatusLabels, bookingStatusStyles } from "@/components/admin/bookingStyles";
 import DeleteButton from "@/components/admin/cms/DeleteButton";
 import { deleteBookingAction } from "@/lib/actions/bookings";
 import AutoSearchInput from "@/components/admin/AutoSearchInput";
-import { AutoFilterSelect } from "@/components/admin/AutoFilter";
 import { formatBalance } from "@/lib/money";
 import Pagination, { PAGE_SIZE } from "@/components/admin/Pagination";
 
 export default async function BookingsListPage({
   title,
   subtitle,
-  fixedStatus,
   searchParams,
   basePath = "/admin",
 }: {
   title: string;
   subtitle: string;
-  fixedStatus?: BookingStatus;
-  searchParams?: Promise<{ status?: string; q?: string; page?: string }>;
+  searchParams?: Promise<{ q?: string; page?: string }>;
   basePath?: string;
 }) {
   const params = searchParams ? await searchParams : {};
-  const status = fixedStatus ?? (params.status as BookingStatus | undefined);
   const q = params.q?.trim();
   const page = Math.max(1, Number(params.page) || 1);
-  // Trips is just the bookings list filtered to COMPLETED - its detail
-  // links still point at the shared /bookings/[id] route below, but the
-  // list itself (filters, pagination) lives at its own /trips path.
-  const listPath = `${basePath}/${fixedStatus ? "trips" : "bookings"}`;
+  const listPath = `${basePath}/bookings`;
 
   const where = {
-    ...(status ? { status } : {}),
     ...(q
       ? { OR: [{ travelerName: { contains: q, mode: "insensitive" as const } }, { phone: { contains: q, mode: "insensitive" as const } }] }
       : {}),
@@ -68,18 +58,6 @@ export default async function BookingsListPage({
 
       <div className="mt-6 flex flex-wrap gap-3">
         <AutoSearchInput placeholder="Search traveler name or phone..." />
-        {!fixedStatus && (
-          <div className="w-44">
-            <AutoFilterSelect
-              paramName="status"
-              placeholder="All statuses"
-              options={[
-                { value: "", label: "All statuses" },
-                ...Object.values(BookingStatus).map((s) => ({ value: s, label: bookingStatusLabels[s] })),
-              ]}
-            />
-          </div>
-        )}
       </div>
 
       <div className="mt-6 overflow-x-auto rounded-2xl border border-ink-100 bg-white shadow-sm">
@@ -92,7 +70,6 @@ export default async function BookingsListPage({
               <th className="px-4 py-3">Total</th>
               <th className="px-4 py-3">Paid</th>
               <th className="px-4 py-3">Balance</th>
-              <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
@@ -102,9 +79,12 @@ export default async function BookingsListPage({
               const balance = b.totalAmount + b.taxAmount - paid;
               const balanceDisplay = formatBalance(balance);
               return (
-                <tr key={b.id} className="border-b border-ink-50 last:border-0 hover:bg-ink-50/60">
+                <tr key={b.id} className="relative cursor-pointer border-b border-ink-50 last:border-0 hover:bg-ink-50/60">
+                  {/* The name link stretches over the whole row (after:inset-0),
+                      so a click anywhere opens the booking; the edit and delete
+                      buttons sit above it (relative z-10) and keep their own clicks. */}
                   <td className="px-4 py-3">
-                    <Link href={`${basePath}/bookings/${b.id}`} className="font-semibold text-ink-900 hover:text-brand-600">
+                    <Link href={`${basePath}/bookings/${b.id}`} className="font-semibold text-ink-900 after:absolute after:inset-0 hover:text-brand-600">
                       {b.travelerName}
                     </Link>
                     <p className="text-xs text-ink-500">{b.phone}</p>
@@ -120,12 +100,7 @@ export default async function BookingsListPage({
                     {balance < 0 && <span className="ml-1 text-[10px] font-bold uppercase tracking-wide">Overpaid</span>}
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${bookingStatusStyles[b.status]}`}>
-                      {bookingStatusLabels[b.status]}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-1">
+                    <div className="relative z-10 flex items-center gap-1">
                       <Link href={`${basePath}/bookings/${b.id}/edit`} className="grid h-8 w-8 place-items-center rounded-full text-ink-400 hover:bg-brand-50 hover:text-brand-600" aria-label="Edit">
                         <Pencil className="h-4 w-4" />
                       </Link>
@@ -137,7 +112,7 @@ export default async function BookingsListPage({
             })}
             {bookings.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-4 py-10 text-center text-sm text-ink-500">
+                <td colSpan={7} className="px-4 py-10 text-center text-sm text-ink-500">
                   No bookings match.
                 </td>
               </tr>
@@ -146,7 +121,7 @@ export default async function BookingsListPage({
         </table>
       </div>
 
-      <Pagination basePath={listPath} params={{ status: fixedStatus ? undefined : params.status, q }} page={page} total={total} />
+      <Pagination basePath={listPath} params={{ q }} page={page} total={total} />
     </div>
   );
 }

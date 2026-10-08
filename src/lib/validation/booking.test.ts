@@ -6,6 +6,7 @@ describe("createBookingSchema", () => {
     const result = createBookingSchema.safeParse({
       travelerName: "Priya Verma",
       phone: "9123456780",
+      email: "priya@example.com",
       packageTitle: "Goa Beach Bliss",
       totalAmount: "50000",
     });
@@ -16,6 +17,7 @@ describe("createBookingSchema", () => {
     const result = createBookingSchema.safeParse({
       travelerName: "Priya Verma",
       phone: "9123456780",
+      email: "priya@example.com",
       packageTitle: "Goa Beach Bliss",
       totalAmount: "50000",
     });
@@ -29,6 +31,7 @@ describe("createBookingSchema", () => {
     const result = createBookingSchema.safeParse({
       travelerName: "Priya Verma",
       phone: "9123456780",
+      email: "priya@example.com",
       packageTitle: "Goa Beach Bliss",
       totalAmount: "50000",
       taxAmount: "2500",
@@ -49,13 +52,14 @@ describe("createBookingSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects a missing package title", () => {
+  it("accepts a booking without a package", () => {
     const result = createBookingSchema.safeParse({
       travelerName: "Priya Verma",
       phone: "9123456780",
+      email: "priya@example.com",
       totalAmount: "50000",
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
   it("rejects a negative total amount", () => {
@@ -68,7 +72,7 @@ describe("createBookingSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("accepts an empty-string email (the edit form sends '' when cleared)", () => {
+  it("rejects a missing email", () => {
     const result = createBookingSchema.safeParse({
       travelerName: "Priya Verma",
       phone: "9123456780",
@@ -76,7 +80,7 @@ describe("createBookingSchema", () => {
       totalAmount: "50000",
       email: "",
     });
-    expect(result.success).toBe(true);
+    expect(result.success).toBe(false);
   });
 });
 

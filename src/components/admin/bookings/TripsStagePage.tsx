@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { CheckCircle2, Clock } from "lucide-react";
 import { db } from "@/lib/db";
 import type { Prisma } from "@/generated/prisma/client";
 import { formatRupees } from "@/lib/gst";
@@ -45,21 +44,17 @@ export default async function TripsStagePage({
     ? { OR: [{ tripId: contains }, { travelerName: contains }, { phone: contains }, { email: contains }] }
     : {};
 
-  // Coarse pre-filter. Bookings explicitly marked COMPLETED or CANCELLED are
-  // handled by getTripStage, so they're only excluded where the dates alone
-  // would otherwise pull them in.
+  // Coarse pre-filter on the dates; getTripStage below has the final say.
   const stageWhere: Prisma.BookingWhereInput =
     stage === "UPCOMING"
-      ? { travelStartDate: { gt: today }, status: { notIn: ["CANCELLED", "COMPLETED"] } }
+      ? { travelStartDate: { gt: today } }
       : stage === "ONGOING"
         ? {
             travelStartDate: { lte: today },
             OR: [{ travelEndDate: { gte: today } }, { travelEndDate: null }],
-            status: { notIn: ["CANCELLED", "COMPLETED"] },
           }
         : {
-            OR: [{ travelEndDate: { lt: today } }, { status: "COMPLETED" }],
-            status: { not: "CANCELLED" },
+            OR: [{ travelEndDate: { lt: today } }, { travelEndDate: null, travelStartDate: { lt: today } }],
           };
 
   const rows = await db.booking.findMany({
@@ -100,11 +95,13 @@ export default async function TripsStagePage({
             {bookings.map((booking) => {
               const summary = getPaymentSummary(booking);
               return (
-                <tr key={booking.id} className="border-b border-ink-50 last:border-0 hover:bg-ink-50/60">
+                <tr key={booking.id} className="relative cursor-pointer border-b border-ink-50 last:border-0 hover:bg-ink-50/60">
+                  {/* The Trip ID link stretches over the whole row (after:inset-0),
+                      so a click anywhere opens the booking. */}
                   <td className="px-4 py-3">
                     <Link
                       href={`${basePath}/bookings/${booking.id}`}
-                      className="font-mono text-xs font-semibold text-brand-600 hover:text-brand-700"
+                      className="font-mono text-sm font-bold text-brand-600 after:absolute after:inset-0 hover:text-brand-700"
                     >
                       {booking.tripId ?? `#${booking.id.slice(-10).toUpperCase()}`}
                     </Link>
@@ -122,13 +119,9 @@ export default async function TripsStagePage({
                   <td className="px-4 py-3 text-ink-900">{formatRupees(summary.grandTotal)}</td>
                   <td className="px-4 py-3">
                     {summary.isComplete ? (
-                      <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
-                        <CheckCircle2 className="h-3.5 w-3.5" />
-                        Payment Complete
-                      </span>
+                      <span className="font-semibold text-emerald-600">Paid</span>
                     ) : (
-                      <span className="flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800">
-                        <Clock className="h-3.5 w-3.5" />
+                      <span className="font-semibold text-amber-700">
                         {formatRupees(Math.max(0, summary.balance))} due
                       </span>
                     )}
