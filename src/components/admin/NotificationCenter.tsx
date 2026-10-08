@@ -66,7 +66,16 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const seenIds = useRef<Set<string> | null>(null);
 
   const poll = useCallback(async () => {
-    const { items: freshItems, unreadCount: freshUnread } = await getMyNotificationsAction();
+    // A background check, so a dropped connection (server recompiling,
+    // laptop waking from sleep, wifi blip) just skips this round instead of
+    // surfacing as an error - the next interval tries again.
+    let result: Awaited<ReturnType<typeof getMyNotificationsAction>>;
+    try {
+      result = await getMyNotificationsAction();
+    } catch {
+      return;
+    }
+    const { items: freshItems, unreadCount: freshUnread } = result;
 
     const previouslySeen = seenIds.current;
     if (previouslySeen) {

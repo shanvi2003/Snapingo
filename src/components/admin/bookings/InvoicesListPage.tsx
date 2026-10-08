@@ -8,13 +8,13 @@ import AutoSearchInput from "@/components/admin/AutoSearchInput";
 import Pagination, { PAGE_SIZE } from "@/components/admin/Pagination";
 
 const fmtDate = (d: Date | null) =>
-  d ? d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—";
+  d ? d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "N/A";
 
 /** Whole days between the two travel dates, inclusive of both. */
 function tripDays(start: Date | null, end: Date | null): string {
-  if (!start || !end) return "—";
+  if (!start || !end) return "N/A";
   const ms = end.getTime() - start.getTime();
-  if (ms < 0) return "—";
+  if (ms < 0) return "N/A";
   return String(Math.round(ms / 86_400_000) + 1);
 }
 
@@ -92,7 +92,7 @@ export default async function InvoicesListPage({
                     </Link>
                   </td>
                   <td className="px-4 py-3 font-semibold text-ink-900">{booking.travelerName}</td>
-                  <td className="px-4 py-3 text-ink-700">{booking.email || "—"}</td>
+                  <td className="px-4 py-3 text-ink-700">{booking.email || "N/A"}</td>
                   <td className="px-4 py-3 text-ink-700">
                     {tripDays(booking.travelStartDate, booking.travelEndDate)}
                   </td>

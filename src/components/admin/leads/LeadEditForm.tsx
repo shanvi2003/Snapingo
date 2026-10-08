@@ -265,8 +265,8 @@ export default function LeadEditForm({
             name="hotelCategory"
             value={hotelCategory}
             onChange={setHotelCategory}
-            placeholder="—"
-            options={[{ value: "", label: "—" }, ...hotelCategories]}
+            placeholder="Select"
+            options={[{ value: "", label: "Select" }, ...hotelCategories]}
           />
         </Field>
         <Field label="Room category">
@@ -274,8 +274,8 @@ export default function LeadEditForm({
             name="roomCategory"
             value={roomCategory}
             onChange={setRoomCategory}
-            placeholder="—"
-            options={[{ value: "", label: "—" }, ...roomCategories]}
+            placeholder="Select"
+            options={[{ value: "", label: "Select" }, ...roomCategories]}
           />
         </Field>
       </div>

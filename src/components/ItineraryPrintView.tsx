@@ -272,7 +272,7 @@ export default async function ItineraryPrintView({ pkg }: { pkg: TourPackage }) 
               {nightStays.map((stay) => (
                 <tr key={stay.city} className="break-inside-avoid">
                   <td className="border border-brand-200 px-3 py-2 font-semibold text-ink-900">
-                    {stay.city} &mdash; {stay.nights} Night{stay.nights === 1 ? "" : "s"}
+                    {stay.city} · {stay.nights} Night{stay.nights === 1 ? "" : "s"}
                   </td>
                   <td className="border border-brand-200 px-3 py-2 font-semibold text-ink-900">
                     {stay.hotel ? stay.hotel.name : `Similar ${stay.categoryLabel.toLowerCase()} property`}

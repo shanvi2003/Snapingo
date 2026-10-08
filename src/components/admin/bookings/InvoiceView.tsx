@@ -74,7 +74,7 @@ export default async function InvoiceView({ bookingId }: { bookingId: string }) 
 
         {booking.taxAmount > 0 && !siteConfig.gstin && (
           <p className="print-hide mt-4 rounded-lg bg-amber-50 px-4 py-2.5 text-xs font-medium text-amber-700">
-            This invoice charges GST but no GSTIN is set — add NEXT_PUBLIC_GSTIN to your environment before sending this to a customer.
+            This invoice charges GST but no GSTIN is set. Add NEXT_PUBLIC_GSTIN to your environment before sending this to a customer.
           </p>
         )}
 
@@ -165,7 +165,7 @@ export default async function InvoiceView({ bookingId }: { bookingId: string }) 
         )}
 
         <p className="mt-10 text-center text-xs text-ink-400">
-          Payment collected manually — this invoice is a record of an agreed booking, not an online payment receipt.
+          Payment collected manually. This invoice is a record of an agreed booking, not an online payment receipt.
         </p>
       </div>
     </div>

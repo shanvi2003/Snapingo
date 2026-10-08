@@ -10,7 +10,7 @@ export default function AdminCancelledLeadsPage({
       basePath="/admin/leads"
       searchParams={searchParams}
       title="Cancelled Leads"
-      subtitle="Leads marked Cancelled — including every lead where staff chose “Won’t Book With Me”."
+      subtitle="Leads marked Cancelled, including every lead where staff chose “Won’t Book With Me”."
       fixedStatus="CANCELLED"
     />
   );

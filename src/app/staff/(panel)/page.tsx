@@ -18,7 +18,7 @@ export default async function StaffDashboardPage() {
       <div>
         <h1 className="font-heading text-2xl font-bold text-ink-900">Welcome, {user.name}</h1>
         <p className="mt-1 text-sm text-ink-500">
-          {user.jobRole ? jobRoleLabels[user.jobRole] : "Staff"} — use the sidebar to get to your tools.
+          {user.jobRole ? jobRoleLabels[user.jobRole] : "Staff"}. Use the sidebar to get to your tools.
         </p>
       </div>
     );
@@ -48,7 +48,7 @@ export default async function StaffDashboardPage() {
         </div>
         <p className="mt-2 text-sm text-ink-500">
           {stats.total === 0
-            ? "No leads yet — as soon as someone fills out a form on the site, it'll show up here."
+            ? "No leads yet. As soon as someone fills out a form on the site, it'll show up here."
             : `${stats.new} new leads waiting.`}
         </p>
       </div>

@@ -13,7 +13,7 @@ export default async function AdminPermissionsPage() {
     <div>
       <h1 className="font-heading text-2xl font-bold text-ink-900">Staff Access</h1>
       <p className="mt-1 text-sm text-ink-500">
-        What each staff role can view and edit. Admin always has full access. Changes take effect immediately —
+        What each staff role can view and edit. Admin always has full access. Changes take effect immediately, so there&apos;s
         no need for that staff member to sign out and back in.
       </p>
 

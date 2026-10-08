@@ -107,7 +107,7 @@ export async function createLeadAction(
     });
 
     if (duplicate) {
-      const detail = destinationName ? ` — ${destinationName}` : "";
+      const detail = destinationName ? ` · ${destinationName}` : "";
       await logLeadActivity(
         duplicate.id,
         "NOTE_ADDED",

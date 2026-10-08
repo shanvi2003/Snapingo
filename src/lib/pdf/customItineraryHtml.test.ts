@@ -64,7 +64,7 @@ describe("buildCustomItineraryHtml", () => {
     expect(html).toContain("SNP-2026-0042");
     expect(html).toContain("Asha Menon");
     expect(html).toContain("Snow Valley Resort");
-    expect(html).toContain("Manali — 5 Nights / 6 Days");
+    expect(html).toContain("Manali · 5 Nights / 6 Days");
     expect(html).toContain("Innova Crysta");
   });
 

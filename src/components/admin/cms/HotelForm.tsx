@@ -31,16 +31,16 @@ export default function HotelForm({ isNew, defaults }: { isNew: boolean; default
         <input id="id" name="id" required readOnly={!isNew} defaultValue={defaults?.id} placeholder="goa-sea-breeze-inn" className={`${inputClass} ${!isNew ? "bg-ink-50 text-ink-400" : ""}`} />
       </div>
       <div>
-        <label className={labelClass} htmlFor="name">Name</label>
-        <input id="name" name="name" required defaultValue={defaults?.name} className={inputClass} />
+        <label className={labelClass} htmlFor="name">Hotel Name</label>
+        <input id="name" name="name" required defaultValue={defaults?.name} placeholder="Sea Breeze Inn, Calangute" className={inputClass} />
       </div>
       <div>
-        <label className={labelClass} htmlFor="destinationSlug">Destination Slug</label>
-        <input id="destinationSlug" name="destinationSlug" required defaultValue={defaults?.destinationSlug} className={inputClass} />
+        <label className={labelClass} htmlFor="destinationSlug">Destination</label>
+        <input id="destinationSlug" name="destinationSlug" required defaultValue={defaults?.destinationSlug} placeholder="Goa" className={inputClass} />
       </div>
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
         <div>
-          <label className={labelClass} htmlFor="category">Category</label>
+          <label className={labelClass} htmlFor="category">Hotel Category</label>
           <CustomSelect
             name="category"
             value={category}
@@ -54,12 +54,12 @@ export default function HotelForm({ isNew, defaults }: { isNew: boolean; default
           />
         </div>
         <div>
-          <label className={labelClass} htmlFor="pricePerNight">Price/Night (₹)</label>
-          <input id="pricePerNight" name="pricePerNight" type="number" min={0} required defaultValue={defaults?.pricePerNight} className={inputClass} />
+          <label className={labelClass} htmlFor="pricePerNight">Price per Night (₹)</label>
+          <input id="pricePerNight" name="pricePerNight" type="number" min={0} required defaultValue={defaults?.pricePerNight} placeholder="2499" className={inputClass} />
         </div>
         <div>
-          <label className={labelClass} htmlFor="rating">Rating</label>
-          <input id="rating" name="rating" type="number" step="0.1" min={0} max={5} required defaultValue={defaults?.rating} className={inputClass} />
+          <label className={labelClass} htmlFor="rating">Rating (out of 5)</label>
+          <input id="rating" name="rating" type="number" step="0.1" min={0} max={5} required defaultValue={defaults?.rating} placeholder="4.2" className={inputClass} />
         </div>
       </div>
 

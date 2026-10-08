@@ -117,7 +117,7 @@ export default async function AdminReportsPage() {
       </div>
 
       <div className="mt-6 rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
-        <h2 className="font-heading text-base font-bold text-ink-900">Leads — Last 14 Days</h2>
+        <h2 className="font-heading text-base font-bold text-ink-900">Leads: Last 14 Days</h2>
         <div className="mt-4 flex items-end gap-1.5 overflow-x-auto">
           {Object.entries(dayBuckets).map(([day, count]) => (
             <div key={day} className="flex flex-1 flex-col items-center gap-1">

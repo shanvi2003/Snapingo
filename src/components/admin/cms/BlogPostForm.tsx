@@ -33,7 +33,7 @@ export default function BlogPostForm({ isNew, defaults }: { isNew: boolean; defa
       <FormSection title="Basic details">
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
           <div>
-            <label className={labelClass} htmlFor="id">Post ID (URL slug)</label>
+            <label className={labelClass} htmlFor="id">Post ID</label>
             <input
               id="id"
               name="id"
@@ -47,13 +47,13 @@ export default function BlogPostForm({ isNew, defaults }: { isNew: boolean; defa
           {/* Two columns: a blog title is a full sentence ("A First-Timer's
               Guide to..."), not a short label like the post ID. */}
           <div className="sm:col-span-2">
-            <label className={labelClass} htmlFor="title">Title</label>
-            <input id="title" name="title" required defaultValue={defaults?.title} className={inputClass} />
+            <label className={labelClass} htmlFor="title">Blog Title</label>
+            <input id="title" name="title" required defaultValue={defaults?.title} placeholder="10 Hidden Beaches in Goa Only Locals Know About" className={inputClass} />
           </div>
         </div>
 
         <div className="mt-5">
-          <label className={labelClass} htmlFor="excerpt">Excerpt</label>
+          <label className={labelClass} htmlFor="excerpt">Short Summary</label>
           <textarea id="excerpt" name="excerpt" rows={3} required defaultValue={defaults?.excerpt} className={inputClass} />
         </div>
       </FormSection>
@@ -61,26 +61,26 @@ export default function BlogPostForm({ isNew, defaults }: { isNew: boolean; defa
       <FormSection title="Post details">
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <label className={labelClass} htmlFor="category">Category</label>
-            <input id="category" name="category" required defaultValue={defaults?.category} className={inputClass} />
+            <label className={labelClass} htmlFor="category">Blog Category</label>
+            <input id="category" name="category" required defaultValue={defaults?.category} placeholder="Beach Guide" className={inputClass} />
           </div>
           <div>
-            <label className={labelClass} htmlFor="author">Author</label>
-            <input id="author" name="author" required defaultValue={defaults?.author} className={inputClass} />
+            <label className={labelClass} htmlFor="author">Written By</label>
+            <input id="author" name="author" required defaultValue={defaults?.author} placeholder="Snapingo Travel Desk" className={inputClass} />
           </div>
           <div>
-            <label className={labelClass} htmlFor="date">Date</label>
+            <label className={labelClass} htmlFor="date">Publish Date</label>
             <input id="date" name="date" type="date" required defaultValue={defaults?.date?.slice(0, 10)} className={inputClass} />
           </div>
           <div>
-            <label className={labelClass} htmlFor="readTime">Read Time</label>
+            <label className={labelClass} htmlFor="readTime">Reading Time</label>
             <input id="readTime" name="readTime" required placeholder="6 min read" defaultValue={defaults?.readTime} className={inputClass} />
           </div>
         </div>
       </FormSection>
 
       <FormSection title="Cover image">
-        <ImageUrlField name="image" label="Cover Image URL" defaultValue={defaults?.image} required />
+        <ImageUrlField name="image" label="Cover Image" defaultValue={defaults?.image} required />
       </FormSection>
 
       <FormSection title="Content">
@@ -89,8 +89,8 @@ export default function BlogPostForm({ isNew, defaults }: { isNew: boolean; defa
           addLabel="Add Section"
           stacked
           fields={[
-            { key: "heading", label: "Heading (optional)", type: "text" },
-            { key: "body", label: "Body", type: "textarea" },
+            { key: "heading", label: "Section Heading (optional)", type: "text" },
+            { key: "body", label: "Section Text", type: "textarea" },
           ]}
           initialRows={defaults?.content ?? []}
         />

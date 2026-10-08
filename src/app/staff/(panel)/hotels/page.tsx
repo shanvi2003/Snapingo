@@ -9,7 +9,7 @@ export default async function StaffHotelsPage() {
   return (
     <div>
       <h1 className="font-heading text-2xl font-bold text-ink-900">Hotels</h1>
-      <p className="mt-1 text-sm text-ink-500">Read-only catalog — for reference while talking to customers.</p>
+      <p className="mt-1 text-sm text-ink-500">Read-only catalog, for reference while talking to customers.</p>
 
       {hotels.length === 0 ? (
         <p className="mt-6 rounded-2xl border border-ink-100 bg-white p-6 text-sm text-ink-500 shadow-sm">

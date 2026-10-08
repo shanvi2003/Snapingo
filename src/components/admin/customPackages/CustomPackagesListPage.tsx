@@ -91,7 +91,7 @@ export default async function CustomPackagesListPage({
                 </td>
                 <td className="px-4 py-3 text-ink-700">{quotation.destinationName}</td>
                 <td className="px-4 py-3 text-ink-700">
-                  {quotation.startDate ? fmtDate(quotation.startDate) : "—"}
+                  {quotation.startDate ? fmtDate(quotation.startDate) : "N/A"}
                   <p className="text-xs text-ink-500">
                     {quotation.durationNights}N / {quotation.durationDays}D
                   </p>

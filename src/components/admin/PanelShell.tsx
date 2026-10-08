@@ -45,12 +45,20 @@ export default function PanelShell({
         <AutoRefresh />
         <aside className="print-hide hidden h-full w-64 shrink-0 flex-col border-r border-ink-100 bg-white lg:flex">
           <div className="flex shrink-0 items-center gap-2.5 border-b border-ink-100 px-6 py-5">
-            <span className="relative block h-9 w-9">
-              <Image src="/snapingo-icon.png" alt="Snapingo" fill sizes="36px" className="object-contain" unoptimized />
-            </span>
+            {/* The brand wordmark (pink icon + pink lettering) rather than the
+                icon beside plain text, so the panel carries the actual logo. */}
             <div className="min-w-0 flex-1">
-              <p className="font-heading text-base font-bold text-ink-900">Snapingo</p>
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-brand-600">{title}</p>
+              <span className="relative block h-8 w-[152px]">
+                <Image
+                  src="/snapingo-wordmark-horizontal.png"
+                  alt="Snapingo"
+                  fill
+                  sizes="152px"
+                  className="object-contain object-left"
+                  unoptimized
+                />
+              </span>
+              <p className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-black">{title}</p>
             </div>
             <NotificationBell leadsBasePath={leadsBasePath} align="left" />
           </div>

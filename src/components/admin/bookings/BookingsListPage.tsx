@@ -109,9 +109,9 @@ export default async function BookingsListPage({
                     </Link>
                     <p className="text-xs text-ink-500">{b.phone}</p>
                   </td>
-                  <td className="px-4 py-3 text-ink-700">{b.packageTitle || b.destinationName || "—"}</td>
+                  <td className="px-4 py-3 text-ink-700">{b.packageTitle || b.destinationName || "N/A"}</td>
                   <td className="px-4 py-3 whitespace-nowrap text-ink-700">
-                    {b.travelStartDate ? b.travelStartDate.toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "—"}
+                    {b.travelStartDate ? b.travelStartDate.toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "N/A"}
                   </td>
                   <td className="px-4 py-3 font-semibold text-ink-900">₹{(b.totalAmount + b.taxAmount).toLocaleString("en-IN")}</td>
                   <td className="px-4 py-3 text-emerald-600">₹{paid.toLocaleString("en-IN")}</td>

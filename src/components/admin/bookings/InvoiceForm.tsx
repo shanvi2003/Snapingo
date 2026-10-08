@@ -95,7 +95,7 @@ export default function InvoiceForm({
             <div key={index} className="flex flex-wrap items-end gap-3 rounded-xl border border-ink-200 bg-ink-50/40 p-3">
               <div className="min-w-[150px] flex-1">
                 <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-ink-500">
-                  Installment {index + 1} — date
+                  Installment {index + 1} date
                 </label>
                 <input
                   type="date"

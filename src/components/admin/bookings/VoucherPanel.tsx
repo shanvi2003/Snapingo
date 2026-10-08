@@ -40,7 +40,7 @@ export default function VoucherPanel({
     <section className="rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
       <h2 className="font-heading text-base font-bold text-ink-900">Booking Vouchers</h2>
       <p className="mt-1 text-sm text-ink-500">
-        Hotel, flight and cab confirmations. Stored privately — only staff can open them.
+        Hotel, flight and cab confirmations. Stored privately, only staff can open them.
       </p>
 
       <div className="mt-4 space-y-2">
@@ -94,7 +94,7 @@ export default function VoucherPanel({
               <input
                 id="label"
                 name="label"
-                placeholder="Hotel voucher — Manali"
+                placeholder="Hotel voucher, Manali"
                 className="w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
               />
             </div>

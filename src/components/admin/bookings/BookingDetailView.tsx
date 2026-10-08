@@ -72,22 +72,22 @@ export default async function BookingDetailView({ bookingId, basePath = "/admin"
           <dl className="mt-4 grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
             <div>
               <dt className="text-xs font-bold uppercase tracking-wide text-ink-500">Package</dt>
-              <dd className="mt-0.5 text-sm text-ink-900">{booking.packageTitle || "—"}</dd>
+              <dd className="mt-0.5 text-sm text-ink-900">{booking.packageTitle || "N/A"}</dd>
             </div>
             <div>
               <dt className="text-xs font-bold uppercase tracking-wide text-ink-500">Destination</dt>
-              <dd className="mt-0.5 text-sm text-ink-900">{booking.destinationName || "—"}</dd>
+              <dd className="mt-0.5 text-sm text-ink-900">{booking.destinationName || "N/A"}</dd>
             </div>
             <div>
               <dt className="text-xs font-bold uppercase tracking-wide text-ink-500">Travel dates</dt>
               <dd className="mt-0.5 text-sm text-ink-900">
-                {booking.travelStartDate ? fmtDate(booking.travelStartDate) : "—"}
+                {booking.travelStartDate ? fmtDate(booking.travelStartDate) : "N/A"}
                 {booking.travelEndDate ? ` – ${fmtDate(booking.travelEndDate)}` : ""}
               </dd>
             </div>
             <div>
               <dt className="text-xs font-bold uppercase tracking-wide text-ink-500">Email</dt>
-              <dd className="mt-0.5 text-sm text-ink-900">{booking.email || "—"}</dd>
+              <dd className="mt-0.5 text-sm text-ink-900">{booking.email || "N/A"}</dd>
             </div>
           </dl>
           {booking.notes && (

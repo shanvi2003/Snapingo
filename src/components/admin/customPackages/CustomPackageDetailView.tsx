@@ -59,18 +59,18 @@ export default async function CustomPackageDetailView({
 
   const facts: [string, string][] = [
     ["Customer", quotation.customerName],
-    ["Phone", quotation.customerPhone ?? "—"],
-    ["Email", quotation.customerEmail ?? "—"],
+    ["Phone", quotation.customerPhone ?? "N/A"],
+    ["Email", quotation.customerEmail ?? "N/A"],
     [
       "Trip type",
-      quotation.tripType === "international" ? "International" : quotation.tripType === "domestic" ? "Domestic" : "—",
+      quotation.tripType === "international" ? "International" : quotation.tripType === "domestic" ? "Domestic" : "N/A",
     ],
     ["Destination", quotation.destinationName],
     [
       "Travel dates",
       quotation.startDate
         ? `${fmtDate(quotation.startDate)}${quotation.endDate ? ` – ${fmtDate(quotation.endDate)}` : ""}`
-        : "—",
+        : "N/A",
     ],
     ["Duration", `${quotation.durationNights} Nights / ${quotation.durationDays} Days`],
     [
@@ -100,9 +100,9 @@ export default async function CustomPackageDetailView({
         quotation.roomCategoryOther || (quotation.roomCategory ? roomLabels.get(quotation.roomCategory) : ""),
       ]
         .filter(Boolean)
-        .join(" · ") || "—",
+        .join(" · ") || "N/A",
     ],
-    ["Vehicle", quotation.vehicleName ?? "—"],
+    ["Vehicle", quotation.vehicleName ?? "N/A"],
     ["Created by", `${quotation.createdBy.name} · ${fmtDate(quotation.createdAt)}`],
   ];
 
@@ -149,7 +149,7 @@ export default async function CustomPackageDetailView({
             {facts.map(([label, value]) => (
               <div key={label}>
                 <dt className="text-xs font-bold uppercase tracking-wide text-ink-500">{label}</dt>
-                <dd className="mt-0.5 text-sm text-ink-900">{value || "—"}</dd>
+                <dd className="mt-0.5 text-sm text-ink-900">{value || "N/A"}</dd>
               </div>
             ))}
           </dl>
@@ -178,20 +178,20 @@ export default async function CustomPackageDetailView({
                           [stay.nights ? `${stay.nights}N` : "", stay.days ? `${stay.days}D` : ""].filter(Boolean).join(" / "),
                         ]
                           .filter(Boolean)
-                          .join(" · ") || "—"}
+                          .join(" · ") || "N/A"}
                       </td>
                       <td className="py-2 pr-3 font-semibold text-ink-900">{stay.hotelName}</td>
                       <td className="py-2 pr-3 text-ink-700">
-                        {stay.hotelCategory ? hotelLabels.get(stay.hotelCategory) ?? "—" : "—"}
+                        {stay.hotelCategory ? hotelLabels.get(stay.hotelCategory) ?? "N/A" : "N/A"}
                       </td>
                       <td className="py-2 pr-3 text-ink-700">
-                        {stay.roomCategory ? roomLabels.get(stay.roomCategory) ?? "—" : "—"}
+                        {stay.roomCategory ? roomLabels.get(stay.roomCategory) ?? "N/A" : "N/A"}
                       </td>
                       <td className="py-2 pr-3 text-ink-700">{stay.rooms}</td>
                       <td className="py-2 text-ink-700">
                         {[stay.extraBed ? "Extra bed" : "", stay.extraMattress ? "Extra mattress" : ""]
                           .filter(Boolean)
-                          .join(", ") || "—"}
+                          .join(", ") || "N/A"}
                       </td>
                     </tr>
                   ))}

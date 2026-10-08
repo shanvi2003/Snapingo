@@ -7,7 +7,7 @@ import { db } from "@/lib/db";
 // provider - the notification bell in the admin/staff panel is the only
 // consumer, so a DB row is all that's needed.
 function detailSuffix(destinationName?: string | null): string {
-  return destinationName ? ` — ${destinationName}` : "";
+  return destinationName ? ` · ${destinationName}` : "";
 }
 
 // Every active admin sees every new lead, regardless of who (if anyone) it

@@ -68,10 +68,10 @@ export default async function AdminDashboardPage() {
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-ink-900">{b.travelerName}</p>
-                  <p className="text-xs text-ink-500">{b.destinationName || b.packageTitle || "—"}</p>
+                  <p className="text-xs text-ink-500">{b.destinationName || b.packageTitle || "N/A"}</p>
                 </div>
                 <p className="shrink-0 text-xs font-semibold text-brand-600">
-                  {b.travelStartDate ? fmtDate(b.travelStartDate) : "—"}
+                  {b.travelStartDate ? fmtDate(b.travelStartDate) : "N/A"}
                 </p>
               </Link>
             ))}
@@ -118,7 +118,7 @@ export default async function AdminDashboardPage() {
         </div>
         <p className="mt-2 text-sm text-ink-500">
           {stats.total === 0
-            ? "No leads yet — as soon as someone fills out a form on the site, it'll show up here."
+            ? "No leads yet. As soon as someone fills out a form on the site, it'll show up here."
             : `${stats.new} new, ${stats.contacted} contacted, ${stats.quoted} quoted, ${stats.converted} converted, ${stats.closed} closed.`}
         </p>
       </div>

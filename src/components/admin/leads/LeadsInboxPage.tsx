@@ -206,14 +206,14 @@ export default async function LeadsInboxPage({
                 </td>
                 <td className="px-4 py-3 text-ink-700">{sourceLabels[lead.source]}</td>
                 <td className="px-4 py-3 text-ink-700">
-                  {lead.destinationName || lead.packageTitle || lead.hotelName || "—"}
+                  {lead.destinationName || lead.packageTitle || lead.hotelName || "N/A"}
                 </td>
                 <td className="px-4 py-3">
                   <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusStyles[lead.status]}`}>
                     {statusLabels[lead.status]}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-ink-700">{lead.assignedTo?.name ?? "—"}</td>
+                <td className="px-4 py-3 text-ink-700">{lead.assignedTo?.name ?? "N/A"}</td>
                 <td className="px-4 py-3 whitespace-nowrap text-ink-500">
                   {lead.createdAt.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                 </td>

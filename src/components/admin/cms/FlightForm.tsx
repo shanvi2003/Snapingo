@@ -32,22 +32,22 @@ export default function FlightForm({ isNew, defaults }: { isNew: boolean; defaul
         <input id="id" name="id" required readOnly={!isNew} defaultValue={defaults?.id} placeholder="del-goa-indigo-eco" className={`${inputClass} ${!isNew ? "bg-ink-50 text-ink-400" : ""}`} />
       </div>
       <div>
-        <label className={labelClass} htmlFor="airline">Airline</label>
-        <input id="airline" name="airline" required defaultValue={defaults?.airline} className={inputClass} />
+        <label className={labelClass} htmlFor="airline">Airline Name</label>
+        <input id="airline" name="airline" required defaultValue={defaults?.airline} placeholder="IndiGo" className={inputClass} />
       </div>
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div>
-          <label className={labelClass} htmlFor="departureCitySlug">Departure City Slug</label>
-          <input id="departureCitySlug" name="departureCitySlug" required defaultValue={defaults?.departureCitySlug} className={inputClass} />
+          <label className={labelClass} htmlFor="departureCitySlug">Departure City</label>
+          <input id="departureCitySlug" name="departureCitySlug" required defaultValue={defaults?.departureCitySlug} placeholder="Delhi" className={inputClass} />
         </div>
         <div>
-          <label className={labelClass} htmlFor="destinationSlug">Destination Slug</label>
-          <input id="destinationSlug" name="destinationSlug" required defaultValue={defaults?.destinationSlug} className={inputClass} />
+          <label className={labelClass} htmlFor="destinationSlug">Destination</label>
+          <input id="destinationSlug" name="destinationSlug" required defaultValue={defaults?.destinationSlug} placeholder="Goa" className={inputClass} />
         </div>
       </div>
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
         <div>
-          <label className={labelClass} htmlFor="flightClass">Class</label>
+          <label className={labelClass} htmlFor="flightClass">Travel Class</label>
           <CustomSelect
             name="flightClass"
             value={flightClass}
@@ -61,11 +61,11 @@ export default function FlightForm({ isNew, defaults }: { isNew: boolean; defaul
           />
         </div>
         <div>
-          <label className={labelClass} htmlFor="price">Price (₹)</label>
-          <input id="price" name="price" type="number" min={0} required defaultValue={defaults?.price} className={inputClass} />
+          <label className={labelClass} htmlFor="price">Ticket Price (₹)</label>
+          <input id="price" name="price" type="number" min={0} required defaultValue={defaults?.price} placeholder="4499" className={inputClass} />
         </div>
         <div>
-          <label className={labelClass} htmlFor="duration">Duration</label>
+          <label className={labelClass} htmlFor="duration">Flight Duration</label>
           <input id="duration" name="duration" required placeholder="2h 40m" defaultValue={defaults?.duration} className={inputClass} />
         </div>
       </div>

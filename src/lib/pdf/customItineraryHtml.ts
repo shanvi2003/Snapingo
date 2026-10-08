@@ -238,12 +238,12 @@ export async function buildCustomItineraryHtml(
                  ]
                    .filter(Boolean)
                    .join(" / ");
-                 const where = [stay.city, length].filter(Boolean).join(" — ");
+                 const where = [stay.city, length].filter(Boolean).join(" · ");
                  const category = [stay.hotelCategoryLabel, stay.roomCategoryLabel].filter(Boolean).join(" · ");
                  return `<tr>
-                   <td>${esc(where || "—")}</td>
+                   <td>${esc(where || "N/A")}</td>
                    <td>${esc(stay.hotelName)}</td>
-                   <td>${esc(category || "—")}</td>
+                   <td>${esc(category || "N/A")}</td>
                  </tr>`;
                })
                .join("")}
@@ -279,11 +279,11 @@ export async function buildCustomItineraryHtml(
   const inclusionsExclusions = `<div class="cols mt-6 avoid-break">
       <section class="col col-in">
         <h2>Inclusion</h2>
-        <ul>${data.inclusions.map((i) => `<li>&bull; ${esc(i)}</li>`).join("") || "<li>&bull; —</li>"}</ul>
+        <ul>${data.inclusions.map((i) => `<li>&bull; ${esc(i)}</li>`).join("") || "<li>&bull; None</li>"}</ul>
       </section>
       <section class="col col-ex">
         <h2>Exclusions</h2>
-        <ul>${data.exclusions.map((e) => `<li>&bull; ${esc(e)}</li>`).join("") || "<li>&bull; —</li>"}</ul>
+        <ul>${data.exclusions.map((e) => `<li>&bull; ${esc(e)}</li>`).join("") || "<li>&bull; None</li>"}</ul>
       </section>
     </div>`;
 
@@ -324,7 +324,7 @@ export async function buildCustomItineraryHtml(
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>${esc(data.tripId)} — ${esc(data.customerName)}</title>
+<title>${esc(data.tripId)} · ${esc(data.customerName)}</title>
 <style>
   ${lexend ? `@font-face { font-family: "Lexend"; src: url("${lexend}") format("truetype"); font-weight: 100 900; font-style: normal; }` : ""}
   /* The website PDF's page box (globals.css @media print). The watermark

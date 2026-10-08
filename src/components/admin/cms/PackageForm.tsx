@@ -132,7 +132,7 @@ export default function PackageForm({
           <div>
             <p className={labelClass}>Package ID</p>
             <p className="rounded-xl border border-dashed border-ink-200 bg-ink-50 px-4 py-2.5 font-mono text-sm text-ink-700">
-              {isNew ? nextPackageCode : (defaults?.code ?? "—")}
+              {isNew ? nextPackageCode : (defaults?.code ?? "N/A")}
             </p>
           </div>
           <div className="sm:col-span-2">
@@ -250,7 +250,7 @@ export default function PackageForm({
               so the tax-inclusive figure is visible while pricing. */}
           <div className="rounded-xl border border-ink-200 bg-ink-50/60 p-4">
             <p className="text-xs font-bold uppercase tracking-wide text-ink-700">
-              GST ({gstPercent}%) — calculated automatically
+              GST ({gstPercent}%), calculated automatically
             </p>
             <dl className="mt-2 space-y-1 text-sm text-ink-800">
               <div className="flex justify-between">

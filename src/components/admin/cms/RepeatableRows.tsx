@@ -112,14 +112,14 @@ export default function RepeatableRows({
                     <CustomSelect
                       value={row[field.key] ?? ""}
                       onChange={(value) => updateField(index, field.key, value)}
-                      placeholder="—"
+                      placeholder="Select"
                       options={field.options.map((opt) => ({ value: opt, label: opt }))}
                     />
                   ) : field.type === "options" ? (
                     <CustomSelect
                       value={row[field.key] ?? ""}
                       onChange={(value) => updateField(index, field.key, value)}
-                      placeholder="—"
+                      placeholder="Select"
                       options={field.options}
                     />
                   ) : field.type === "suggest" ? (

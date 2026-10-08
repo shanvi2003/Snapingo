@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { isAllowedImageSource, imageSourceMessage } from "@/lib/imageHosts";
 import { contentBlocksField } from "@/lib/validation/contentBlocks";
+import { slugify } from "@/lib/slug";
 
 const linesToArray = (v: unknown) =>
   typeof v === "string" ? v.split("\n").map((s) => s.trim()).filter(Boolean) : [];
@@ -123,7 +124,8 @@ export const blogPostSchema = z.object({
 export const hotelSchema = z.object({
   id: z.string().trim().min(1).max(120).regex(/^[a-z0-9-]+$/, "Use lowercase letters, numbers and hyphens only."),
   name: z.string().trim().min(1).max(200),
-  destinationSlug: z.string().trim().min(1).max(120),
+  // Typed as a name ("Goa"), stored as the slug the website looks up by.
+  destinationSlug: z.string().trim().min(1).max(120).transform(slugify),
   category: z.enum(["3-star", "4-star", "5-star", "luxury"]),
   pricePerNight: z.coerce.number().int().nonnegative(),
   rating: z.coerce.number().min(0).max(5),
@@ -132,8 +134,10 @@ export const hotelSchema = z.object({
 export const flightSchema = z.object({
   id: z.string().trim().min(1).max(120).regex(/^[a-z0-9-]+$/, "Use lowercase letters, numbers and hyphens only."),
   airline: z.string().trim().min(1).max(120),
-  departureCitySlug: z.string().trim().min(1).max(120),
-  destinationSlug: z.string().trim().min(1).max(120),
+  // Staff type a city name ("New Delhi"); the website looks flights up by
+  // slug ("new-delhi"), so the name is turned into one on save.
+  departureCitySlug: z.string().trim().min(1).max(120).transform(slugify),
+  destinationSlug: z.string().trim().min(1).max(120).transform(slugify),
   flightClass: z.enum(["economy", "premium-economy", "business", "first"]),
   price: z.coerce.number().int().nonnegative(),
   duration: z.string().trim().min(1).max(60),

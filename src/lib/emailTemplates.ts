@@ -83,7 +83,7 @@ export function itineraryEmail(input: {
     [
       paragraphs([`Hi ${esc(input.customerName)},`]),
       paragraphs([
-        `Thank you for talking to us. Your itinerary is attached as a PDF — it covers the day-by-day plan, where you'll be staying, what's included and the full cost.`,
+        `Thank you for talking to us. Your itinerary is attached as a PDF. It covers the day-by-day plan, where you'll be staying, what's included and the full cost.`,
       ]),
       detailRows([
         ["Trip ID", input.tripId],
@@ -93,7 +93,7 @@ export function itineraryEmail(input: {
       ]),
       input.note ? paragraphs([esc(input.note).replace(/\n/g, "<br>")]) : "",
       paragraphs([
-        `Anything you'd like changed — dates, hotels, inclusions — just reply to this email and we'll rework it.`,
+        `Anything you'd like changed (dates, hotels, inclusions), just reply to this email and we'll rework it.`,
         `Warm regards,<br><strong>${esc(input.senderName)}</strong>`,
       ]),
     ].join("")
@@ -112,7 +112,7 @@ export function invoiceEmail(input: {
   senderName: string;
   note?: string;
 }): { subject: string; html: string } {
-  const subject = `Invoice ${input.reference} — ${input.destinationName}`;
+  const subject = `Invoice ${input.reference} · ${input.destinationName}`;
 
   const html = layout(
     `Your invoice`,

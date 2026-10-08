@@ -123,7 +123,7 @@ export default async function CustomPackageFormPage({
     list.map((b) => ({ key: b.key, title: b.title, body: b.body }));
 
   const heading = editLeadId
-    ? `Edit Lead${lead?.name ? ` — ${lead.name}` : ""}`
+    ? `Edit Lead${lead?.name ? `: ${lead.name}` : ""}`
     : isNew
       ? "New Customized Package"
       : `Edit ${quotation?.tripId}`;

@@ -7,7 +7,7 @@ import { getPaymentSummary, getTripStage, type TripStage } from "@/lib/tripStage
 import AutoSearchInput from "@/components/admin/AutoSearchInput";
 
 const fmtDate = (d: Date | null) =>
-  d ? d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—";
+  d ? d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "N/A";
 
 /**
  * Ongoing / Upcoming / Complete trips.
@@ -114,7 +114,7 @@ export default async function TripsStagePage({
                     <p className="text-xs text-ink-500">{booking.phone}</p>
                   </td>
                   <td className="px-4 py-3 text-ink-700">
-                    {booking.packageTitle || booking.destinationName || "—"}
+                    {booking.packageTitle || booking.destinationName || "N/A"}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-ink-700">
                     {fmtDate(booking.travelStartDate)} – {fmtDate(booking.travelEndDate)}

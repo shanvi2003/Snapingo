@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { saveUspsAction, type FormState } from "@/lib/actions/homepage";
-import RepeatableRows from "@/components/admin/cms/RepeatableRows";
+import CompactRows from "@/components/admin/cms/CompactRows";
 import type { UspContent } from "@/lib/content/homepage";
 
 // Matches the icon set WhyChooseUs.tsx (homepage "Travel planning, minus
@@ -14,15 +14,15 @@ export default function UspsForm({ initialRows }: { initialRows: UspContent[] })
 
   return (
     <form action={formAction} className="mt-6 w-full space-y-6 rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
-      <RepeatableRows
+      <CompactRows
         name="items"
         addLabel="Add Item"
-        fields={[
-          { key: "icon", label: "Icon", type: "select", options: iconOptions },
-          { key: "title", label: "Title", type: "text" },
-          { key: "desc", label: "Description", type: "textarea" },
+        columns={[
+          { key: "icon", label: "Icon", width: "13rem", options: iconOptions },
+          { key: "title", label: "Title", width: "1fr" },
+          { key: "desc", label: "Description", width: "2fr" },
         ]}
-        initialRows={initialRows}
+        initial={initialRows}
       />
 
       {state?.error && <p className="rounded-lg bg-red-50 px-4 py-2.5 text-sm font-medium text-red-600">{state.error}</p>}
