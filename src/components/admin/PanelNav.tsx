@@ -37,11 +37,11 @@ export default function PanelNav({
                 type="button"
                 onClick={() => setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }))}
                 aria-expanded={!isCollapsed}
-                className="flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-xs font-bold uppercase tracking-wider text-ink-500 transition hover:bg-ink-50 hover:text-ink-700"
+                className="flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2.5 text-sm font-bold uppercase tracking-wider text-ink-700 transition hover:bg-ink-50 hover:text-ink-900"
               >
                 <span>{section.heading}</span>
                 <ChevronDown
-                  className={`h-4 w-4 shrink-0 transition-transform duration-200 ${isCollapsed ? "-rotate-90" : ""}`}
+                  className={`h-5 w-5 shrink-0 transition-transform duration-200 ${isCollapsed ? "-rotate-90" : ""}`}
                 />
               </button>
             )}
@@ -57,6 +57,23 @@ export default function PanelNav({
                   <div className="space-y-1">
                     {section.items.map((item) => {
                       const active = isActive(pathname, item.href, item.href === rootHref);
+                      // A link outside any section (Dashboard) sits level with
+                      // the section headings, so it takes their size and style.
+                      if (!section.heading) {
+                        return (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            onClick={onNavigate}
+                            aria-current={active ? "page" : undefined}
+                            className={`flex items-center rounded-lg px-3 py-2.5 text-sm font-bold uppercase tracking-wider transition ${
+                              active ? "bg-brand-50 text-brand-700" : "text-ink-700 hover:bg-ink-50 hover:text-ink-900"
+                            }`}
+                          >
+                            {item.label}
+                          </Link>
+                        );
+                      }
                       return (
                         <Link
                           key={item.href}

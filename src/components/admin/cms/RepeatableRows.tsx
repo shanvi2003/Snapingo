@@ -81,8 +81,10 @@ export default function RepeatableRows({
 
   // Bare rows sit among the section's ordinary fields, so their labels and
   // boxes match those fields' size instead of the compact card styling.
+  // Stacked rows (a package's itinerary days) get the full-size labels too,
+  // since each field there has a whole row to itself.
   const labelClass =
-    bare || large
+    bare || large || stacked
       ? "mb-1.5 block text-xs font-bold uppercase tracking-wide text-ink-900"
       : "mb-1 block text-[10px] font-bold uppercase tracking-wide text-ink-500";
   const boxClass = bare || large ? "rounded-xl px-4 py-2.5" : "rounded-lg px-3 py-2";
