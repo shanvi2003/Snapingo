@@ -56,6 +56,7 @@ const context: CustomItineraryContext = {
     { key: "PDF_ABOUT", title: "About Snapingo", body: "" },
   ],
   operationHead: { name: "Ashutosh Pandey", phone: "+91 87077 36609", email: "ops@example.com" },
+  preparedBy: null,
 };
 
 describe("buildCustomItineraryHtml", () => {
@@ -125,6 +126,19 @@ describe("buildCustomItineraryHtml", () => {
 
   // No hotels entered: like the website PDF, a "handpicked hotels" line
   // stands in for the table rather than an empty one.
+  it("prints who prepared it under the operation head, or nothing when unnamed", async () => {
+    const html = await buildCustomItineraryHtml(makeData(), {
+      ...context,
+      preparedBy: { name: "Riya Kapoor", role: "Travel Executive" },
+    });
+    expect(html).toContain("Prepared By");
+    expect(html).toContain("Riya Kapoor");
+    expect(html).toContain("Travel Executive");
+    expect(html.indexOf("Prepared By")).toBeGreaterThan(html.indexOf("Ashutosh Pandey"));
+
+    expect(await buildCustomItineraryHtml(makeData(), context)).not.toContain("Prepared By");
+  });
+
   it("still produces a document when there are no stays or inclusions", async () => {
     const html = await buildCustomItineraryHtml(
       makeData({ stays: [], inclusions: [], exclusions: [] }),

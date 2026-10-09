@@ -86,6 +86,9 @@ export type CustomItineraryData = {
 export type CustomItineraryContext = {
   blocks: ContentBlockView[];
   operationHead: { name: string; phone: string; email: string };
+  // Who prepared the quotation, printed under the operation head; null when
+  // nobody is named.
+  preparedBy: { name: string; role: string } | null;
 };
 
 // Escapes everything staff typed. This HTML is assembled by string
@@ -348,6 +351,16 @@ export async function buildCustomItineraryHtml(
        </div>`
     : "";
 
+  // Two plain lines under the operation head: who prepared it, then their
+  // role at Snapingo.
+  const by = context.preparedBy;
+  const preparedBy = by
+    ? `<ul class="op-list prepared avoid-break">
+         <li>Prepared By: ${esc(by.name)}</li>
+         ${by.role ? `<li>${esc(by.role)} | ${esc(siteConfig.name)}</li>` : ""}
+       </ul>`
+    : "";
+
   const disclaimerLines = disclaimer
     ? parseContentBody(disclaimer.body)
         .map((line) => `<p class="mt-2">${esc(line.text)}</p>`)
@@ -508,6 +521,7 @@ export async function buildCustomItineraryHtml(
   .op-name { font-size: 27px; font-weight: 800; color: ${INK_900}; }
   .op-list { font-size: 17px; color: ${INK_800}; }
   .op-list li + li { margin-top: 4px; }
+  .prepared { margin-top: 16px; }
 
   footer { margin-top: 32px; border-top: 1px solid ${INK_200}; padding-top: 12px; font-size: 17px; color: ${INK_500}; break-inside: avoid; }
   footer .company { font-size: 20px; line-height: 28px; font-weight: 600; color: ${INK_700}; }
@@ -563,6 +577,8 @@ export async function buildCustomItineraryHtml(
   </section>
 
   ${operationHead}
+
+  ${preparedBy}
 
   <footer>
     <p class="company">SNAPINGO TRAVELS</p>

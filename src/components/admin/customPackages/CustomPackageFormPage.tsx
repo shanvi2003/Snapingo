@@ -6,7 +6,7 @@ import { getSuggestionSets } from "@/lib/suggestions";
 import CustomPackageForm, { type CustomPackageDefaults } from "@/components/admin/customPackages/CustomPackageForm";
 import { parseDuration } from "@/lib/durationHelpers";
 import { getContentBlocks } from "@/lib/contentBlocks";
-import { defaultsFromQuotation, loadQuotation, toDateInput } from "@/lib/customPackageDefaults";
+import { currentPreparer, defaultsFromQuotation, loadQuotation, toDateInput } from "@/lib/customPackageDefaults";
 
 type LeadRow = NonNullable<Awaited<ReturnType<typeof loadLead>>>;
 
@@ -100,9 +100,10 @@ export default async function CustomPackageFormPage({
 
   // A new quotation starts from the standard PDF sections (passed separately,
   // below); an existing one carries its own.
-  const [standardContentBlocks, quotationDefaults] = await Promise.all([
+  const [standardContentBlocks, quotationDefaults, preparer] = await Promise.all([
     getContentBlocks(),
     quotation ? defaultsFromQuotation(quotation) : null,
+    currentPreparer(),
   ]);
   const toEditable = (list: { key: string; title: string; body: string }[]) =>
     list.map((b) => ({ key: b.key, title: b.title, body: b.body }));
@@ -112,6 +113,13 @@ export default async function CustomPackageFormPage({
     : isNew
       ? "New Customized Package"
       : `Edit ${quotation?.tripId}`;
+
+  // A quotation nobody has signed yet (every new one, and older ones saved
+  // before this existed) starts as prepared by whoever is signed in now.
+  const baseDefaults = quotationDefaults ?? (lead ? defaultsFromLead(lead) : undefined);
+  const defaults = baseDefaults?.preparedByName
+    ? baseDefaults
+    : { ...baseDefaults, ...preparer };
 
   const toOptions = (list: { value: string; label: string; freeText: boolean }[]) =>
     list.map((o) => ({ value: o.value, label: o.label, freeText: o.freeText }));
@@ -138,13 +146,7 @@ export default async function CustomPackageFormPage({
         hotelCategories={toOptions(hotelCategories)}
         gstPercent={gstPercent}
         standardContentBlocks={toEditable(standardContentBlocks)}
-        defaults={
-          quotationDefaults
-            ? quotationDefaults
-            : lead
-              ? defaultsFromLead(lead)
-              : undefined
-        }
+        defaults={defaults}
       />
     </div>
   );

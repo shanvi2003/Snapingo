@@ -170,6 +170,9 @@ export async function loadCustomItinerary(
         phone: settings.operation_head_phone,
         email: settings.operation_head_email,
       },
+      preparedBy: quotation.preparedByName
+        ? { name: quotation.preparedByName, role: quotation.preparedByRole ?? "" }
+        : null,
     },
   };
 }

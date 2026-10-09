@@ -515,6 +515,11 @@ model CustomPackage {
 
   notes String?
 
+  // Who prepared this quotation, printed under the operation head on the
+  // PDF. Starts as the signed-in staff member; editable on the form.
+  preparedByName String?
+  preparedByRole String?
+
   // This quotation's own copy of the PDF content blocks, as on Package.
   // Null = the standard content from ContentBlock.
   contentBlocks Json?

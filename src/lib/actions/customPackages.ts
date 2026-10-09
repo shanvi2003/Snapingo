@@ -107,6 +107,9 @@ export async function saveCustomPackageAction(
     gstPercent: gst.percent,
     gstAmount: gst.gstAmount,
     totalAmount: gst.totalAmount,
+    // Blank means "leave it off the PDF", stored as null rather than "".
+    preparedByName: data.preparedByName || null,
+    preparedByRole: data.preparedByRole || null,
   };
 
   const saved = isNew

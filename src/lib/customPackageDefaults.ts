@@ -2,6 +2,8 @@ import "server-only";
 import { db } from "@/lib/db";
 import type { Prisma } from "@/generated/prisma/client";
 import { resolveContentBlocks } from "@/lib/contentBlocks";
+import { getSession } from "@/lib/dal";
+import { jobRoleLabels } from "@/lib/permissions";
 import type { CustomPackageDefaults } from "@/components/admin/customPackages/CustomPackageForm";
 
 // <input type="date"> only accepts yyyy-mm-dd, and toISOString() would shift
@@ -54,6 +56,8 @@ export async function defaultsFromQuotation(quotation: QuotationWithRows): Promi
     vehicleName: quotation.vehicleName ?? undefined,
     price: quotation.price,
     notes: quotation.notes ?? undefined,
+    preparedByName: quotation.preparedByName ?? undefined,
+    preparedByRole: quotation.preparedByRole ?? undefined,
     contentBlocks: blocks.map((b) => ({ key: b.key, title: b.title, body: b.body })),
     days: quotation.days.map((d) => ({
       date: toDateInput(d.date) ?? "",
@@ -67,4 +71,20 @@ export async function defaultsFromQuotation(quotation: QuotationWithRows): Promi
       days: s.days != null ? String(s.days) : "",
     })),
   };
+}
+
+/**
+ * The signed-in staff member as a quotation's "Prepared By": their name, and
+ * their job role (or "Admin"), as staff read it.
+ */
+export async function currentPreparer(): Promise<{ preparedByName?: string; preparedByRole?: string }> {
+  const session = await getSession();
+  if (!session) return {};
+  const user = await db.staffUser.findUnique({
+    where: { id: session.userId },
+    select: { name: true, role: true, jobRole: true },
+  });
+  if (!user) return {};
+  const role = user.role === "ADMIN" ? "Admin" : user.jobRole ? jobRoleLabels[user.jobRole] : "Staff";
+  return { preparedByName: user.name, preparedByRole: role };
 }

@@ -77,6 +77,10 @@ export const customPackageSchema = z.object({
 
   vehicleName: optionalText(200),
 
+  // Who prepared it, printed under the operation head on the PDF.
+  preparedByName: optionalText(120),
+  preparedByRole: optionalText(80),
+
   // GST is never posted by the form: it is computed server-side from the
   // configured rate so a crafted request can't understate a customer's tax.
   price: z.coerce.number().int().nonnegative(),

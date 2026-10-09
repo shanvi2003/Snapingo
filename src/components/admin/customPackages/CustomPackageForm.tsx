@@ -74,6 +74,9 @@ export type CustomPackageDefaults = {
   vehicleName?: string;
   price?: number;
   notes?: string;
+  // Who prepared it (printed under the operation head on the PDF).
+  preparedByName?: string;
+  preparedByRole?: string;
   days?: Record<string, string>[];
   stays?: Record<string, string>[];
   // This quotation's own PDF sections; absent = start from the standard ones.
@@ -171,6 +174,8 @@ function formToDefaults(form: HTMLFormElement): CustomPackageDefaults {
     exclusions: (str("exclusions") ?? "").split("\n").filter(Boolean),
     price: num("price"),
     notes: str("notes"),
+    preparedByName: str("preparedByName"),
+    preparedByRole: str("preparedByRole"),
     contentBlocks: rows("contentBlocks") as EditableContentBlock[],
   };
 }
@@ -232,6 +237,9 @@ export default function CustomPackageForm(props: FormProps) {
         customerPhone: current.customerPhone,
         customerEmail: current.customerEmail,
         notes: current.notes,
+        // Whoever is preparing this one, not whoever prepared the original.
+        preparedByName: current.preparedByName,
+        preparedByRole: current.preparedByRole,
       },
     });
   };
@@ -789,6 +797,33 @@ function CustomPackageFormBody({
           initial={defaults?.contentBlocks?.length ? defaults.contentBlocks : standardContentBlocks}
           standard={standardContentBlocks}
         />
+      </Section>
+
+      <Section title="Prepared By">
+        {/* Printed on the PDF under the operation head. Starts as the
+            signed-in staff member; leave both blank to keep it off the PDF. */}
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <div>
+            <label className={labelClass} htmlFor="preparedByName">Name</label>
+            <input
+              id="preparedByName"
+              name="preparedByName"
+              defaultValue={defaults?.preparedByName}
+              placeholder="Full name"
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className={labelClass} htmlFor="preparedByRole">Role</label>
+            <input
+              id="preparedByRole"
+              name="preparedByRole"
+              defaultValue={defaults?.preparedByRole}
+              placeholder="e.g. Travel Executive"
+              className={inputClass}
+            />
+          </div>
+        </div>
       </Section>
 
       {state && "error" in state && (
