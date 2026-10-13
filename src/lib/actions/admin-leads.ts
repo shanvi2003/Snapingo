@@ -3,12 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireSession, requireStaffFeature } from "@/lib/dal";
-import type { LeadNoteStatus, LeadStatus, StaffJobRole } from "@/generated/prisma/client";
-import { jobRoleLabels } from "@/lib/permissions";
+import type { LeadNoteStatus, LeadStatus } from "@/generated/prisma/client";
 import { logLeadActivity } from "@/lib/leadActivity";
 import { statusLabels, sourceLabels, noteStatusLabels } from "@/components/admin/leads/statusStyles";
 import { notifyLeadAssigned } from "@/lib/notifications";
 import { editLeadSchema } from "@/lib/validation/lead-edit";
+import { canAccessLead } from "@/lib/leads";
 
 export type FormState = { error: string } | { success: string } | undefined;
 
@@ -35,6 +35,8 @@ async function actorName(userId: string): Promise<string> {
 // Executive, BDE) — see src/lib/permissions.ts.
 export async function updateLeadStatusAction(leadId: string, status: LeadStatus): Promise<void> {
   const session = await requireStaffFeature("leads");
+  // Staff may only act on leads assigned to them (see leadScope).
+  if (!(await canAccessLead(session, leadId))) return;
   await db.lead.update({ where: { id: leadId }, data: { status } });
   await logLeadActivity(
     leadId,
@@ -62,6 +64,9 @@ export async function assignLeadAction(leadId: string, staffId: string | null): 
 
   const current = await db.lead.findUnique({ where: { id: leadId }, select: { status: true } });
   if (!current) return;
+  if (staffId && !(await db.staffUser.findFirst({ where: { id: staffId, isActive: true }, select: { id: true } }))) {
+    return;
+  }
 
   const lead = await db.lead.update({
     where: { id: leadId },
@@ -102,42 +107,10 @@ export async function assignLeadAction(leadId: string, staffId: string | null): 
   revalidateLead(leadId);
 }
 
-/**
- * Hands a lead to a team (job role) rather than one staff member - what the
- * admin's assign dropdown offers. Same admin-only rule and NEW <-> ASSIGNED
- * status step as assignLeadAction; clears any individual assignee.
- */
-export async function assignLeadRoleAction(leadId: string, role: StaffJobRole | null): Promise<void> {
-  const session = await requireSession(["ADMIN"]);
-  if (role && !(role in jobRoleLabels)) return;
-
-  const current = await db.lead.findUnique({ where: { id: leadId }, select: { status: true } });
-  if (!current) return;
-
-  await db.lead.update({
-    where: { id: leadId },
-    data: {
-      assignedRole: role,
-      assignedToId: null,
-      assignedAt: role ? new Date() : null,
-      ...(role && current.status === "NEW" ? { status: "ASSIGNED" as const } : {}),
-      ...(!role && current.status === "ASSIGNED" ? { status: "NEW" as const } : {}),
-    },
-  });
-
-  const actor = await actorName(session.userId);
-  await logLeadActivity(
-    leadId,
-    "ASSIGNED",
-    role ? `${actor} assigned this lead to ${jobRoleLabels[role]}` : `${actor} unassigned this lead`
-  );
-
-  revalidateLead(leadId);
-}
-
 /** Pins a lead to the top of the inbox. Any staff member with lead access. */
 export async function toggleLeadFavoriteAction(leadId: string): Promise<void> {
-  await requireStaffFeature("leads");
+  const session = await requireStaffFeature("leads");
+  if (!(await canAccessLead(session, leadId))) return;
   const lead = await db.lead.findUnique({ where: { id: leadId }, select: { isFavorite: true } });
   if (!lead) return;
   await db.lead.update({ where: { id: leadId }, data: { isFavorite: !lead.isFavorite } });
@@ -157,6 +130,7 @@ export async function addLeadNoteAction(
   formData: FormData
 ): Promise<FormState> {
   const session = await requireStaffFeature("leads");
+  if (!(await canAccessLead(session, leadId))) return { error: "This lead isn't assigned to you." };
 
   const body = String(formData.get("body") ?? "").trim();
   const rawStatus = String(formData.get("status") ?? "").trim();
@@ -202,6 +176,7 @@ export async function updateLeadDetailsAction(
   formData: FormData
 ): Promise<FormState> {
   const session = await requireStaffFeature("leads");
+  if (!(await canAccessLead(session, leadId))) return { error: "This lead isn't assigned to you." };
 
   const parsed = editLeadSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Please check the form." };

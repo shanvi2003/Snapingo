@@ -14,6 +14,8 @@ import {
   AutoFilterToggle,
 } from "@/components/admin/AutoFilter";
 import Pagination, { PAGE_SIZE } from "@/components/admin/Pagination";
+import { getSession } from "@/lib/dal";
+import { leadScope } from "@/lib/leads";
 
 export type LeadsSearchParams = {
   source?: string;
@@ -65,7 +67,9 @@ export default async function LeadsInboxPage({
   subtitle?: string;
   fixedStatus?: LeadStatus;
 }) {
-  const params = await searchParams;
+  const [params, session] = await Promise.all([searchParams, getSession()]);
+  // Staff see only the leads assigned to them; admins see everything.
+  const scope = leadScope(session);
   const page = Math.max(1, Number(params.page) || 1);
   const q = params.q?.trim();
   const status = fixedStatus ?? (params.status as LeadStatus | undefined);
@@ -81,7 +85,7 @@ export default async function LeadsInboxPage({
   // Built as an AND list rather than one merged object on purpose: the search
   // filter contributes its own OR, and a spread would let whichever condition
   // came last silently overwrite it.
-  const conditions: Prisma.LeadWhereInput[] = [];
+  const conditions: Prisma.LeadWhereInput[] = [scope];
   if (params.source) conditions.push({ source: params.source as LeadSource });
   if (status) conditions.push({ status });
   if (params.destination) {
@@ -108,7 +112,7 @@ export default async function LeadsInboxPage({
     // Destination options come from the leads themselves, so the filter can
     // only ever offer values that will actually return something.
     db.lead.findMany({
-      where: { destinationName: { not: null } },
+      where: { ...scope, destinationName: { not: null } },
       select: { destinationName: true },
       distinct: ["destinationName"],
       orderBy: { destinationName: "asc" },

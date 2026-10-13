@@ -14,6 +14,7 @@ import {
 import LeadStatusSelect from "@/components/admin/leads/LeadStatusSelect";
 import LeadAssignSelect from "@/components/admin/leads/LeadAssignSelect";
 import { jobRoleLabels } from "@/lib/permissions";
+import { leadScope } from "@/lib/leads";
 import LeadFavoriteButton from "@/components/admin/leads/LeadFavoriteButton";
 import LeadNoteForm from "@/components/admin/leads/LeadNoteForm";
 import LeadEditForm from "@/components/admin/leads/LeadEditForm";
@@ -57,13 +58,23 @@ export default async function LeadDetailView({ basePath, leadId }: { basePath: s
     canUseStaffFeature("customPackages"),
   ]);
 
-  if (!lead) notFound();
+  // A staff member can only open leads assigned to them - opening someone
+  // else's by URL is the same 404 as a lead that doesn't exist.
+  const isAdmin = session?.role === "ADMIN";
+  if (!lead || (!isAdmin && lead.assignedToId !== session?.userId)) notFound();
 
-  // Whoever owns the lead: a team (role) or, for website leads auto-assigned
-  // to one person, that staff member.
+  // Whoever owns the lead. Older leads may still be assigned to a team (role)
+  // from before assignment moved to individual people.
   const assignee = lead.assignedRole ? jobRoleLabels[lead.assignedRole] : lead.assignedTo?.name ?? null;
 
-  const isAdmin = session?.role === "ADMIN";
+  // Active staff accounts for the admin's assign dropdown, grouped by role there.
+  const assignableStaff = isAdmin
+    ? await db.staffUser.findMany({
+        where: { role: "STAFF", isActive: true, jobRole: { not: null } },
+        select: { id: true, name: true, jobRole: true },
+        orderBy: { name: "asc" },
+      })
+    : [];
   // basePath is the leads list ("/admin/leads"); quotations live beside it at
   // the panel root ("/admin/custom-packages"), not under it - linking them off
   // basePath produced /admin/leads/custom-packages/..., a 404.
@@ -71,7 +82,7 @@ export default async function LeadDetailView({ basePath, leadId }: { basePath: s
 
   const duplicates = lead.phone
     ? await db.lead.findMany({
-        where: { phone: lead.phone, id: { not: lead.id } },
+        where: { ...leadScope(session), phone: lead.phone, id: { not: lead.id } },
         orderBy: { createdAt: "desc" },
         select: { id: true, source: true, createdAt: true, status: true },
         take: 10,
@@ -107,7 +118,9 @@ export default async function LeadDetailView({ basePath, leadId }: { basePath: s
             <LeadAssignSelect
               leadId={lead.id}
               assignedRole={lead.assignedRole}
+              assignedToId={lead.assignedToId}
               assignedToName={lead.assignedTo?.name ?? null}
+              staff={assignableStaff.map((s) => ({ id: s.id, name: s.name, jobRole: s.jobRole! }))}
             />
           ) : (
             <span className="rounded-full bg-ink-50 px-4 py-2 text-sm font-semibold text-ink-500">

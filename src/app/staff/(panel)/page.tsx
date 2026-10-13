@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { requireSession } from "@/lib/dal";
 import { db } from "@/lib/db";
-import { getLeadStats } from "@/lib/leads";
+import { getLeadStats, leadScope } from "@/lib/leads";
 import { hasFeature, jobRoleLabels } from "@/lib/permissions";
 import { getRolePermissions } from "@/lib/rolePermissions";
 import StatCard from "@/components/admin/StatCard";
@@ -24,7 +24,8 @@ export default async function StaffDashboardPage() {
     );
   }
 
-  const stats = await getLeadStats();
+  // Staff count only the leads assigned to them - the same ones their inbox shows.
+  const stats = await getLeadStats(leadScope(session));
 
   return (
     <div>

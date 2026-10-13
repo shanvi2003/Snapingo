@@ -1,14 +1,16 @@
 import { requireStaffFeature } from "@/lib/dal";
 import { db } from "@/lib/db";
+import { leadScope } from "@/lib/leads";
 import { getDestinationNames } from "@/lib/content/destinations";
 import BookingForm from "@/components/admin/bookings/BookingForm";
 import { createBookingAction } from "@/lib/actions/bookings";
 
 export default async function StaffNewBookingPage({ searchParams }: { searchParams: Promise<{ leadId?: string }> }) {
-  await requireStaffFeature("bookings");
+  const session = await requireStaffFeature("bookings");
   const { leadId } = await searchParams;
   const [lead, destinationOptions] = await Promise.all([
-    leadId ? db.lead.findUnique({ where: { id: leadId } }) : null,
+    // Pre-fill only from a lead assigned to this staff member.
+    leadId ? db.lead.findFirst({ where: { id: leadId, ...leadScope(session) } }) : null,
     getDestinationNames(),
   ]);
 

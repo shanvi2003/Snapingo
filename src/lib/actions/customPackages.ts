@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireStaffFeature } from "@/lib/dal";
+import { canAccessLead } from "@/lib/leads";
 import type { SessionPayload } from "@/lib/session";
 import { customPackageSchema } from "@/lib/validation/customPackage";
 import { withNewTripId } from "@/lib/tripIdServer";
@@ -55,6 +56,9 @@ export async function saveCustomPackageAction(
   // save with the quotation half-written.
   if (leadId && !(await db.lead.findUnique({ where: { id: leadId }, select: { id: true } }))) {
     return { error: "The lead this quotation belongs to no longer exists." };
+  }
+  if (leadId && !(await canAccessLead(session, leadId))) {
+    return { error: "This lead isn't assigned to you." };
   }
 
   // Master-list values are re-checked server-side: a Server Action is a plain

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Activity, PenLine, ShieldCheck, UserPlus2 } from "lucide-react";
 import { db } from "@/lib/db";
+import { getSession } from "@/lib/dal";
+import { leadScope } from "@/lib/leads";
 import { LeadActivityType } from "@/generated/prisma/enums";
 import AutoSearchInput from "@/components/admin/AutoSearchInput";
 import { AutoFilterSelect } from "@/components/admin/AutoFilter";
@@ -26,11 +28,13 @@ export default async function LeadActivitiesPage({
   searchParams: Promise<{ q?: string; type?: string }>;
   basePath?: string;
 }) {
-  const { q, type } = await searchParams;
+  const [{ q, type }, session] = await Promise.all([searchParams, getSession()]);
   const query = q?.trim();
 
   const activities = await db.leadActivity.findMany({
     where: {
+      // Staff only see activity on leads assigned to them.
+      ...(session?.role === "ADMIN" ? {} : { lead: leadScope(session) }),
       ...(type ? { type: type as LeadActivityType } : {}),
       ...(query
         ? {

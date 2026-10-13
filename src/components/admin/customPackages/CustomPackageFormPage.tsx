@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import { getSession } from "@/lib/dal";
+import { canAccessLead } from "@/lib/leads";
 import { getActiveMasterList } from "@/lib/masterData";
 import { getGstPercent } from "@/lib/settings";
 import { getSuggestionSets } from "@/lib/suggestions";
@@ -89,7 +91,8 @@ export default async function CustomPackageFormPage({
     sourceLeadId ? loadLead(sourceLeadId) : null,
   ]);
 
-  if (sourceLeadId && !lead) notFound();
+  // Staff can only raise a quotation from a lead assigned to them.
+  if (sourceLeadId && (!lead || !(await canAccessLead(await getSession(), sourceLeadId)))) notFound();
 
   const customPackageId = editLeadId ? lead?.customPackages[0]?.id : customPackageIdProp;
   const isNew = editLeadId ? !customPackageId : isNewProp;
