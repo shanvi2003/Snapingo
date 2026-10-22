@@ -28,7 +28,8 @@ export default function AreaChart({
   unit: ChartUnit;
   /** Name of the measured value in the tooltip, e.g. "Revenue". */
   metric: string;
-  emptyText: string;
+  /** Shown over an all-zero chart; omit to show the flat line alone. */
+  emptyText?: string;
   /** Show every Nth axis label; the last point is always labelled. */
   labelEvery?: number;
   height?: string;
@@ -56,7 +57,7 @@ export default function AreaChart({
 
         <div className="relative flex-1" onMouseLeave={() => setActive(null)}>
           <Gridlines ticks={ticks} top={top} />
-          {empty && <EmptyOverlay text={emptyText} />}
+          {empty && emptyText && <EmptyOverlay text={emptyText} />}
 
           <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 h-full w-full overflow-visible">
               <defs>
@@ -76,10 +77,6 @@ export default function AreaChart({
                 vectorEffect="non-scaling-stroke"
               />
             </svg>
-
-          {active !== null && (
-            <div className="absolute inset-y-0 border-l border-dashed border-ink-300" style={{ left: `${pts[active].x}%` }} />
-          )}
 
           {/* Markers are HTML, not SVG, so they stay round on the stretched plot. */}
           {pts.map((p, i) => (

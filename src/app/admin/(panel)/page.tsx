@@ -1,5 +1,4 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
 import { CalendarCheck, Inbox, Plus, UserPlus, Wallet } from "lucide-react";
 import { db } from "@/lib/db";
 import { getLeadStats } from "@/lib/leads";
@@ -8,13 +7,9 @@ import BarChart from "@/components/admin/charts/BarChart";
 import PipelineDonut from "@/components/admin/charts/PipelineDonut";
 import type { ChartDatum } from "@/components/admin/charts/shared";
 import { demoDashboard } from "@/lib/dashboardDemo";
+import { Empty, IST_OFFSET_MS, Panel, greeting, istDayKey, lastThirtyDays, leadPipeline } from "@/components/admin/dashboard/shared";
 
 const inr = (n: number) => `₹${n.toLocaleString("en-IN")}`;
-
-// Charts bucket by the IST calendar day/month, not the server's (UTC on
-// Vercel), so a lead or payment late at night lands on the date staff expect.
-const istDayKey = (d: Date) => d.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
-const IST_OFFSET_MS = 330 * 60 * 1000;
 
 function lastTwelveMonths(now: Date) {
   const [y, m] = istDayKey(now).split("-").map(Number);
@@ -31,74 +26,6 @@ function lastTwelveMonths(now: Date) {
   // Midnight IST on the 1st of the oldest month.
   const since = new Date(Date.UTC(y, m - 12, 1) - IST_OFFSET_MS);
   return { months, since };
-}
-
-function lastThirtyDays(now: Date) {
-  const [y, m, day] = istDayKey(now).split("-").map(Number);
-  const days: ChartDatum[] = [];
-  for (let i = 29; i >= 0; i--) {
-    const d = new Date(Date.UTC(y, m - 1, day - i));
-    days.push({
-      key: d.toISOString().slice(0, 10),
-      label: d.toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "UTC" }),
-      title:
-        i === 0 ? "Today" : d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }),
-      value: 0,
-    });
-  }
-  const since = new Date(Date.UTC(y, m - 1, day - 29) - IST_OFFSET_MS);
-  return { days, since };
-}
-
-// Closed and cancelled are both "dropped out", so they share one grey slice
-// rather than two near-identical ones. Hues are in a fixed order and were
-// checked for colour-blind separation; the legend always prints the counts.
-const PIPELINE_COLORS = {
-  NEW: "#ec1278",
-  ASSIGNED: "#6366f1",
-  CONTACTED: "#f59e0b",
-  QUOTED: "#0ea5e9",
-  CONVERTED: "#059669",
-  CLOSED: "#c9b0c1",
-};
-
-function greeting(now: Date) {
-  const h = Number(now.toLocaleString("en-IN", { hour: "numeric", hour12: false, timeZone: "Asia/Kolkata" }));
-  if (h < 12) return "Good morning";
-  if (h < 17) return "Good afternoon";
-  return "Good evening";
-}
-
-function Panel({
-  title,
-  href,
-  linkLabel,
-  className = "",
-  children,
-}: {
-  title: string;
-  href?: string;
-  linkLabel?: string;
-  className?: string;
-  children: ReactNode;
-}) {
-  return (
-    <section className={`flex flex-col rounded-lg border border-ink-200/70 bg-white pb-2 ${className}`}>
-      <div className="flex items-center justify-between px-5 pb-1 pt-5">
-        <h2 className="text-sm font-semibold text-ink-900">{title}</h2>
-        {href && (
-          <Link href={href} className="text-xs font-medium text-ink-500 hover:text-brand-600">
-            {linkLabel ?? "See all"}
-          </Link>
-        )}
-      </div>
-      {children}
-    </section>
-  );
-}
-
-function Empty({ children }: { children: ReactNode }) {
-  return <p className="px-5 pb-4 pt-2 text-sm text-ink-400">{children}</p>;
 }
 
 export default async function AdminDashboardPage({ searchParams }: { searchParams: Promise<{ demo?: string }> }) {
@@ -151,14 +78,7 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
   const leads30 = days.reduce((sum, d) => sum + d.value, 0);
   const busiest = days.reduce((best, d) => (d.value > best.value ? d : best), days[0]);
 
-  const pipeline = [
-    { status: "NEW", label: "New", count: stats.new },
-    { status: "ASSIGNED", label: "Assigned", count: stats.assigned },
-    { status: "CONTACTED", label: "Contacted", count: stats.contacted },
-    { status: "QUOTED", label: "Quoted", count: stats.quoted },
-    { status: "CONVERTED", label: "Converted", count: stats.converted },
-    { status: "CLOSED", label: "Closed / lost", count: stats.closed + stats.cancelled },
-  ].map((s) => ({ ...s, color: PIPELINE_COLORS[s.status as keyof typeof PIPELINE_COLORS] }));
+  const pipeline = leadPipeline(stats);
   const conversion = stats.total ? Math.round((stats.converted / stats.total) * 1000) / 10 : 0;
 
   return (
@@ -258,7 +178,7 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
                 )}
               </p>
             </div>
-            <AreaChart data={months} unit="inr" metric="Revenue" emptyText="No payments in the last 12 months yet." />
+            <AreaChart data={months} unit="inr" metric="Revenue" />
           </div>
         </Panel>
 
