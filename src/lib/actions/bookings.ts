@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { requireStaffFeature } from "@/lib/dal";
+import { requireSession, requireStaffFeature } from "@/lib/dal";
 import { createBookingSchema, addPaymentSchema } from "@/lib/validation/booking";
 import type { SessionPayload } from "@/lib/session";
 import { withNewTripId } from "@/lib/tripIdServer";
@@ -63,13 +63,13 @@ export async function createBookingAction(_prevState: FormState, formData: FormD
   const customPackageId = formData.get("customPackageId");
   const existingQuotation =
     typeof customPackageId === "string" && customPackageId
-      ? await db.customPackage.findUnique({
-          where: { id: customPackageId },
+      ? await db.customPackage.findFirst({
+          where: { id: customPackageId, deletedAt: null },
           select: { tripId: true, leadId: true },
         })
       : parsed.data.leadId
         ? await db.customPackage.findFirst({
-            where: { leadId: parsed.data.leadId },
+            where: { leadId: parsed.data.leadId, deletedAt: null },
             orderBy: { createdAt: "desc" },
             select: { tripId: true, leadId: true },
           })
@@ -127,15 +127,51 @@ export async function updateBookingAction(bookingId: string, _prevState: FormSta
   // parsed.data.leadId is undefined here (the edit form has no leadId field),
   // and Prisma treats an undefined scalar in `update` as "leave unchanged" -
   // so this can't accidentally clear the lead link established at creation.
-  await db.booking.update({ where: { id: bookingId }, data: parsed.data });
+  const { count } = await db.booking.updateMany({ where: { id: bookingId, deletedAt: null }, data: parsed.data });
+  if (count === 0) return { error: "That booking no longer exists." };
 
   revalidateBookingPaths(bookingId);
   redirect(`${basePathFor(session)}/bookings/${bookingId}`);
 }
 
 export async function deleteBookingAction(bookingId: string): Promise<void> {
-  await requireStaffFeature("bookings");
-  await db.booking.delete({ where: { id: bookingId } });
+  const session = await requireStaffFeature("bookings");
+  const booking = await db.booking.findFirst({ where: { id: bookingId, deletedAt: null }, select: { tripId: true } });
+  if (!booking) return;
+  // Archived, not deleted: to everyone in the panel it is gone, but the
+  // booking and its payments, invoice and vouchers stay for an admin to
+  // restore. The Trip ID is set aside so its quotation can be booked again.
+  await db.booking.update({
+    where: { id: bookingId },
+    data: { deletedAt: new Date(), deletedById: session.userId, deletedTripId: booking.tripId, tripId: null },
+  });
+  revalidateBookingPaths(bookingId);
+}
+
+/**
+ * Brings an archived ("deleted") booking back. Admin only. Its Trip ID comes
+ * back with it unless a newer booking of the same quotation has taken it
+ * meanwhile - then it returns without one (lists fall back to the booking id).
+ */
+export async function restoreBookingAction(bookingId: string): Promise<void> {
+  await requireSession(["ADMIN"]);
+  const booking = await db.booking.findFirst({
+    where: { id: bookingId, deletedAt: { not: null } },
+    select: { deletedTripId: true },
+  });
+  if (!booking) return;
+  const tripIdTaken = booking.deletedTripId
+    ? Boolean(await db.booking.findUnique({ where: { tripId: booking.deletedTripId }, select: { id: true } }))
+    : true;
+  await db.booking.update({
+    where: { id: bookingId },
+    data: {
+      deletedAt: null,
+      deletedById: null,
+      deletedTripId: null,
+      tripId: tripIdTaken ? null : booking.deletedTripId,
+    },
+  });
   revalidateBookingPaths(bookingId);
 }
 
@@ -150,6 +186,8 @@ export async function addPaymentAction(bookingId: string, formData: FormData): P
     notes: formData.get("notes") || undefined,
   });
   if (!parsed.success) return;
+  // An archived ("deleted") booking takes no new payments.
+  if (!(await db.booking.findFirst({ where: { id: bookingId, deletedAt: null }, select: { id: true } }))) return;
 
   await db.payment.create({ data: { ...parsed.data, recordedById: session.userId } });
   revalidateBookingPaths(bookingId);

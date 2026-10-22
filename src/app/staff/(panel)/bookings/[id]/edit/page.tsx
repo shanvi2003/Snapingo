@@ -9,7 +9,7 @@ export default async function StaffEditBookingPage({ params }: { params: Promise
   await requireStaffFeature("bookings");
   const { id } = await params;
   const [booking, destinationOptions] = await Promise.all([
-    db.booking.findUnique({ where: { id } }),
+    db.booking.findFirst({ where: { id, deletedAt: null } }),
     getDestinationNames(),
   ]);
   if (!booking) notFound();

@@ -7,7 +7,7 @@ import { updateBookingAction } from "@/lib/actions/bookings";
 export default async function EditBookingPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const [booking, destinationOptions] = await Promise.all([
-    db.booking.findUnique({ where: { id } }),
+    db.booking.findFirst({ where: { id, deletedAt: null } }),
     getDestinationNames(),
   ]);
   if (!booking) notFound();

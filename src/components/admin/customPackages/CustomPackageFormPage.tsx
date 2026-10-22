@@ -1,7 +1,8 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/dal";
 import { canAccessLead } from "@/lib/leads";
+import { canEditCustomPackage } from "@/lib/customPackageAccess";
 import { getActiveMasterList } from "@/lib/masterData";
 import { getGstPercent } from "@/lib/settings";
 import { getSuggestionSets } from "@/lib/suggestions";
@@ -16,8 +17,9 @@ function loadLead(id: string) {
   return db.lead.findUnique({
     where: { id },
     include: {
-      // The lead's most recent quotation is the one its Edit screen opens.
-      customPackages: { orderBy: { createdAt: "desc" }, take: 1, select: { id: true } },
+      // The lead's most recent quotation the user may edit is the one its
+      // Edit screen opens.
+      customPackages: { where: { deletedAt: null }, orderBy: { createdAt: "desc" }, select: { id: true, createdById: true } },
     },
   });
 }
@@ -92,14 +94,23 @@ export default async function CustomPackageFormPage({
   ]);
 
   // Staff can only raise a quotation from a lead assigned to them.
-  if (sourceLeadId && (!lead || !(await canAccessLead(await getSession(), sourceLeadId)))) notFound();
+  const session = await getSession();
+  if (sourceLeadId && (!lead || !(await canAccessLead(session, sourceLeadId)))) notFound();
 
-  const customPackageId = editLeadId ? lead?.customPackages[0]?.id : customPackageIdProp;
+  // A lead's Edit screen opens the latest quotation this user may edit; one
+  // only a colleague may change is skipped, so they start their own instead.
+  const customPackageId = editLeadId
+    ? lead?.customPackages.find((q) => canEditCustomPackage(session, q.createdById))?.id
+    : customPackageIdProp;
   const isNew = editLeadId ? !customPackageId : isNewProp;
 
   const quotation = customPackageId ? await loadQuotation(customPackageId) : null;
 
   if (customPackageId && !quotation) notFound();
+  // Someone else's quotation is view-only: send them back to its detail page.
+  if (quotation && !canEditCustomPackage(session, quotation.createdById)) {
+    redirect(`${session?.role === "ADMIN" ? "/admin" : "/staff"}/custom-packages/${quotation.id}`);
+  }
 
   // A new quotation starts from the standard PDF sections (passed separately,
   // below); an existing one carries its own.

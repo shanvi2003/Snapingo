@@ -2,7 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, CalendarCheck, CalendarPlus, Download, Pencil } from "lucide-react";
 import { db } from "@/lib/db";
-import { canUseStaffFeature } from "@/lib/dal";
+import { canUseStaffFeature, getSession } from "@/lib/dal";
+import { canEditCustomPackage } from "@/lib/customPackageAccess";
+import RestoreButton from "@/components/admin/RestoreButton";
+import { restoreCustomPackageAction } from "@/lib/actions/customPackages";
 import { formatRupees } from "@/lib/gst";
 import { parsePriceLines, priceLineAmount } from "@/lib/priceLines";
 import { getMasterList } from "@/lib/masterData";
@@ -39,6 +42,7 @@ export default async function CustomPackageDetailView({
         days: { orderBy: { day: "asc" } },
         stays: { orderBy: { order: "asc" } },
         createdBy: { select: { name: true } },
+        deletedBy: { select: { name: true } },
         lead: { select: { id: true } },
       },
     }),
@@ -48,7 +52,11 @@ export default async function CustomPackageDetailView({
     canUseStaffFeature("bookings"),
   ]);
 
-  if (!quotation) notFound();
+  const session = await getSession();
+  // A "deleted" quotation is only archived: gone for staff, but the admin can
+  // still open it from the Deleted view to check it before restoring.
+  if (!quotation || (quotation.deletedAt && session?.role !== "ADMIN")) notFound();
+  const canEdit = canEditCustomPackage(session, quotation.createdById);
 
   // A booking made from this quotation shares its Trip ID, so once it exists
   // the Convert button becomes a link to it.
@@ -133,6 +141,19 @@ export default async function CustomPackageDetailView({
           </h1>
           <p className="mt-1 font-mono text-sm font-semibold text-brand-600">{quotation.tripId}</p>
         </div>
+        {quotation.deletedAt ? (
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="text-sm font-semibold text-red-600">
+              Deleted {fmtDate(quotation.deletedAt)}
+              {quotation.deletedBy ? ` by ${quotation.deletedBy.name}` : ""}
+            </p>
+            <RestoreButton
+              id={quotation.id}
+              action={restoreCustomPackageAction}
+              confirmText={`Restore quotation ${quotation.tripId} for ${quotation.customerName}? It will show in the lists again.`}
+            />
+          </div>
+        ) : (
         <div className="flex flex-wrap items-center gap-3">
           {/* A plain link, not a fetch: the browser downloads the streamed PDF
               straight to disk, which is what staff then attach in WhatsApp. */}
@@ -143,13 +164,16 @@ export default async function CustomPackageDetailView({
             <Download className="h-4 w-4" />
             Download Itinerary PDF
           </a>
-          <Link
-            href={`${basePath}/custom-packages/${quotation.id}/edit`}
-            className="flex items-center gap-1.5 rounded-full border border-ink-200 px-5 py-2.5 text-sm font-semibold text-ink-700 transition hover:border-brand-400 hover:text-brand-600"
-          >
-            <Pencil className="h-4 w-4" />
-            Edit
-          </Link>
+          {/* Someone else's quotation is view-and-download only. */}
+          {canEdit && (
+            <Link
+              href={`${basePath}/custom-packages/${quotation.id}/edit`}
+              className="flex items-center gap-1.5 rounded-full border border-ink-200 px-5 py-2.5 text-sm font-semibold text-ink-700 transition hover:border-brand-400 hover:text-brand-600"
+            >
+              <Pencil className="h-4 w-4" />
+              Edit
+            </Link>
+          )}
           {canBook &&
             (booking ? (
               <Link
@@ -169,6 +193,7 @@ export default async function CustomPackageDetailView({
               </Link>
             ))}
         </div>
+        )}
       </div>
 
       <div className="mt-6 divide-y divide-ink-100 rounded-2xl border border-ink-100 bg-white shadow-sm">

@@ -45,10 +45,10 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
           db.destination.count(),
           db.blogPost.count(),
           db.staffUser.count({ where: { isActive: true, role: "STAFF" } }),
-          db.booking.count({ where: { status: { not: "CANCELLED" } } }),
-          db.booking.count({ where: { travelStartDate: { gte: now, lte: in14Days } } }),
-          db.payment.aggregate({ _sum: { amount: true }, _count: true }),
-          db.payment.findMany({ where: { paidAt: { gte: since } }, select: { amount: true, paidAt: true } }),
+          db.booking.count({ where: { status: { not: "CANCELLED" }, deletedAt: null } }),
+          db.booking.count({ where: { travelStartDate: { gte: now, lte: in14Days }, deletedAt: null } }),
+          db.payment.aggregate({ where: { booking: { deletedAt: null } }, _sum: { amount: true }, _count: true }),
+          db.payment.findMany({ where: { paidAt: { gte: since }, booking: { deletedAt: null } }, select: { amount: true, paidAt: true } }),
           db.lead.findMany({ where: { createdAt: { gte: leadsSince } }, select: { createdAt: true } }),
         ]);
 

@@ -75,8 +75,8 @@ export async function loadCustomItinerary(
 ): Promise<{ data: CustomItineraryData; context: CustomItineraryContext } | null> {
   const [quotation, inclusionOptions, roomOptions, hotelOptions, settings] =
     await Promise.all([
-      db.customPackage.findUnique({
-        where: { id },
+      db.customPackage.findFirst({
+        where: { id, deletedAt: null },
         include: {
           days: { orderBy: { day: "asc" } },
           stays: { orderBy: { order: "asc" } },

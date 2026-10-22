@@ -23,7 +23,7 @@ const withRows = { days: { orderBy: { day: "asc" } }, stays: { orderBy: { order:
 type QuotationWithRows = Prisma.CustomPackageGetPayload<{ include: typeof withRows }>;
 
 export function loadQuotation(id: string): Promise<QuotationWithRows | null> {
-  return db.customPackage.findUnique({ where: { id }, include: withRows });
+  return db.customPackage.findFirst({ where: { id, deletedAt: null }, include: withRows });
 }
 
 /** A saved quotation as the quotation form's starting values. */

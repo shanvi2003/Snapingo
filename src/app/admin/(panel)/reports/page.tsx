@@ -74,8 +74,8 @@ export default async function AdminReportsPage() {
       take: 10,
     }),
     db.lead.findMany({ where: { createdAt: { gte: since } }, select: { createdAt: true } }),
-    db.booking.count({ where: { status: { not: "CANCELLED" } } }),
-    db.payment.aggregate({ _sum: { amount: true }, _count: true }),
+    db.booking.count({ where: { status: { not: "CANCELLED" }, deletedAt: null } }),
+    db.payment.aggregate({ where: { booking: { deletedAt: null } }, _sum: { amount: true }, _count: true }),
   ]);
 
   const dayByKey = new Map(days.map((d) => [d.key, d]));

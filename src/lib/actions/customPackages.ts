@@ -2,8 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { requireStaffFeature } from "@/lib/dal";
+import { requireSession, requireStaffFeature } from "@/lib/dal";
 import { canAccessLead } from "@/lib/leads";
+import { canEditCustomPackageById } from "@/lib/customPackageAccess";
 import type { SessionPayload } from "@/lib/session";
 import { customPackageSchema } from "@/lib/validation/customPackage";
 import { withNewTripId } from "@/lib/tripIdServer";
@@ -63,6 +64,9 @@ export async function saveCustomPackageAction(
   }
   if (leadId && !(await canAccessLead(session, leadId))) {
     return { error: "This lead isn't assigned to you." };
+  }
+  if (!isNew && !(await canEditCustomPackageById(session, id ?? ""))) {
+    return { error: "You can only edit quotations you created." };
   }
 
   // Master-list values are re-checked server-side: a Server Action is a plain
@@ -198,6 +202,20 @@ export async function saveCustomPackageAction(
 
 export async function deleteCustomPackageAction(id: string): Promise<void> {
   const session = await requireStaffFeature("customPackages");
-  await db.customPackage.delete({ where: { id } });
+  // Only the creator (or an admin) may delete a quotation.
+  if (!(await canEditCustomPackageById(session, id))) return;
+  // Archived, not deleted: to everyone in the panel it is gone, but an admin
+  // can bring it back from Customized Packages → Deleted.
+  await db.customPackage.update({
+    where: { id },
+    data: { deletedAt: new Date(), deletedById: session.userId },
+  });
   revalidatePath(`${basePathFor(session)}/custom-packages`);
+}
+
+/** Brings an archived ("deleted") quotation back. Admin only. */
+export async function restoreCustomPackageAction(id: string): Promise<void> {
+  await requireSession(["ADMIN"]);
+  await db.customPackage.update({ where: { id }, data: { deletedAt: null, deletedById: null } });
+  for (const panel of ["/admin", "/staff"]) revalidatePath(`${panel}/custom-packages`);
 }

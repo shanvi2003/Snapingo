@@ -58,7 +58,7 @@ export default async function TripsStagePage({
           };
 
   const rows = await db.booking.findMany({
-    where: { AND: [stageWhere, search] },
+    where: { AND: [stageWhere, search, { deletedAt: null }] },
     orderBy: stage === "COMPLETE" ? { travelEndDate: "desc" } : { travelStartDate: "asc" },
     take: 200,
     include: { payments: true },

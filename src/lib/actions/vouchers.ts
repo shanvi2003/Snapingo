@@ -31,7 +31,7 @@ export async function uploadVoucherAction(
     return { error: "File uploads aren't set up yet. Ask an admin to connect blob storage." };
   }
 
-  const booking = await db.booking.findUnique({ where: { id: bookingId }, select: { id: true } });
+  const booking = await db.booking.findFirst({ where: { id: bookingId, deletedAt: null }, select: { id: true } });
   if (!booking) return { error: "That booking no longer exists." };
 
   const file = formData.get("file");
@@ -63,9 +63,10 @@ export async function deleteVoucherAction(voucherId: string): Promise<void> {
 
   const voucher = await db.bookingVoucher.findUnique({
     where: { id: voucherId },
-    select: { bookingId: true, blobUrl: true },
+    select: { bookingId: true, blobUrl: true, booking: { select: { deletedAt: true } } },
   });
-  if (!voucher) return;
+  // Files on an archived ("deleted") booking are kept for a restore.
+  if (!voucher || voucher.booking.deletedAt) return;
 
   // Row first, then the file. If the blob delete fails the record is already
   // gone, which is the right way round - an orphaned file costs storage, an

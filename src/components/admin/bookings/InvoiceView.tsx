@@ -14,8 +14,8 @@ const headCell = "border-b-2 border-ink-900 pb-2 text-left font-semibold";
 const sectionHeading = "font-heading text-lg font-bold";
 
 export default async function InvoiceView({ bookingId }: { bookingId: string }) {
-  const booking = await db.booking.findUnique({
-    where: { id: bookingId },
+  const booking = await db.booking.findFirst({
+    where: { id: bookingId, deletedAt: null },
     include: {
       payments: { orderBy: { paidAt: "asc" } },
       invoice: { include: { installments: { orderBy: { order: "asc" } } } },

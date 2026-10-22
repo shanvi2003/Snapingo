@@ -45,6 +45,7 @@ export default async function LeadDetailView({ basePath, leadId }: { basePath: s
         // Quotations raised from this lead: what the "download the itinerary
         // PDF and send it on WhatsApp" step actually links to.
         customPackages: {
+          where: { deletedAt: null },
           orderBy: { createdAt: "desc" },
           select: { id: true, tripId: true, destinationName: true, totalAmount: true, createdAt: true },
         },

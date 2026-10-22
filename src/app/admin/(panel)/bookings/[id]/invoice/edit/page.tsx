@@ -15,8 +15,8 @@ export default async function EditInvoicePage({ params }: { params: Promise<{ id
   await requireStaffFeature("bookings");
   const { id } = await params;
 
-  const booking = await db.booking.findUnique({
-    where: { id },
+  const booking = await db.booking.findFirst({
+    where: { id, deletedAt: null },
     include: { invoice: { include: { installments: { orderBy: { order: "asc" } } } } },
   });
   if (!booking) notFound();

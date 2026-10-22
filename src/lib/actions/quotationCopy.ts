@@ -28,6 +28,7 @@ export async function searchQuotationsAction(query: string, excludeId?: string):
   const contains = { contains: q, mode: "insensitive" as const };
   return db.customPackage.findMany({
     where: {
+      deletedAt: null,
       ...(excludeId ? { id: { not: excludeId } } : {}),
       OR: [{ tripId: contains }, { customerName: contains }, { customerPhone: contains }, { customerEmail: contains }],
     },

@@ -22,7 +22,7 @@ export default async function NewBookingView({
   const [lead, chosenQuotation, destinationOptions] = await Promise.all([
     // Pre-fill only from a lead this user may see (staff: assigned to them).
     leadId ? db.lead.findFirst({ where: { id: leadId, ...leadScope(session) } }) : null,
-    customPackageId ? db.customPackage.findUnique({ where: { id: customPackageId } }) : null,
+    customPackageId ? db.customPackage.findFirst({ where: { id: customPackageId, deletedAt: null } }) : null,
     getDestinationNames(),
   ]);
   // A lead converted after it was quoted books that quotation - the same one
@@ -30,7 +30,7 @@ export default async function NewBookingView({
   const quotation =
     chosenQuotation ??
     (lead
-      ? await db.customPackage.findFirst({ where: { leadId: lead.id }, orderBy: { createdAt: "desc" } })
+      ? await db.customPackage.findFirst({ where: { leadId: lead.id, deletedAt: null }, orderBy: { createdAt: "desc" } })
       : null);
 
   let defaults: BookingDefaults | undefined;

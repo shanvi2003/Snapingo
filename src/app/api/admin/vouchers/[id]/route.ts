@@ -14,11 +14,12 @@ export const dynamic = "force-dynamic";
  * real for customer documents rather than just unlikely.
  */
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
-  await requireStaffFeature("bookings");
+  const session = await requireStaffFeature("bookings");
 
   const { id } = await params;
-  const voucher = await db.bookingVoucher.findUnique({ where: { id } });
-  if (!voucher) return NextResponse.json({ error: "Voucher not found" }, { status: 404 });
+  const voucher = await db.bookingVoucher.findUnique({ where: { id }, include: { booking: { select: { deletedAt: true } } } });
+  // A voucher on an archived ("deleted") booking is the admin's alone to open.
+  if (!voucher || (voucher.booking.deletedAt && session.role !== "ADMIN")) return NextResponse.json({ error: "Voucher not found" }, { status: 404 });
 
   const result = await readPrivateDocument(voucher.blobUrl);
   if (!result || result.statusCode !== 200 || !result.stream) {

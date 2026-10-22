@@ -16,12 +16,17 @@ async function issuedThisYear(prefix: string, year: number): Promise<string[]> {
   const startsWith = `${prefix}-${year}-`;
   const [quotations, bookings] = await Promise.all([
     db.customPackage.findMany({ where: { tripId: { startsWith } }, select: { tripId: true } }),
-    db.booking.findMany({ where: { tripId: { startsWith } }, select: { tripId: true } }),
+    // Archived bookings park their Trip ID in deletedTripId; it still counts
+    // as issued, so no new trip is ever drawn under an archived number.
+    db.booking.findMany({
+      where: { OR: [{ tripId: { startsWith } }, { deletedTripId: { startsWith } }] },
+      select: { tripId: true, deletedTripId: true },
+    }),
   ]);
 
   return [
     ...quotations.map((q) => q.tripId),
-    ...bookings.map((b) => b.tripId).filter((id): id is string => Boolean(id)),
+    ...bookings.flatMap((b) => [b.tripId, b.deletedTripId]).filter((id): id is string => Boolean(id)),
   ];
 }
 

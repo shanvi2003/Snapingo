@@ -3,7 +3,9 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Pencil, Receipt } from "lucide-react";
 import { db } from "@/lib/db";
 import DeleteBookingButton from "@/components/admin/bookings/DeleteBookingButton";
-import { addPaymentAction } from "@/lib/actions/bookings";
+import { addPaymentAction, restoreBookingAction } from "@/lib/actions/bookings";
+import { getSession } from "@/lib/dal";
+import RestoreButton from "@/components/admin/RestoreButton";
 import { formatBalance } from "@/lib/money";
 import { isPrivateBlobConfigured } from "@/lib/blob";
 import VoucherPanel from "@/components/admin/bookings/VoucherPanel";
@@ -14,15 +16,22 @@ const PAYMENT_MODES = ["UPI", "Cash", "Bank Transfer", "Card", "Cheque"];
 const fmtDate = (d: Date) => d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 
 export default async function BookingDetailView({ bookingId, basePath = "/admin" }: { bookingId: string; basePath?: string }) {
-  const booking = await db.booking.findUnique({
-    where: { id: bookingId },
-    include: {
-      payments: { orderBy: { paidAt: "desc" }, include: { recordedBy: { select: { name: true } } } },
-      createdBy: { select: { name: true } },
-      vouchers: { orderBy: { createdAt: "desc" }, include: { uploadedBy: { select: { name: true } } } },
-    },
-  });
-  if (!booking) notFound();
+  const [booking, session] = await Promise.all([
+    db.booking.findUnique({
+      where: { id: bookingId },
+      include: {
+        payments: { orderBy: { paidAt: "desc" }, include: { recordedBy: { select: { name: true } } } },
+        createdBy: { select: { name: true } },
+        deletedBy: { select: { name: true } },
+        vouchers: { orderBy: { createdAt: "desc" }, include: { uploadedBy: { select: { name: true } } } },
+      },
+    }),
+    getSession(),
+  ]);
+  // A "deleted" booking is only archived: gone for staff, but the admin can
+  // still open it from the Deleted view to check it before restoring.
+  if (!booking || (booking.deletedAt && session?.role !== "ADMIN")) notFound();
+  const archived = Boolean(booking.deletedAt);
 
   const paid = booking.payments.reduce((sum, p) => sum + p.amount, 0);
   const grandTotal = booking.totalAmount + booking.taxAmount;
@@ -43,6 +52,20 @@ export default async function BookingDetailView({ bookingId, basePath = "/admin"
             {booking.phone} · Booked by {booking.createdBy.name} on {fmtDate(booking.createdAt)}
           </p>
         </div>
+        {booking.deletedAt ? (
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="text-sm font-semibold text-red-600">
+              Deleted {fmtDate(booking.deletedAt)}
+              {booking.deletedBy ? ` by ${booking.deletedBy.name}` : ""}
+              {booking.deletedTripId ? ` · Trip ${booking.deletedTripId}` : ""}
+            </p>
+            <RestoreButton
+              id={booking.id}
+              action={restoreBookingAction}
+              confirmText={`Restore the booking for ${booking.travelerName}? It will show in the lists again, with its payments.`}
+            />
+          </div>
+        ) : (
         <div className="flex flex-wrap items-center gap-3">
           <Link
             href={`${basePath}/bookings/${booking.id}/invoice`}
@@ -61,6 +84,7 @@ export default async function BookingDetailView({ bookingId, basePath = "/admin"
           </Link>
           <DeleteBookingButton bookingId={booking.id} basePath={basePath} />
         </div>
+        )}
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1.4fr_1fr]">
@@ -138,6 +162,8 @@ export default async function BookingDetailView({ bookingId, basePath = "/admin"
             {booking.payments.length === 0 && <p className="text-sm text-ink-500">No payments recorded yet.</p>}
           </div>
 
+          {/* An archived booking is read-only until it's restored. */}
+          {!archived && (
           <form action={addPaymentAction.bind(null, booking.id)} className="mt-4 space-y-2.5 border-t border-ink-100 pt-4">
             <div className="grid grid-cols-2 gap-2.5">
               <input
@@ -162,13 +188,14 @@ export default async function BookingDetailView({ bookingId, basePath = "/admin"
               Record Payment
             </button>
           </form>
+          )}
         </div>
       </div>
 
       <div className="mt-6">
         <VoucherPanel
           bookingId={booking.id}
-          uploadsEnabled={isPrivateBlobConfigured()}
+          uploadsEnabled={!archived && isPrivateBlobConfigured()}
           vouchers={booking.vouchers.map((v) => ({
             id: v.id,
             label: v.label,

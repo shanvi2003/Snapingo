@@ -7,9 +7,13 @@ export default async function AdminPaymentsPage({ searchParams }: { searchParams
   const query = q?.trim();
 
   const payments = await db.payment.findMany({
-    where: query
-      ? { OR: [{ booking: { travelerName: { contains: query, mode: "insensitive" } } }, { mode: { contains: query, mode: "insensitive" } }] }
-      : {},
+    // Payments on an archived ("deleted") booking leave the list with it.
+    where: {
+      booking: { deletedAt: null },
+      ...(query
+        ? { OR: [{ booking: { travelerName: { contains: query, mode: "insensitive" } } }, { mode: { contains: query, mode: "insensitive" } }] }
+        : {}),
+    },
     orderBy: { paidAt: "desc" },
     take: 200,
     include: { booking: { select: { id: true, travelerName: true } }, recordedBy: { select: { name: true } } },

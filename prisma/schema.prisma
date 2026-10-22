@@ -57,7 +57,9 @@ model StaffUser {
   assignedLeads       Lead[]           @relation("AssignedTo")
   leadNotes           LeadNote[]
   bookings            Booking[]        @relation("BookingCreatedBy")
+  deletedBookings     Booking[]        @relation("BookingDeletedBy")
   customPackages      CustomPackage[]  @relation("CustomPackageCreatedBy")
+  deletedPackages     CustomPackage[]  @relation("CustomPackageDeletedBy")
   invoices            Invoice[]        @relation("InvoiceCreatedBy")
   vouchers            BookingVoucher[] @relation("VoucherUploadedBy")
   emails              EmailLog[]       @relation("EmailSentBy")
@@ -316,8 +318,22 @@ model Booking {
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 
+  // Archive instead of delete, as on CustomPackage: "Delete" in the panel
+  // only sets these, the booking and its payments, invoice and vouchers stay,
+  // and an admin can restore it (Booking Management → Deleted). Every read
+  // outside that admin view filters `deletedAt: null`.
+  //
+  // The Trip ID moves to deletedTripId while archived, so the quotation it
+  // came from can be converted again under the same number; restoring puts
+  // it back if no newer booking has taken it.
+  deletedAt     DateTime?
+  deletedBy     StaffUser? @relation("BookingDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+  deletedById   String?
+  deletedTripId String?
+
   @@index([status])
   @@index([createdAt])
+  @@index([deletedAt])
   // Ongoing / Upcoming / Complete are derived from the travel dates on every
   // read rather than moved by a scheduled job, so this index is what keeps
   // those three lists cheap.
@@ -540,11 +556,20 @@ model CustomPackage {
   createdBy   StaffUser @relation("CustomPackageCreatedBy", fields: [createdById], references: [id])
   createdById String
 
+  // Archive instead of delete. "Delete" in the panel only sets these: to
+  // staff the quotation is gone everywhere, but the row survives so an admin
+  // can restore it (Customized Packages → Deleted). Every read outside that
+  // admin view filters `deletedAt: null`. The Trip ID stays taken either way.
+  deletedAt   DateTime?
+  deletedBy   StaffUser? @relation("CustomPackageDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+  deletedById String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([createdAt])
   @@index([createdById])
+  @@index([deletedAt])
 }
 
 model CustomPackageDay {

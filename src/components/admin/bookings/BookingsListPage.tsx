@@ -2,7 +2,10 @@ import Link from "next/link";
 import { Pencil, Plus } from "lucide-react";
 import { db } from "@/lib/db";
 import DeleteButton from "@/components/admin/cms/DeleteButton";
-import { deleteBookingAction } from "@/lib/actions/bookings";
+import RestoreButton from "@/components/admin/RestoreButton";
+import { deleteBookingAction, restoreBookingAction } from "@/lib/actions/bookings";
+import { getSession } from "@/lib/dal";
+import { AutoFilterSelect } from "@/components/admin/AutoFilter";
 import AutoSearchInput from "@/components/admin/AutoSearchInput";
 import { formatBalance } from "@/lib/money";
 import Pagination, { PAGE_SIZE } from "@/components/admin/Pagination";
@@ -15,15 +18,21 @@ export default async function BookingsListPage({
 }: {
   title: string;
   subtitle: string;
-  searchParams?: Promise<{ q?: string; page?: string }>;
+  searchParams?: Promise<{ q?: string; view?: string; page?: string }>;
   basePath?: string;
 }) {
-  const params = searchParams ? await searchParams : {};
+  const params: { q?: string; view?: string; page?: string } = searchParams ? await searchParams : {};
   const q = params.q?.trim();
   const page = Math.max(1, Number(params.page) || 1);
   const listPath = `${basePath}/bookings`;
 
+  // "Deleted" bookings are only archived (see deletedAt in the schema). The
+  // admin alone gets a view of them, to restore one; to staff they are gone.
+  const isAdmin = (await getSession())?.role === "ADMIN";
+  const showDeleted = isAdmin && params.view === "deleted";
+
   const where = {
+    deletedAt: showDeleted ? { not: null } : null,
     ...(q
       ? { OR: [{ travelerName: { contains: q, mode: "insensitive" as const } }, { phone: { contains: q, mode: "insensitive" as const } }] }
       : {}),
@@ -33,8 +42,8 @@ export default async function BookingsListPage({
     db.booking.count({ where }),
     db.booking.findMany({
       where,
-      orderBy: { createdAt: "desc" },
-      include: { payments: true },
+      orderBy: showDeleted ? { deletedAt: "desc" } : { createdAt: "desc" },
+      include: { payments: true, deletedBy: { select: { name: true } } },
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
     }),
@@ -58,6 +67,18 @@ export default async function BookingsListPage({
 
       <div className="mt-6 flex flex-wrap gap-3">
         <AutoSearchInput placeholder="Search traveler name or phone..." />
+        {isAdmin && (
+          <div className="w-56">
+            <AutoFilterSelect
+              paramName="view"
+              placeholder="Active bookings"
+              options={[
+                { value: "", label: "Active bookings" },
+                { value: "deleted", label: "Deleted" },
+              ]}
+            />
+          </div>
+        )}
       </div>
 
       <div className="mt-6 overflow-x-auto rounded-2xl border border-ink-100 bg-white shadow-sm">
@@ -88,6 +109,12 @@ export default async function BookingsListPage({
                       {b.travelerName}
                     </Link>
                     <p className="text-xs text-ink-500">{b.phone}</p>
+                    {b.deletedAt && (
+                      <p className="mt-1 text-xs font-semibold text-red-600">
+                        Deleted {b.deletedAt.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                        {b.deletedBy ? ` by ${b.deletedBy.name}` : ""}
+                      </p>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-ink-700">{b.packageTitle || b.destinationName || "N/A"}</td>
                   <td className="px-4 py-3 whitespace-nowrap text-ink-700">
@@ -100,12 +127,22 @@ export default async function BookingsListPage({
                     {balance < 0 && <span className="ml-1 text-[10px] font-bold uppercase tracking-wide">Overpaid</span>}
                   </td>
                   <td className="px-4 py-3">
+                    {showDeleted ? (
+                      <div className="relative z-10 flex items-center">
+                        <RestoreButton
+                          id={b.id}
+                          action={restoreBookingAction}
+                          confirmText={`Restore the booking for ${b.travelerName}? It will show in the lists again, with its payments.`}
+                        />
+                      </div>
+                    ) : (
                     <div className="relative z-10 flex items-center gap-1">
                       <Link href={`${basePath}/bookings/${b.id}/edit`} className="grid h-8 w-8 place-items-center rounded-full text-ink-400 hover:bg-brand-50 hover:text-brand-600" aria-label="Edit">
                         <Pencil className="h-4 w-4" />
                       </Link>
                       <DeleteButton id={b.id} action={deleteBookingAction} confirmText="Delete this booking and its payment history? This can't be undone." />
                     </div>
+                    )}
                   </td>
                 </tr>
               );
@@ -113,7 +150,7 @@ export default async function BookingsListPage({
             {bookings.length === 0 && (
               <tr>
                 <td colSpan={7} className="px-4 py-10 text-center text-sm text-ink-500">
-                  No bookings match.
+                  {showDeleted ? "No deleted bookings." : "No bookings match."}
                 </td>
               </tr>
             )}
@@ -121,7 +158,7 @@ export default async function BookingsListPage({
         </table>
       </div>
 
-      <Pagination basePath={listPath} params={{ q }} page={page} total={total} />
+      <Pagination basePath={listPath} params={{ q, view: showDeleted ? "deleted" : undefined }} page={page} total={total} />
     </div>
   );
 }

@@ -45,7 +45,7 @@ function searchFilter(q: string): Prisma.LeadWhereInput {
       { email: contains },
       { destinationName: contains },
       { packageTitle: contains },
-      { customPackages: { some: { tripId: contains } } },
+      { customPackages: { some: { tripId: contains, deletedAt: null } } },
       { bookings: { some: { tripId: contains } } },
     ],
   };

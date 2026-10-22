@@ -31,6 +31,7 @@ export default async function InvoicesListPage({
   const contains = { contains: q ?? "", mode: "insensitive" as const };
   const where: Prisma.BookingWhereInput = q
     ? {
+        deletedAt: null,
         OR: [
           { tripId: contains },
           { travelerName: contains },
@@ -39,7 +40,7 @@ export default async function InvoicesListPage({
           { invoice: { invoiceNumber: contains } },
         ],
       }
-    : {};
+    : { deletedAt: null };
 
   const [total, bookings] = await Promise.all([
     db.booking.count({ where }),

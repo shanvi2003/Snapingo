@@ -43,8 +43,8 @@ export async function saveInvoiceAction(
 
   const { bookingId, installments, ...billing } = parsed.data;
 
-  const booking = await db.booking.findUnique({
-    where: { id: bookingId },
+  const booking = await db.booking.findFirst({
+    where: { id: bookingId, deletedAt: null },
     select: { id: true, tripId: true, totalAmount: true, taxAmount: true, invoice: { select: { id: true } } },
   });
   if (!booking) return { error: "That booking no longer exists." };
