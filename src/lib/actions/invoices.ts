@@ -88,9 +88,3 @@ export async function saveInvoiceAction(
   revalidatePath(`${basePath}/bookings/${bookingId}`);
   redirect(`${basePath}/bookings/${bookingId}/invoice`);
 }
-
-export async function deleteInvoiceAction(bookingId: string): Promise<void> {
-  const session = await requireStaffFeature("bookings");
-  await db.invoice.deleteMany({ where: { bookingId } });
-  revalidatePath(`${basePathFor(session)}/invoices`);
-}

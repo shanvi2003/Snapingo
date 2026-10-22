@@ -13,7 +13,7 @@ export const ALLOWED_IMAGE_HOSTS = ["images.unsplash.com", "randomuser.me"] as c
 //
 // Only the `public.` variant is listed: a private blob is never rendered by
 // next/image, it is streamed through an authenticated admin route instead.
-export const BLOB_IMAGE_HOST_SUFFIX = ".public.blob.vercel-storage.com";
+const BLOB_IMAGE_HOST_SUFFIX = ".public.blob.vercel-storage.com";
 export const BLOB_IMAGE_HOST_PATTERN = `**${BLOB_IMAGE_HOST_SUFFIX}`;
 
 export function isAllowedImageSource(value: string): boolean {

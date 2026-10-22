@@ -6,7 +6,7 @@
 // Pure functions only - the database side lives in
 // src/lib/tripIdServer.ts, so these stay unit-testable.
 
-export const TRIP_ID_SEQUENCE_DIGITS = 4;
+const TRIP_ID_SEQUENCE_DIGITS = 4;
 
 export function formatTripId(prefix: string, year: number, sequence: number): string {
   return `${prefix}-${year}-${String(sequence).padStart(TRIP_ID_SEQUENCE_DIGITS, "0")}`;

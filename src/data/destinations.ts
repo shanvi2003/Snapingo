@@ -568,12 +568,3 @@ export const internationalDestinations: Destination[] = [
     idealDuration: "5–7 days",
   },
 ];
-
-export const allDestinations: Destination[] = [
-  ...domesticDestinations,
-  ...internationalDestinations,
-];
-
-export function getDestinationBySlug(slug: string): Destination | undefined {
-  return allDestinations.find((d) => d.slug === slug);
-}

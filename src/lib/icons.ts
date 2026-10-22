@@ -23,7 +23,7 @@ import {
 // with its own copy and a comment asking the next person to keep them in
 // sync), this is the single registry that both the admin picker and every
 // renderer read, so the two cannot drift apart.
-export const inclusionIcons: Record<string, LucideIcon> = {
+const inclusionIcons: Record<string, LucideIcon> = {
   BedDouble,
   Plane,
   Car,
@@ -38,8 +38,6 @@ export const inclusionIcons: Record<string, LucideIcon> = {
   Bus,
   Plus,
 };
-
-export const inclusionIconNames = Object.keys(inclusionIcons);
 
 /**
  * Never returns undefined. Inclusions are admin-editable now, so a row can

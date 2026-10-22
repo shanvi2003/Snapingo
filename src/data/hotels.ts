@@ -41,21 +41,6 @@ export const priceRangeLabels: Record<PriceRange, string> = {
   "20k-plus": "₹20,000+/person",
 };
 
-function matchesPriceRange(price: number, range: PriceRange): boolean {
-  switch (range) {
-    case "under-5k":
-      return price < 5000;
-    case "5k-10k":
-      return price >= 5000 && price < 10000;
-    case "10k-20k":
-      return price >= 10000 && price < 20000;
-    case "20k-plus":
-      return price >= 20000;
-    default:
-      return true;
-  }
-}
-
 export const hotels: Hotel[] = [
   // Goa
   { id: "goa-sea-breeze-inn", name: "Sea Breeze Inn, Calangute", destinationSlug: "goa", category: "3-star", pricePerNight: 2499, rating: 4.2 },
@@ -117,20 +102,3 @@ export const hotels: Hotel[] = [
   { id: "thailand-anantara-phuket", name: "Anantara, Phuket Layan", destinationSlug: "thailand", category: "5-star", pricePerNight: 13999, rating: 4.7 },
   { id: "thailand-amanpuri-phuket", name: "Amanpuri, Phuket", destinationSlug: "thailand", category: "luxury", pricePerNight: 42999, rating: 4.9 },
 ];
-
-export function getHotelsByFilter({
-  destinationSlug,
-  category,
-  priceRange,
-}: {
-  destinationSlug: string;
-  category: HotelCategory;
-  priceRange: PriceRange;
-}): Hotel[] {
-  return hotels.filter(
-    (h) =>
-      h.destinationSlug === destinationSlug &&
-      h.category === category &&
-      matchesPriceRange(h.pricePerNight, priceRange)
-  );
-}

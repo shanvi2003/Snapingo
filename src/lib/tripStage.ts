@@ -64,10 +64,3 @@ export function getPaymentSummary(booking: {
     isComplete: grandTotal > 0 && balance <= 0,
   };
 }
-
-export const tripStageLabels: Record<TripStage, string> = {
-  UPCOMING: "Upcoming",
-  ONGOING: "Ongoing",
-  COMPLETE: "Complete",
-  UNSCHEDULED: "Dates not set",
-};

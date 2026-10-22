@@ -191,7 +191,3 @@ export const blogPosts: BlogPost[] = [
     ],
   },
 ];
-
-export function getBlogPostById(id: string): BlogPost | undefined {
-  return blogPosts.find((p) => p.id === id);
-}

@@ -42,13 +42,3 @@ export async function getActiveMasterList(list: MasterListKey): Promise<MasterOp
   });
   return rows;
 }
-
-/**
- * value -> label for one list. Used anywhere a stored slug has to be shown to
- * a human. Falls back to the raw slug at the call site rather than throwing,
- * so a package referencing an option an admin has since deleted still renders.
- */
-export async function getMasterLabels(list: MasterListKey): Promise<Map<string, string>> {
-  const rows = await loadList(list);
-  return new Map(rows.map((r) => [r.value, r.label]));
-}

@@ -33,13 +33,13 @@ function compactInr(n: number) {
   return `₹${n}`;
 }
 
-export const formatValue = (unit: ChartUnit) => (unit === "inr" ? inr : (n: number) => n.toLocaleString("en-IN"));
-export const formatAxis = (unit: ChartUnit) => (unit === "inr" ? compactInr : (n: number) => n.toLocaleString("en-IN"));
+const formatValue = (unit: ChartUnit) => (unit === "inr" ? inr : (n: number) => n.toLocaleString("en-IN"));
+const formatAxis = (unit: ChartUnit) => (unit === "inr" ? compactInr : (n: number) => n.toLocaleString("en-IN"));
 
 // Rounds the top of the scale up to 1/2/2.5/5 x 10^n so gridlines land on
 // readable numbers instead of whatever the biggest value happened to be.
 // Counts never get a fractional half-way gridline.
-export function niceMax(max: number, unit: ChartUnit) {
+function niceMax(max: number, unit: ChartUnit) {
   if (max <= 0) return 0;
   if (unit === "count" && max <= 4) return max % 2 ? max + 1 : max;
   const pow = 10 ** Math.floor(Math.log10(max));

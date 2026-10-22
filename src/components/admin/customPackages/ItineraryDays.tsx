@@ -5,7 +5,7 @@ import { Plus, Trash2 } from "lucide-react";
 export type DayRow = { date: string; title: string; desc: string };
 
 /** "2026-10-05" + 2 -> "2026-10-07". UTC so no timezone can shift the day. */
-export function addDays(isoDate: string, count: number): string {
+function addDays(isoDate: string, count: number): string {
   const time = Date.parse(`${isoDate}T00:00:00Z`);
   if (Number.isNaN(time)) return "";
   return new Date(time + count * 86_400_000).toISOString().slice(0, 10);

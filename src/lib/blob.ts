@@ -34,15 +34,9 @@ const IMAGE_PREFIX = "images";
 const DOCUMENT_PREFIX = "documents";
 
 export const MAX_IMAGE_BYTES = 8 * 1024 * 1024; // 8 MB
-export const MAX_DOCUMENT_BYTES = 20 * 1024 * 1024; // 20 MB
+const MAX_DOCUMENT_BYTES = 20 * 1024 * 1024; // 20 MB
 
-export const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif", "image/gif"] as const;
-
-export const ACCEPTED_DOCUMENT_TYPES = [
-  "application/pdf",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-] as const;
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif", "image/gif"] as const;
 
 // Two stores, because Vercel sets public/private on the whole store, not per
 // file ("Private storage requires a private Blob store"):
@@ -250,7 +244,7 @@ export async function deleteBlob(url: string): Promise<void> {
 }
 
 /** True for URLs this app uploaded, as opposed to a pasted third-party link. */
-export function isBlobUrl(value: string): boolean {
+function isBlobUrl(value: string): boolean {
   try {
     return new URL(value).hostname.endsWith(".blob.vercel-storage.com");
   } catch {

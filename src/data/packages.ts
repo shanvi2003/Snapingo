@@ -4610,15 +4610,3 @@ export const allPackages: TourPackage[] = [
     hotDeal: true,
   },
 ];
-
-export const featuredPackages: TourPackage[] = allPackages.filter((p) => p.featured);
-
-export const hotDealPackages: TourPackage[] = allPackages.filter((p) => p.hotDeal);
-
-export function getPackageById(id: string): TourPackage | undefined {
-  return allPackages.find((p) => p.id === id);
-}
-
-export function getPackagesByDestinationSlug(slug: string): TourPackage[] {
-  return allPackages.filter((p) => p.destinationSlug === slug);
-}

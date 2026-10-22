@@ -14,7 +14,7 @@ export type ContentBlockView = {
 // back half of every itinerary PDF. The heading lives here rather than only
 // in the database so a block an admin hasn't saved yet still renders with a
 // sensible title instead of an empty <h2>.
-export const contentBlockDefinitions: { key: ContentBlockKey; title: string }[] = [
+const contentBlockDefinitions: { key: ContentBlockKey; title: string }[] = [
   { key: "PDF_ABOUT", title: "About Snapingo" },
   { key: "PDF_TERMS", title: "Terms & Conditions" },
   { key: "PDF_PAYMENT_POLICY", title: "Payment Policy" },
@@ -50,12 +50,6 @@ export async function resolveContentBlocks(stored: unknown): Promise<ContentBloc
   const own = new Map(readStoredContentBlocks(stored).map((b) => [b.key, b]));
   const standard = await getContentBlocks();
   return standard.map((block) => own.get(block.key) ?? block);
-}
-
-export async function getContentBlock(key: ContentBlockKey): Promise<ContentBlockView> {
-  const stored = await loadBlocks();
-  const fallbackTitle = contentBlockDefinitions.find((d) => d.key === key)?.title ?? "";
-  return stored.get(key) ?? { key, title: fallbackTitle, body: "" };
 }
 
 export type ContentLine = { type: "bullet" | "paragraph"; text: string };

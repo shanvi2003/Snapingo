@@ -38,7 +38,7 @@ async function issuedThisYear(prefix: string, year: number): Promise<string[]> {
  * `tripId` columns are UNIQUE, so simultaneous saves lose one insert rather
  * than silently duplicating - `withNewTripId` retries that case.
  */
-export async function nextTripId(): Promise<string> {
+async function nextTripId(): Promise<string> {
   const prefix = normalizeTripIdPrefix(await getSetting("trip_id_prefix"));
   const year = new Date().getFullYear();
   const existing = await issuedThisYear(prefix, year);

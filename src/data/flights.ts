@@ -92,20 +92,3 @@ export const flights: Flight[] = [
   // Mumbai -> Maldives
   { id: "bom-maldives-indigo-eco", airline: "IndiGo", departureCitySlug: "mumbai", destinationSlug: "maldives", flightClass: "economy", price: 15999, duration: "3h 20m" },
 ];
-
-export function getFlightsByFilter({
-  departureCitySlug,
-  destinationSlug,
-  flightClass,
-}: {
-  departureCitySlug: string;
-  destinationSlug: string;
-  flightClass: FlightClass;
-}): Flight[] {
-  return flights.filter(
-    (f) =>
-      f.departureCitySlug === departureCitySlug &&
-      f.destinationSlug === destinationSlug &&
-      f.flightClass === flightClass
-  );
-}

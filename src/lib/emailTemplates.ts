@@ -101,38 +101,3 @@ export function itineraryEmail(input: {
 
   return { subject, html };
 }
-
-export function invoiceEmail(input: {
-  customerName: string;
-  reference: string;
-  destinationName: string;
-  totalAmount: number;
-  paidAmount: number;
-  dueAmount: number;
-  senderName: string;
-  note?: string;
-}): { subject: string; html: string } {
-  const subject = `Invoice ${input.reference} · ${input.destinationName}`;
-
-  const html = layout(
-    `Your invoice`,
-    [
-      paragraphs([`Hi ${esc(input.customerName)},`]),
-      paragraphs([`Please find your invoice attached.`]),
-      detailRows([
-        ["Reference", input.reference],
-        ["Trip", input.destinationName],
-        ["Total", formatRupees(input.totalAmount)],
-        ["Paid", formatRupees(input.paidAmount)],
-        ["Balance due", formatRupees(Math.max(0, input.dueAmount))],
-      ]),
-      input.note ? paragraphs([esc(input.note).replace(/\n/g, "<br>")]) : "",
-      paragraphs([
-        `If anything looks wrong, reply to this email and we'll sort it out.`,
-        `Warm regards,<br><strong>${esc(input.senderName)}</strong>`,
-      ]),
-    ].join("")
-  );
-
-  return { subject, html };
-}

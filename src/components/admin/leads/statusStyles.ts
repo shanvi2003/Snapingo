@@ -50,14 +50,6 @@ export const noteStatusOrder: LeadNoteStatus[] = [
   "MY_HOT",
 ];
 
-export const noteStatusStyles: Record<LeadNoteStatus, string> = {
-  TRAVELER_NOT_REACHABLE: "bg-amber-50 text-amber-700",
-  WONT_BOOK_WITH_ME: "bg-red-50 text-red-700",
-  TALK_IN_PROGRESS_WITH_TRAVELER: "bg-blue-50 text-blue-700",
-  TRAVELER_WILL_FINALIZE: "bg-indigo-50 text-indigo-700",
-  MY_HOT: "bg-brand-50 text-brand-700",
-};
-
 // Text colour alone, for places that name the status inline rather than as a
 // tinted pill (the lead page's notes list).
 export const noteStatusTextStyles: Record<LeadNoteStatus, string> = {

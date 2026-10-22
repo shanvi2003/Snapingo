@@ -7,7 +7,7 @@
 // Pure functions only; the database side lives in src/lib/packageCodeServer.ts
 // so this stays unit-testable and importable from the form.
 
-export const PACKAGE_CODE_MIN_DIGITS = 2;
+const PACKAGE_CODE_MIN_DIGITS = 2;
 
 /**
  * Pads to a minimum width without ever truncating a longer number.

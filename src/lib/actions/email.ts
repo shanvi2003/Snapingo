@@ -5,11 +5,10 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireStaffFeature } from "@/lib/dal";
 import { isEmailConfigured, looksLikeEmail, sendEmail } from "@/lib/email";
-import { invoiceEmail, itineraryEmail } from "@/lib/emailTemplates";
+import { itineraryEmail } from "@/lib/emailTemplates";
 import { loadCustomItinerary } from "@/lib/pdf/customItineraryData";
 import { buildCustomItineraryHtml } from "@/lib/pdf/customItineraryHtml";
 import { renderPdfFromHtml } from "@/lib/pdf/renderPdf";
-import { getPaymentSummary } from "@/lib/tripStage";
 
 export type FormState = { error: string } | { success: string } | undefined;
 
@@ -88,62 +87,4 @@ export async function sendItineraryEmailAction(
   revalidatePath(`/admin/custom-packages/${customPackageId}`);
   revalidatePath(`/staff/custom-packages/${customPackageId}`);
   return { success: `Itinerary sent to ${parsed.data.to}.` };
-}
-
-/**
- * Emails an invoice summary to the customer.
- *
- * No PDF is attached here: the invoice is a panel page designed to be printed,
- * not a generated document, so the email carries the figures and the customer
- * can ask for a printed copy. Wiring the same Chromium renderer to the invoice
- * page would be the next step if a PDF is wanted.
- */
-export async function sendInvoiceEmailAction(
-  bookingId: string,
-  _prevState: FormState,
-  formData: FormData
-): Promise<FormState> {
-  const session = await requireStaffFeature("bookings");
-
-  if (!isEmailConfigured()) {
-    return { error: "Email isn't set up yet. Ask an admin to connect the email provider." };
-  }
-
-  const parsed = sendSchema.safeParse(Object.fromEntries(formData.entries()));
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the form." };
-  if (!looksLikeEmail(parsed.data.to)) return { error: "That doesn't look like a valid email address." };
-
-  const booking = await db.booking.findUnique({
-    where: { id: bookingId },
-    include: { payments: true, invoice: { select: { invoiceNumber: true } } },
-  });
-  if (!booking) return { error: "That booking no longer exists." };
-
-  const summary = getPaymentSummary(booking);
-
-  const message = invoiceEmail({
-    customerName: booking.travelerName,
-    reference: booking.invoice?.invoiceNumber ?? booking.tripId ?? booking.id.slice(-10).toUpperCase(),
-    destinationName: booking.packageTitle || booking.destinationName || "your trip",
-    totalAmount: summary.grandTotal,
-    paidAmount: summary.paid,
-    dueAmount: summary.balance,
-    senderName: await senderName(session.userId),
-    note: parsed.data.note,
-  });
-
-  const result = await sendEmail({
-    to: parsed.data.to,
-    subject: message.subject,
-    html: message.html,
-    kind: "INVOICE",
-    sentById: session.userId,
-    bookingId,
-  });
-
-  if (!result.ok) return { error: result.error };
-
-  revalidatePath(`/admin/bookings/${bookingId}`);
-  revalidatePath(`/staff/bookings/${bookingId}`);
-  return { success: `Invoice sent to ${parsed.data.to}.` };
 }

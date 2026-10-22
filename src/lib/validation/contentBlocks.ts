@@ -4,7 +4,7 @@ import { z } from "zod";
 // quotation carries as its own copy. Kept free of server-only imports so the
 // form schemas on both sides can share it.
 
-export const CONTENT_BLOCK_KEYS = [
+const CONTENT_BLOCK_KEYS = [
   "PDF_ABOUT",
   "PDF_TERMS",
   "PDF_PAYMENT_POLICY",
