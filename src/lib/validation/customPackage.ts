@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { contentBlocksField } from "@/lib/validation/contentBlocks";
+import { parsePriceLines } from "@/lib/priceLines";
 
 const linesToArray = (v: unknown) =>
   typeof v === "string" ? v.split("\n").map((s) => s.trim()).filter(Boolean) : [];
@@ -81,9 +82,16 @@ export const customPackageSchema = z.object({
   preparedByName: optionalText(120),
   preparedByRole: optionalText(80),
 
-  // GST is never posted by the form: it is computed server-side from the
-  // configured rate so a crafted request can't understate a customer's tax.
-  price: z.coerce.number().int().nonnegative(),
+  // The per-person breakup. Neither the package price nor GST is posted: the
+  // price is these rows' sum and GST is computed server-side from the
+  // configured rate, so a crafted request can't understate either.
+  priceLines: jsonRows.transform(parsePriceLines),
+  // "false" from the form's Yes/No; anything else (including a form that
+  // predates the question) keeps the default of printing the count.
+  showTravellerCount: z
+    .string()
+    .optional()
+    .transform((v) => v !== "false"),
 
   notes: optionalText(4000),
 

@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Download, Pencil } from "lucide-react";
+import { ArrowLeft, CalendarCheck, CalendarPlus, Download, Pencil } from "lucide-react";
 import { db } from "@/lib/db";
+import { canUseStaffFeature } from "@/lib/dal";
 import { formatRupees } from "@/lib/gst";
+import { parsePriceLines, priceLineAmount } from "@/lib/priceLines";
 import { getMasterList } from "@/lib/masterData";
 import { getEffectiveExclusions, resolveInclusions } from "@/lib/inclusionHelpers";
 import { isEmailConfigured } from "@/lib/email";
@@ -30,7 +32,7 @@ export default async function CustomPackageDetailView({
   basePath: string;
   id: string;
 }) {
-  const [quotation, inclusionOptions, roomOptions, hotelOptions] = await Promise.all([
+  const [quotation, inclusionOptions, roomOptions, hotelOptions, canBook] = await Promise.all([
     db.customPackage.findUnique({
       where: { id },
       include: {
@@ -43,9 +45,16 @@ export default async function CustomPackageDetailView({
     getMasterList("PACKAGE_INCLUSION"),
     getMasterList("ROOM_CATEGORY"),
     getMasterList("HOTEL_CATEGORY"),
+    canUseStaffFeature("bookings"),
   ]);
 
   if (!quotation) notFound();
+
+  // A booking made from this quotation shares its Trip ID, so once it exists
+  // the Convert button becomes a link to it.
+  const booking = canBook
+    ? await db.booking.findUnique({ where: { tripId: quotation.tripId }, select: { id: true } })
+    : null;
 
   const roomLabels = new Map(roomOptions.map((o) => [o.value, o.label]));
   const hotelLabels = new Map(hotelOptions.map((o) => [o.value, o.label]));
@@ -56,6 +65,7 @@ export default async function CustomPackageDetailView({
     quotation.customInclusions
   );
   const exclusions = getEffectiveExclusions(quotation.exclusions, quotation.inclusions, inclusionOptions);
+  const priceLines = parsePriceLines(quotation.priceLines);
 
   const facts: [string, string][] = [
     ["Customer", quotation.customerName],
@@ -140,6 +150,24 @@ export default async function CustomPackageDetailView({
             <Pencil className="h-4 w-4" />
             Edit
           </Link>
+          {canBook &&
+            (booking ? (
+              <Link
+                href={`${basePath}/bookings/${booking.id}`}
+                className="flex items-center gap-1.5 rounded-full border border-ink-200 px-5 py-2.5 text-sm font-semibold text-ink-700 transition hover:border-brand-400 hover:text-brand-600"
+              >
+                <CalendarCheck className="h-4 w-4" />
+                View Booking
+              </Link>
+            ) : (
+              <Link
+                href={`${basePath}/bookings/new?customPackageId=${quotation.id}`}
+                className="flex items-center gap-1.5 rounded-full border border-ink-200 px-5 py-2.5 text-sm font-semibold text-ink-700 transition hover:border-brand-400 hover:text-brand-600"
+              >
+                <CalendarPlus className="h-4 w-4" />
+                Convert to Booking
+              </Link>
+            ))}
         </div>
       </div>
 
@@ -238,7 +266,15 @@ export default async function CustomPackageDetailView({
 
         <Section title="Pricing">
           <dl className="max-w-md space-y-2 text-sm">
-            <div className="flex justify-between">
+            {priceLines.map((line, i) => (
+              <div key={i} className="flex justify-between gap-4">
+                <dt className="text-ink-500">
+                  {line.label} × {line.count} @ {formatRupees(line.rate)}
+                </dt>
+                <dd className="whitespace-nowrap text-ink-900">{formatRupees(priceLineAmount(line))}</dd>
+              </div>
+            ))}
+            <div className={`flex justify-between ${priceLines.length ? "border-t border-ink-100 pt-2" : ""}`}>
               <dt className="text-ink-500">Package price</dt>
               <dd className="text-ink-900">{formatRupees(quotation.price)}</dd>
             </div>

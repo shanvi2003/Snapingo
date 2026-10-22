@@ -7,6 +7,7 @@ import { requireStaffFeature } from "@/lib/dal";
 import { createBookingSchema, addPaymentSchema } from "@/lib/validation/booking";
 import type { SessionPayload } from "@/lib/session";
 import { withNewTripId } from "@/lib/tripIdServer";
+import { canAccessLead } from "@/lib/leads";
 
 export type FormState = { error: string } | undefined;
 
@@ -54,18 +55,42 @@ export async function createBookingAction(_prevState: FormState, formData: FormD
     return { error: parsed.error.issues[0]?.message ?? "Please check the form fields." };
   }
 
-  // If this booking comes from a lead that already has a quotation, it
-  // inherits that quotation's Trip ID rather than drawing a new one: the
+  // A booking converted from a quotation, or from a lead that already has
+  // one, inherits that quotation's Trip ID rather than drawing a new one: the
   // customer has already been given that reference on a PDF, and handing them
   // a second number for the same trip is exactly the confusion Trip IDs exist
   // to prevent.
-  const existingQuotation = parsed.data.leadId
-    ? await db.customPackage.findFirst({
-        where: { leadId: parsed.data.leadId },
-        orderBy: { createdAt: "desc" },
-        select: { tripId: true },
-      })
-    : null;
+  const customPackageId = formData.get("customPackageId");
+  const existingQuotation =
+    typeof customPackageId === "string" && customPackageId
+      ? await db.customPackage.findUnique({
+          where: { id: customPackageId },
+          select: { tripId: true, leadId: true },
+        })
+      : parsed.data.leadId
+        ? await db.customPackage.findFirst({
+            where: { leadId: parsed.data.leadId },
+            orderBy: { createdAt: "desc" },
+            select: { tripId: true, leadId: true },
+          })
+        : null;
+
+  // A quotation raised from a lead converts that lead too.
+  parsed.data.leadId ??= existingQuotation?.leadId ?? undefined;
+  if (parsed.data.leadId && !(await canAccessLead(session, parsed.data.leadId))) {
+    return { error: "This lead isn't assigned to you." };
+  }
+
+  // Trip IDs are unique across bookings, so a trip can only be booked once.
+  if (existingQuotation) {
+    const alreadyBooked = await db.booking.findUnique({
+      where: { tripId: existingQuotation.tripId },
+      select: { id: true },
+    });
+    if (alreadyBooked) {
+      return { error: `Trip ${existingQuotation.tripId} already has a booking.` };
+    }
+  }
 
   const booking = existingQuotation
     ? await db.booking.create({
@@ -81,6 +106,11 @@ export async function createBookingAction(_prevState: FormState, formData: FormD
     await db.lead.update({ where: { id: parsed.data.leadId }, data: { status: "CONVERTED" } });
     revalidatePath("/admin/leads");
     revalidatePath("/staff/leads");
+  }
+  // The quotation's page swaps its Convert button for a link to this booking.
+  if (typeof customPackageId === "string" && customPackageId) {
+    revalidatePath(`/admin/custom-packages/${customPackageId}`);
+    revalidatePath(`/staff/custom-packages/${customPackageId}`);
   }
 
   revalidateBookingPaths();

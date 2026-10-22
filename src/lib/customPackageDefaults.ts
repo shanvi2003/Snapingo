@@ -4,6 +4,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { resolveContentBlocks } from "@/lib/contentBlocks";
 import { getSession } from "@/lib/dal";
 import { jobRoleLabels } from "@/lib/permissions";
+import { parsePriceLines } from "@/lib/priceLines";
 import type { CustomPackageDefaults } from "@/components/admin/customPackages/CustomPackageForm";
 
 // <input type="date"> only accepts yyyy-mm-dd, and toISOString() would shift
@@ -54,7 +55,8 @@ export async function defaultsFromQuotation(quotation: QuotationWithRows): Promi
     customInclusions: quotation.customInclusions,
     exclusions: quotation.exclusions,
     vehicleName: quotation.vehicleName ?? undefined,
-    price: quotation.price,
+    priceLines: parsePriceLines(quotation.priceLines),
+    showTravellerCount: quotation.showTravellerCount,
     notes: quotation.notes ?? undefined,
     preparedByName: quotation.preparedByName ?? undefined,
     preparedByRole: quotation.preparedByRole ?? undefined,

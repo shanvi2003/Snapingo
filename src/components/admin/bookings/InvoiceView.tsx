@@ -73,7 +73,7 @@ export default async function InvoiceView({ bookingId }: { bookingId: string }) 
                 {booking.tripId && (
                   <tr>
                     <td className="pr-3 text-left">Trip ID</td>
-                    <td className="font-semibold">{booking.tripId}</td>
+                    <td className="whitespace-nowrap font-semibold">{booking.tripId}</td>
                   </tr>
                 )}
               </tbody>

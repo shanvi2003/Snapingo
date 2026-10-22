@@ -7,6 +7,7 @@ describe("createBookingSchema", () => {
       travelerName: "Priya Verma",
       phone: "9123456780",
       email: "priya@example.com",
+      travelStartDate: "2026-12-01",
       packageTitle: "Goa Beach Bliss",
       totalAmount: "50000",
     });
@@ -18,6 +19,7 @@ describe("createBookingSchema", () => {
       travelerName: "Priya Verma",
       phone: "9123456780",
       email: "priya@example.com",
+      travelStartDate: "2026-12-01",
       packageTitle: "Goa Beach Bliss",
       totalAmount: "50000",
     });
@@ -32,6 +34,7 @@ describe("createBookingSchema", () => {
       travelerName: "Priya Verma",
       phone: "9123456780",
       email: "priya@example.com",
+      travelStartDate: "2026-12-01",
       packageTitle: "Goa Beach Bliss",
       totalAmount: "50000",
       taxAmount: "2500",
@@ -57,9 +60,20 @@ describe("createBookingSchema", () => {
       travelerName: "Priya Verma",
       phone: "9123456780",
       email: "priya@example.com",
+      travelStartDate: "2026-12-01",
       totalAmount: "50000",
     });
     expect(result.success).toBe(true);
+  });
+
+  it("rejects a booking without a travel start date", () => {
+    const result = createBookingSchema.safeParse({
+      travelerName: "Priya Verma",
+      phone: "9123456780",
+      email: "priya@example.com",
+      totalAmount: "50000",
+    });
+    expect(result.success).toBe(false);
   });
 
   it("rejects a negative total amount", () => {

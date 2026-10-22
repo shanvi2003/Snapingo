@@ -8,7 +8,7 @@ import type { SessionPayload } from "@/lib/session";
 import { customPackageSchema } from "@/lib/validation/customPackage";
 import { withNewTripId } from "@/lib/tripIdServer";
 import { getGstPercent } from "@/lib/settings";
-import { calculateGst } from "@/lib/gst";
+import { priceLinesGst, priceLinesTotal } from "@/lib/priceLines";
 import { formatDuration } from "@/lib/durationHelpers";
 
 // `savedPath` instead of a server-side redirect: the form keeps a browser
@@ -51,6 +51,10 @@ export async function saveCustomPackageAction(
   }
   if (days.length === 0) {
     return { error: "Add at least one day to the itinerary." };
+  }
+  const price = priceLinesTotal(data.priceLines);
+  if (price <= 0) {
+    return { error: "Enter the per-person rate for at least one traveller type under Pricing." };
   }
   // Checked up front so a deleted lead gives a clear message, not a failed
   // save with the quotation half-written.
@@ -100,10 +104,11 @@ export async function saveCustomPackageAction(
   // The rate is read here, not taken from the form, and then frozen onto the
   // row - reprinting a quotation years later must show the tax the customer
   // was actually quoted, not today's rate.
-  const gst = calculateGst(data.price, await getGstPercent());
+  const gst = priceLinesGst(data.priceLines, await getGstPercent());
 
   const shared = {
     ...data,
+    price,
     customerEmail: customerEmail || null,
     leadId: leadId || null,
     startDate: startDate ? new Date(startDate) : null,

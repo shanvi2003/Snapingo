@@ -44,9 +44,11 @@ export async function getLeadStats(scope: Prisma.LeadWhereInput = {}) {
     total,
     today: todayCount,
     new: byStatus.NEW ?? 0,
+    assigned: byStatus.ASSIGNED ?? 0,
     contacted: byStatus.CONTACTED ?? 0,
     quoted: byStatus.QUOTED ?? 0,
     converted: byStatus.CONVERTED ?? 0,
+    cancelled: byStatus.CANCELLED ?? 0,
     closed: byStatus.CLOSED ?? 0,
   };
 }

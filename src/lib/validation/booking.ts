@@ -8,7 +8,9 @@ export const createBookingSchema = z.object({
   packageId: z.string().max(120).optional(),
   packageTitle: z.string().trim().max(200).optional(),
   destinationName: z.string().max(200).optional(),
-  travelStartDate: z.coerce.date().optional(),
+  // Required: Upcoming / Ongoing / Complete Trips place a booking by its dates
+  // alone (src/lib/tripStage.ts), so one without a start date is in none of them.
+  travelStartDate: z.coerce.date({ error: "Pick the travel start date." }),
   travelEndDate: z.coerce.date().optional(),
   totalAmount: z.coerce.number().int().nonnegative(),
   taxAmount: z.coerce.number().int().nonnegative().default(0),

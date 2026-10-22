@@ -15,20 +15,27 @@ import { saveCustomPackageAction, type FormState } from "@/lib/actions/customPac
 import RepeatableRows from "@/components/admin/cms/RepeatableRows";
 import CustomSelect from "@/components/CustomSelect";
 import { dayOptions, MAX_DURATION_NIGHTS, nightOptions } from "@/lib/durationHelpers";
-import { calculateGst, formatRupees } from "@/lib/gst";
+import { formatRupees } from "@/lib/gst";
 import SuggestInput from "@/components/admin/SuggestInput";
 import ItineraryDays, { datesFromStart, type DayRow } from "@/components/admin/customPackages/ItineraryDays";
 import ContentBlocksEditor, { type EditableContentBlock } from "@/components/admin/ContentBlocksEditor";
 import FormSection from "@/components/admin/FormSection";
 import { CHILD_AGES, INFANT_AGES, splitTravellerAges } from "@/lib/travellerAges";
 import CopyFromQuotation from "@/components/admin/customPackages/CopyFromQuotation";
+import { Plus, Trash2 } from "lucide-react";
+import {
+  MAX_PRICE_LINES,
+  parsePriceLines,
+  priceLineAmountWithGst,
+  priceLinesGst,
+  rateWithGst,
+} from "@/lib/priceLines";
 
 // Lets the copy search (outside the form) read what's been typed so far.
 const FORM_ID = "custom-package-form";
 
 const inputClass =
   "w-full rounded-xl border border-ink-200 bg-white px-4 py-2.5 text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100";
-const shortInputClass = `${inputClass} max-w-sm`;
 const labelClass = "mb-1.5 block text-xs font-bold uppercase tracking-wide text-ink-900";
 
 export type Option = { value: string; label: string; freeText?: boolean };
@@ -45,6 +52,26 @@ const ageOptionsFor = (ages: string[], current: string | undefined): Option[] =>
 };
 
 const countOf = (value: string) => Math.min(MAX_AGE_ROWS, Math.max(0, Math.floor(Number(value) || 0)));
+
+// The price breakup starts with one row per kind of traveller, its count
+// following the Travellers section. A row keeps that link (`kind`) while it
+// exists, even renamed ("Child" -> "Child with bed"); rows staff add are free.
+const travellerRowLabels = { adult: "Adult", child: "Child", infant: "Infant" } as const;
+type TravellerKind = keyof typeof travellerRowLabels;
+// `custom`: staff picked "Other" and type the name themselves.
+type PriceRow = { kind?: TravellerKind; custom?: boolean; label: string; count: string; rate: string };
+
+const kindOfLabel = (label: string) =>
+  (Object.keys(travellerRowLabels) as TravellerKind[]).find((k) => travellerRowLabels[k] === label);
+
+// The usual ways a quote is split per person; "Other" covers the rest.
+const travellerTypes = ["Adult", "Extra adult", "Child", "Child with bed", "Child without bed", "Infant"];
+const OTHER_TYPE = "__other__";
+const travellerTypeOptions = [
+  ...travellerTypes.map((t) => ({ value: t, label: t })),
+  { value: OTHER_TYPE, label: "Other" },
+];
+const isCustomType = (label: string) => Boolean(label) && !travellerTypes.includes(label);
 
 export type CustomPackageDefaults = {
   id?: string;
@@ -72,6 +99,11 @@ export type CustomPackageDefaults = {
   customInclusions?: string[];
   exclusions?: string[];
   vehicleName?: string;
+  // Per-person breakup; numbers from a saved quotation, strings from a draft.
+  priceLines?: { label: string; count: number | string; rate: number | string }[];
+  showTravellerCount?: boolean;
+  // A quotation saved before the breakup existed: its old total, shown as a
+  // reminder while its per-person rates are entered.
   price?: number;
   notes?: string;
   // Who prepared it (printed under the operation head on the PDF).
@@ -172,7 +204,7 @@ function formToDefaults(form: HTMLFormElement): CustomPackageDefaults {
     inclusions: fd.getAll("inclusions").filter((v): v is string => typeof v === "string"),
     customInclusions: (str("customInclusions") ?? "").split("\n").filter(Boolean),
     exclusions: (str("exclusions") ?? "").split("\n").filter(Boolean),
-    price: num("price"),
+    priceLines: rows("priceLines") as CustomPackageDefaults["priceLines"],
     notes: str("notes"),
     preparedByName: str("preparedByName"),
     preparedByRole: str("preparedByRole"),
@@ -353,8 +385,40 @@ function CustomPackageFormBody({
   };
 
   const [tripType, setTripType] = useState(defaults?.tripType ?? "domestic");
+  const [adults, setAdults] = useState(String(defaults?.adults ?? 1));
   const [children, setChildren] = useState(String(defaults?.children ?? 0));
   const [infants, setInfants] = useState(String(defaults?.infants ?? 0));
+
+  const [priceRows, setPriceRows] = useState<PriceRow[]>(() => {
+    const saved = defaults?.priceLines ?? [];
+    if (saved.length > 0) {
+      return saved.map((l) => ({
+        kind: kindOfLabel(l.label),
+        custom: isCustomType(l.label),
+        label: l.label,
+        count: String(l.count),
+        rate: String(l.rate),
+      }));
+    }
+    const counts = { adult: defaults?.adults ?? 1, child: defaults?.children ?? 0, infant: defaults?.infants ?? 0 };
+    return (Object.keys(counts) as TravellerKind[])
+      .filter((k) => k === "adult" || counts[k] > 0)
+      .map((k) => ({ kind: k, label: travellerRowLabels[k], count: String(counts[k]), rate: "" }));
+  });
+  // A change under Travellers carries into its price row, adding the row the
+  // first time, say, a child is added.
+  const syncTravellerCount = (kind: TravellerKind, value: string) => {
+    const count = String(Math.max(0, Math.floor(Number(value) || 0)));
+    setPriceRows((rows) =>
+      rows.some((r) => r.kind === kind)
+        ? rows.map((r) => (r.kind === kind ? { ...r, count } : r))
+        : Number(count) > 0
+          ? [...rows, { kind, label: travellerRowLabels[kind], count, rate: "" }]
+          : rows
+    );
+  };
+  const updatePriceRow = (index: number, patch: Partial<PriceRow>) =>
+    setPriceRows((rows) => rows.map((r, i) => (i === index ? { ...r, ...patch } : r)));
   const [initialAges] = useState(() => splitTravellerAges(defaults?.childAges ?? [], defaults?.children ?? 0));
   const [childAgeList, setChildAgeList] = useState<string[]>(initialAges.childAges);
   const [infantAgeList, setInfantAgeList] = useState<string[]>(initialAges.infantAges);
@@ -397,7 +461,6 @@ function CustomPackageFormBody({
   };
   const [roomCategory, setRoomCategory] = useState(defaults?.roomCategory ?? "");
   const [hotelCategory, setHotelCategory] = useState(defaults?.hotelCategory ?? "");
-  const [price, setPrice] = useState(String(defaults?.price ?? ""));
 
   const [inclusions, setInclusions] = useState<Set<string>>(new Set(defaults?.inclusions ?? []));
   // The automatic half of the PDF's Exclusions: every regular inclusion left
@@ -406,9 +469,13 @@ function CustomPackageFormBody({
     .filter((o) => !o.freeText && !inclusions.has(o.value))
     .map((o) => o.label);
 
+  // Whether the PDF prints the group size; asked under Pricing.
+  const [showTravellerCount, setShowTravellerCount] = useState(defaults?.showTravellerCount ?? true);
+
   // Mirrors what the server will compute and store, so staff see the tax and
   // the grand total before saving instead of typing GST in by hand.
-  const gst = calculateGst(Number(price) || 0, gstPercent);
+  // The package price is the breakup's sum - the same rule the server applies.
+  const gst = priceLinesGst(parsePriceLines(priceRows), gstPercent);
 
   const roomCategoryIsOther = roomCategories.find((c) => c.value === roomCategory)?.freeText ?? false;
 
@@ -571,7 +638,18 @@ function CustomPackageFormBody({
         <div className="grid grid-cols-2 gap-5 sm:grid-cols-3">
           <div>
             <label className={labelClass} htmlFor="adults">Adults</label>
-            <input id="adults" name="adults" type="number" min={0} defaultValue={defaults?.adults ?? 1} className={inputClass} />
+            <input
+              id="adults"
+              name="adults"
+              type="number"
+              min={0}
+              value={adults}
+              onChange={(e) => {
+                setAdults(e.target.value);
+                syncTravellerCount("adult", e.target.value);
+              }}
+              className={inputClass}
+            />
           </div>
           <div>
             <label className={labelClass} htmlFor="children">Children</label>
@@ -582,7 +660,10 @@ function CustomPackageFormBody({
               min={0}
               max={MAX_AGE_ROWS}
               value={children}
-              onChange={(e) => setChildren(e.target.value)}
+              onChange={(e) => {
+                setChildren(e.target.value);
+                syncTravellerCount("child", e.target.value);
+              }}
               className={inputClass}
             />
           </div>
@@ -595,7 +676,10 @@ function CustomPackageFormBody({
               min={0}
               max={MAX_AGE_ROWS}
               value={infants}
-              onChange={(e) => setInfants(e.target.value)}
+              onChange={(e) => {
+                setInfants(e.target.value);
+                syncTravellerCount("infant", e.target.value);
+              }}
               className={inputClass}
             />
           </div>
@@ -746,27 +830,139 @@ function CustomPackageFormBody({
       </Section>
 
       <Section title="Pricing">
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+        {/* The per-person rows on the left, the running total beside them, so
+            no field stretches across the whole card. */}
+        <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
           <div>
-            <label className={labelClass} htmlFor="price">Package price (₹)</label>
+            <p className={labelClass}>Per-person price (enter before GST)</p>
+            {!defaults?.priceLines?.length && defaults?.price ? (
+              <p className="mb-3 text-sm text-ink-500">
+                Saved earlier with a total of {formatRupees(defaults.price)} before GST. Enter the per-person rates
+                below; the package price is worked out from them.
+              </p>
+            ) : null}
             <input
-              id="price"
-              name="price"
-              type="number"
-              min={0}
-              required
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              className={shortInputClass}
+              type="hidden"
+              name="priceLines"
+              value={JSON.stringify(priceRows.map(({ label, count, rate }) => ({ label, count, rate })))}
             />
+            <div className="space-y-3">
+              {priceRows.map((row, index) => {
+                // Shown with GST added - the figure the customer will see.
+                const rate = Number(row.rate) || 0;
+                const amount = priceLineAmountWithGst({ label: row.label, count: Number(row.count) || 0, rate }, gstPercent);
+                return (
+                  <div key={index} className="flex flex-wrap items-end gap-2 sm:flex-nowrap">
+                    <div className="w-full min-w-0 sm:flex-1">
+                      {index === 0 && <label className="mb-1 block text-xs text-ink-500">Traveller type</label>}
+                      {row.custom ? (
+                        <input
+                          value={row.label}
+                          onChange={(e) => updatePriceRow(index, { label: e.target.value })}
+                          // Emptied: back to the list.
+                          onBlur={() => !row.label.trim() && updatePriceRow(index, { custom: false, label: "" })}
+                          autoFocus={!row.label}
+                          placeholder="Type traveller type"
+                          aria-label="Traveller type"
+                          className={inputClass}
+                        />
+                      ) : (
+                        <CustomSelect
+                          value={row.label}
+                          onChange={(v) =>
+                            updatePriceRow(index, v === OTHER_TYPE ? { custom: true, label: "" } : { label: v })
+                          }
+                          placeholder="Select type"
+                          options={travellerTypeOptions}
+                        />
+                      )}
+                    </div>
+                    <div className="w-20 shrink-0">
+                      {index === 0 && <label className="mb-1 block text-xs text-ink-500">Travellers</label>}
+                      <input
+                        type="number"
+                        min={0}
+                        value={row.count}
+                        onChange={(e) => updatePriceRow(index, { count: e.target.value })}
+                        aria-label="Number of travellers"
+                        className={inputClass}
+                      />
+                    </div>
+                    <div className="w-32 shrink-0">
+                      {index === 0 && <label className="mb-1 block text-xs text-ink-500">Rate / person (₹)</label>}
+                      <input
+                        type="number"
+                        min={0}
+                        value={row.rate}
+                        onChange={(e) => updatePriceRow(index, { rate: e.target.value })}
+                        placeholder="0"
+                        aria-label="Rate per person"
+                        className={inputClass}
+                      />
+                    </div>
+                    <div className="w-28 shrink-0 whitespace-nowrap text-right">
+                      {index === 0 && <span className="mb-1 block text-xs text-ink-500">With GST</span>}
+                      <div className="flex h-[42px] flex-col justify-center leading-tight">
+                        <span className="text-sm font-semibold text-ink-900">{formatRupees(amount)}</span>
+                        {Number(row.count) > 1 && rate > 0 && (
+                          <span className="text-[11px] text-ink-500">{formatRupees(rateWithGst(rate, gstPercent))} / person</span>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setPriceRows((rows) => rows.filter((_, i) => i !== index))}
+                      aria-label="Remove row"
+                      className="grid h-[42px] w-8 shrink-0 place-items-center rounded-full text-ink-400 hover:bg-red-50 hover:text-red-600"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+            {priceRows.length < MAX_PRICE_LINES && (
+              <button
+                type="button"
+                onClick={() => setPriceRows((rows) => [...rows, { label: "", count: "1", rate: "" }])}
+                className="mt-2.5 flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:text-brand-700"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Add traveller type
+              </button>
+            )}
+
+            <fieldset className="mt-5">
+              <legend className="text-sm font-medium text-ink-900">Show number of travellers on the itinerary?</legend>
+              <input type="hidden" name="showTravellerCount" value={showTravellerCount ? "true" : "false"} />
+              <div className="mt-2 inline-flex rounded-lg border border-ink-200 p-0.5">
+                {[
+                  { value: true, label: "Yes, show" },
+                  { value: false, label: "No, hide" },
+                ].map((opt) => (
+                  <button
+                    key={opt.label}
+                    type="button"
+                    aria-pressed={showTravellerCount === opt.value}
+                    onClick={() => setShowTravellerCount(opt.value)}
+                    className={`rounded-md px-3.5 py-1.5 text-sm font-medium transition-colors ${
+                      showTravellerCount === opt.value ? "bg-ink-900 text-white" : "text-ink-600 hover:bg-ink-50"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
           </div>
+
           <div className="rounded-xl border border-ink-200 bg-ink-50/60 p-4">
             <p className="text-xs font-bold uppercase tracking-wide text-ink-700">
               GST ({gstPercent}%), calculated automatically
             </p>
             <dl className="mt-2 space-y-1 text-sm text-ink-800">
               <div className="flex justify-between">
-                <dt>Package price</dt>
+                <dt>Price before GST</dt>
                 <dd>{formatRupees(gst.price)}</dd>
               </div>
               <div className="flex justify-between">
@@ -774,12 +970,13 @@ function CustomPackageFormBody({
                 <dd>{formatRupees(gst.gstAmount)}</dd>
               </div>
               <div className="flex justify-between border-t border-ink-200 pt-1 font-bold text-ink-900">
-                <dt>Total</dt>
+                <dt>Total with GST</dt>
                 <dd>{formatRupees(gst.totalAmount)}</dd>
               </div>
             </dl>
             <p className="mt-2 text-xs text-ink-500">
-              The rate comes from Settings, and is saved onto this quotation so reprints never change.
+              The itinerary prints each rate and the total with GST already added, without a separate GST line.
+              The rate comes from Settings and is saved onto this quotation, so reprints never change.
             </p>
           </div>
         </div>

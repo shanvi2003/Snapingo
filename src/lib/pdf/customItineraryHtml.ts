@@ -4,6 +4,7 @@ import path from "node:path";
 import type { ContentBlockView } from "@/lib/contentBlocks";
 import { parseContentBody } from "@/lib/contentBlocks";
 import { formatRupees } from "@/lib/gst";
+import { priceLineAmountWithGst, rateWithGst, type PriceLine } from "@/lib/priceLines";
 import { siteConfig } from "@/lib/siteConfig";
 import { splitTravellerAges } from "@/lib/travellerAges";
 
@@ -64,6 +65,11 @@ export type CustomItineraryData = {
   hotelCategoryLabel: string | null;
   vehicleName: string | null;
   price: number;
+  // Per-person rates before GST; empty on quotations saved before them.
+  // Printed with GST added.
+  priceLines: PriceLine[];
+  // False leaves the group size off: no Travellers/age rows, no "× N".
+  showTravellerCount: boolean;
   gstPercent: number;
   gstAmount: number;
   totalAmount: number;
@@ -234,9 +240,10 @@ export async function buildCustomItineraryHtml(
     ["Travel Dates", travelWindow],
     ["Duration", duration],
     ["Trip Type", tripTypeLabel],
-    ["Travellers", party],
-    ["Child Ages", ages.childAges.filter(Boolean).join(", ")],
-    ["Infant Ages", ages.infantAges.filter(Boolean).join(", ")],
+    // A list of ages gives the head count away too, so they go with it.
+    ["Travellers", data.showTravellerCount ? party : ""],
+    ["Child Ages", data.showTravellerCount ? ages.childAges.filter(Boolean).join(", ") : ""],
+    ["Infant Ages", data.showTravellerCount ? ages.infantAges.filter(Boolean).join(", ") : ""],
     ["Rooms", renderRoomsLine(data)],
   ];
   const details = `<section class="box mt-4 avoid-break">
@@ -286,6 +293,33 @@ export async function buildCustomItineraryHtml(
            categoryLine ? categoryLine.toLowerCase() : "quality"
          )} category hotels/resorts along the route, confirmed at the time of booking.</p>
        </section>`;
+
+  // ---- Price breakup: what each traveller costs with GST already added,
+  // adding up to the total shown at the top. No separate GST line - the
+  // customer sees one all-in rate. Without the head count there's no
+  // "× N" and no Amount column, which would give the count away.
+  const withCount = data.showTravellerCount;
+  const priceBreakup = data.priceLines.length
+    ? `<section class="mt-4 avoid-break">
+         <h2 class="box-heading">Price Breakup</h2>
+         <table class="stays prices">
+           <thead><tr><th>Traveller</th><th>Rate / Person</th>${withCount ? "<th>Amount</th>" : ""}</tr></thead>
+           <tbody>
+             ${data.priceLines
+               .map(
+                 (line) => `<tr>
+                   <td>${esc(line.label)}${withCount ? ` &times; ${esc(line.count)}` : ""}</td>
+                   <td>${esc(formatRupees(rateWithGst(line.rate, data.gstPercent)))}</td>
+                   ${withCount ? `<td>${esc(formatRupees(priceLineAmountWithGst(line, data.gstPercent)))}</td>` : ""}
+                 </tr>`
+               )
+               .join("")}
+             <tr class="total"><td${withCount ? ' colspan="2"' : ""}>Total Price</td><td>${esc(formatRupees(data.totalAmount))}</td></tr>
+           </tbody>
+         </table>
+         <p class="note-strong">&bull; Rates are per person and inclusive of GST.</p>
+       </section>`
+    : "";
 
   const vehicle = data.vehicleName
     ? `<section class="box mt-4 avoid-break">
@@ -455,6 +489,8 @@ export async function buildCustomItineraryHtml(
   table.stays th { font-size: 22px; font-weight: 800; color: ${BRAND}; }
   table.stays td { font-weight: 600; color: ${INK_900}; }
   table.stays tr { break-inside: avoid; }
+  table.prices td:last-child, table.prices th:last-child { text-align: right; white-space: nowrap; }
+  table.prices tr.total td { font-size: 20px; font-weight: 800; color: ${BRAND}; }
   .note-strong { margin-top: 6px; font-size: 16px; line-height: 24px; font-weight: 700; color: ${BRAND}; }
 
   .vehicle-name { margin-top: 6px; font-size: 21px; font-weight: 800; color: ${BRAND}; }
@@ -555,6 +591,8 @@ export async function buildCustomItineraryHtml(
   </div>
 
   ${details}
+
+  ${priceBreakup}
 
   ${stays}
 

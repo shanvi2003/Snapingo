@@ -36,7 +36,7 @@ function toDateInput(value: Date | null): string {
 const str = (v: string | number | null | undefined) => (v === null || v === undefined ? "" : String(v));
 
 export default async function LeadDetailView({ basePath, leadId }: { basePath: string; leadId: string }) {
-  const [lead, session, roomCategories, hotelCategories, canQuote] = await Promise.all([
+  const [lead, session, roomCategories, hotelCategories, canQuote, canBook] = await Promise.all([
     db.lead.findUnique({
       where: { id: leadId },
       include: {
@@ -56,6 +56,7 @@ export default async function LeadDetailView({ basePath, leadId }: { basePath: s
     // Edit opens the full quotation form only for those allowed to save one;
     // anyone else (e.g. BDE) keeps the inline details form.
     canUseStaffFeature("customPackages"),
+    canUseStaffFeature("bookings"),
   ]);
 
   // A staff member can only open leads assigned to them - opening someone
@@ -134,9 +135,9 @@ export default async function LeadDetailView({ basePath, leadId }: { basePath: s
             <FileText className="h-4 w-4" />
             New quotation
           </Link>
-          {isAdmin && (
+          {canBook && (
             <Link
-              href={`/admin/bookings/new?leadId=${lead.id}`}
+              href={`${panelPath}/bookings/new?leadId=${lead.id}`}
               className="flex items-center gap-1.5 rounded-full bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-brand transition hover:bg-brand-700"
             >
               <CalendarPlus className="h-4 w-4" />
@@ -178,7 +179,7 @@ export default async function LeadDetailView({ basePath, leadId }: { basePath: s
                 <div>
                   <Link
                     href={`${panelPath}/custom-packages/${quotation.id}`}
-                    className="font-mono text-xs font-semibold text-brand-600 hover:text-brand-700"
+                    className="whitespace-nowrap font-mono text-xs font-semibold text-brand-600 hover:text-brand-700"
                   >
                     {quotation.tripId}
                   </Link>

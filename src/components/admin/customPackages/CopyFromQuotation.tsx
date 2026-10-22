@@ -94,7 +94,7 @@ export default function CopyFromQuotation({
                 className="w-full px-4 py-2.5 text-left transition hover:bg-brand-50/60 disabled:opacity-60"
               >
                 <span className="flex items-center justify-between gap-3">
-                  <span className="font-mono text-sm font-bold text-brand-600">{match.tripId}</span>
+                  <span className="shrink-0 whitespace-nowrap font-mono text-sm font-bold text-brand-600">{match.tripId}</span>
                   <span className="text-xs text-ink-500">
                     {match.durationNights}N / {match.durationDays}D
                   </span>

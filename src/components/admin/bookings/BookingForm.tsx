@@ -11,6 +11,7 @@ const sectionTitleClass = "font-heading text-lg font-bold text-ink-900";
 
 export type BookingDefaults = {
   leadId?: string;
+  customPackageId?: string;
   travelerName?: string;
   phone?: string;
   email?: string;
@@ -49,6 +50,9 @@ export default function BookingForm({
   return (
     <form action={formAction} className="mt-6 rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
       {defaults?.leadId && <input type="hidden" name="leadId" value={defaults.leadId} />}
+      {defaults?.customPackageId && (
+        <input type="hidden" name="customPackageId" value={defaults.customPackageId} />
+      )}
 
       <div className="pb-5">
         <p className={sectionTitleClass}>Traveler Details</p>
@@ -88,7 +92,7 @@ export default function BookingForm({
           </div>
           <div>
             <label className={labelClass} htmlFor="travelStartDate">Travel Start Date</label>
-            <input id="travelStartDate" name="travelStartDate" type="date" defaultValue={defaults?.travelStartDate} className={inputClass} />
+            <input id="travelStartDate" name="travelStartDate" type="date" required defaultValue={defaults?.travelStartDate} className={inputClass} />
           </div>
           <div>
             <label className={labelClass} htmlFor="travelEndDate">Travel End Date</label>

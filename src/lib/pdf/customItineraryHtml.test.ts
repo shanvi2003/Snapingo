@@ -27,6 +27,8 @@ function makeData(overrides: Partial<CustomItineraryData> = {}): CustomItinerary
     hotelCategoryLabel: "4 Star",
     vehicleName: "Innova Crysta",
     price: 60000,
+    priceLines: [],
+    showTravellerCount: true,
     gstPercent: 5,
     gstAmount: 3000,
     totalAmount: 63000,
@@ -69,7 +71,8 @@ describe("buildCustomItineraryHtml", () => {
     expect(html).toContain("Innova Crysta");
   });
 
-  // The customer only ever sees the GST-inclusive total, never the split.
+  // Without a per-person breakup the customer sees the GST-inclusive total
+  // alone, never the split.
   it("prints only the total, without the GST breakdown", async () => {
     const html = await buildCustomItineraryHtml(makeData(), context);
     expect(html).toContain("₹63,000");
@@ -77,6 +80,43 @@ describe("buildCustomItineraryHtml", () => {
     expect(html).not.toContain("₹3,000");
     // Inlined images/fonts are base64, which can spell "GST" by chance.
     expect(html.replace(/data:[^")]+/g, "")).not.toMatch(/GST/);
+  });
+
+  // Staff enter rates before GST; the customer sees each rate with GST
+  // already added and no separate GST line.
+  it("prints the per-person breakup with GST included in each rate", async () => {
+    const html = await buildCustomItineraryHtml(
+      makeData({
+        priceLines: [
+          { label: "Adult", count: 2, rate: 25000 },
+          { label: "Child with bed", count: 1, rate: 10000 },
+        ],
+      }),
+      context
+    );
+    expect(html).toContain("Price Breakup");
+    expect(html).toContain("Adult &times; 2");
+    expect(html).toContain("₹26,250");
+    expect(html).toContain("₹52,500");
+    expect(html).toContain("Child with bed &times; 1");
+    expect(html).toContain("₹10,500");
+    expect(html).toContain("₹63,000");
+    expect(html).toContain("inclusive of GST");
+    expect(html).not.toContain("GST (5%)");
+    expect(html).not.toContain("₹60,000");
+  });
+
+  // Some customers are quoted per person without the group size on paper.
+  it("leaves the number of travellers off when asked to", async () => {
+    const html = await buildCustomItineraryHtml(
+      makeData({ showTravellerCount: false, priceLines: [{ label: "Adult", count: 2, rate: 25000 }] }),
+      context
+    );
+    expect(html).toContain("₹26,250");
+    expect(html).not.toContain("&times; 2");
+    expect(html).not.toContain("₹52,500");
+    expect(html).not.toContain("2 Adults");
+    expect(html).not.toContain("Child Ages");
   });
 
   // The quotation is a customer-facing document assembled by string

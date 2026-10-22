@@ -80,7 +80,7 @@ export default async function CustomPackagesListPage({
                 {/* The Trip ID link stretches over the whole row (after:inset-0),
                     so a click anywhere opens the quotation; the PDF and delete
                     buttons sit above it (relative z-10) and keep their own clicks. */}
-                <td className="px-4 py-3">
+                <td className="whitespace-nowrap px-4 py-3">
                   <Link
                     href={`${basePath}/custom-packages/${quotation.id}`}
                     className="font-mono text-sm font-bold text-brand-600 after:absolute after:inset-0 hover:text-brand-700"
@@ -93,13 +93,13 @@ export default async function CustomPackagesListPage({
                   <p className="text-xs text-ink-500">{quotation.customerPhone}</p>
                 </td>
                 <td className="px-4 py-3 text-ink-700">{quotation.destinationName}</td>
-                <td className="px-4 py-3 text-ink-700">
+                <td className="whitespace-nowrap px-4 py-3 text-ink-700">
                   {quotation.startDate ? fmtDate(quotation.startDate) : "N/A"}
                   <p className="text-xs text-ink-500">
                     {quotation.durationNights}N / {quotation.durationDays}D
                   </p>
                 </td>
-                <td className="px-4 py-3 font-semibold text-ink-900">
+                <td className="whitespace-nowrap px-4 py-3 font-semibold text-ink-900">
                   {formatRupees(quotation.totalAmount)}
                 </td>
                 <td className="px-4 py-3 text-xs text-ink-500">

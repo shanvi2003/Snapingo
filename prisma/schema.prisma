@@ -513,6 +513,16 @@ model CustomPackage {
   gstAmount   Int   @default(0)
   totalAmount Int   @default(0)
 
+  // Per-person breakup, [{ label, count, rate }] with rates before GST (see
+  // src/lib/priceLines.ts); `price` is its sum. Null on quotations saved
+  // before the breakup existed - those print their total alone.
+  priceLines Json?
+
+  // Whether the PDF prints how many people are travelling (the Travellers
+  // and age rows, and "× N" in the price breakup). Some customers are quoted
+  // per person without the group size on the document.
+  showTravellerCount Boolean @default(true)
+
   notes String?
 
   // Who prepared this quotation, printed under the operation head on the

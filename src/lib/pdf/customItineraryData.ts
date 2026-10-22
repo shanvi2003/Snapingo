@@ -7,6 +7,7 @@ import { resolveContentBlocks } from "@/lib/contentBlocks";
 import { getSettings } from "@/lib/settings";
 import { getMasterList } from "@/lib/masterData";
 import { getEffectiveExclusions, resolveInclusions } from "@/lib/inclusionHelpers";
+import { parsePriceLines } from "@/lib/priceLines";
 import type { CustomItineraryContext, CustomItineraryData } from "@/lib/pdf/customItineraryHtml";
 
 const IMAGE_MIME: Record<string, string> = {
@@ -136,6 +137,8 @@ export async function loadCustomItinerary(
         : null,
       vehicleName: quotation.vehicleName,
       price: quotation.price,
+      priceLines: parsePriceLines(quotation.priceLines),
+      showTravellerCount: quotation.showTravellerCount,
       gstPercent: quotation.gstPercent,
       gstAmount: quotation.gstAmount,
       totalAmount: quotation.totalAmount,
