@@ -15,7 +15,23 @@ const CIRC = 2 * Math.PI * R;
 // Surface-coloured gap between slices so neighbours never touch.
 const GAP = 2;
 
-export default function PipelineDonut({ slices, total, basePath }: { slices: PipelineSlice[]; total: number; basePath: string }) {
+export default function PipelineDonut({
+  slices,
+  total,
+  basePath,
+  param = "status",
+  label = "Leads by pipeline stage",
+  legendColumns = 2,
+}: {
+  slices: PipelineSlice[];
+  total: number;
+  basePath: string;
+  /** Query param each legend row filters the list by; a slice's `status` is its value. */
+  param?: string;
+  label?: string;
+  /** One column suits long labels, e.g. lead sources. */
+  legendColumns?: 1 | 2;
+}) {
   const [active, setActive] = useState<string | null>(null);
   const visible = slices.filter((s) => s.count > 0);
   const pct = (n: number) => (total ? Math.round((n / total) * 100) : 0);
@@ -30,7 +46,7 @@ export default function PipelineDonut({ slices, total, basePath }: { slices: Pip
   return (
     <div className="flex flex-col items-center gap-5">
       <div className="relative shrink-0" style={{ width: SIZE, height: SIZE }}>
-        <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="-rotate-90" role="img" aria-label="Leads by pipeline stage">
+        <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="-rotate-90" role="img" aria-label={label}>
           <circle cx={SIZE / 2} cy={SIZE / 2} r={R} fill="none" stroke="#f4ecf1" strokeWidth={STROKE} />
           {arcs.map((a) => (
             <circle
@@ -58,11 +74,11 @@ export default function PipelineDonut({ slices, total, basePath }: { slices: Pip
         </div>
       </div>
 
-      <ul className="grid w-full grid-cols-2 gap-x-3 gap-y-0.5">
+      <ul className={`grid w-full gap-x-3 gap-y-0.5 ${legendColumns === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
         {slices.map((s) => (
           <li key={s.status}>
             <Link
-              href={`${basePath}?status=${s.status}`}
+              href={`${basePath}?${param}=${encodeURIComponent(s.status)}`}
               onMouseEnter={() => setActive(s.status)}
               onMouseLeave={() => setActive(null)}
               className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors ${
@@ -70,7 +86,9 @@ export default function PipelineDonut({ slices, total, basePath }: { slices: Pip
               }`}
             >
               <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: s.color }} />
-              <span className="whitespace-nowrap text-ink-600">{s.label}</span>
+              <span className="min-w-0 truncate text-ink-600" title={s.label}>
+                {s.label}
+              </span>
               <span className="ml-auto font-medium tabular-nums text-ink-900">{s.count}</span>
               <span className="w-8 text-right text-xs tabular-nums text-ink-400">{pct(s.count)}%</span>
             </Link>

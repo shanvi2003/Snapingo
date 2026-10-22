@@ -45,15 +45,8 @@ export default function StaffRow({
         </div>
       </td>
       <td className="px-4 py-4">
-        <span
-          className={`rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${
-            role === "ADMIN" ? "bg-brand-50 text-brand-700" : "bg-ink-100 text-ink-700"
-          }`}
-        >
-          {role.toLowerCase()}
-        </span>
         {role === "STAFF" && (
-          <div className={`mt-2 w-full max-w-60 ${jobRolePending ? "pointer-events-none opacity-60" : ""}`}>
+          <div className={`w-full max-w-60 ${jobRolePending ? "pointer-events-none opacity-60" : ""}`}>
             <CustomSelect
               value={jobRole ?? ""}
               onChange={(next) => startJobRoleTransition(() => updateStaffJobRoleAction(id, next as StaffJobRole))}
