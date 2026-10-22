@@ -16,7 +16,7 @@ export default function GlobalError({
   }, [error]);
 
   return (
-    <section className="flex min-h-[70vh] items-center bg-ink-50/60 py-20">
+    <section className="flex min-h-screen items-center bg-ink-50/60 py-20">
       <div className="container-app">
         <div className="mx-auto max-w-lg text-center">
           <div className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-red-100">
@@ -26,8 +26,9 @@ export default function GlobalError({
             Something went wrong
           </h1>
           <p className="mt-3 text-base text-ink-900">
-            We hit an unexpected error while loading this page. Please try again, or head back to
-            the homepage.
+            We hit an unexpected error while loading this page.
+            <br />
+            Please try again, or head back to the homepage.
           </p>
           <div className="mx-auto mt-8 flex w-max flex-col gap-3 sm:flex-row">
             <button

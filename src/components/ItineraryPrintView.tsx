@@ -180,7 +180,7 @@ export default async function ItineraryPrintView({ pkg }: { pkg: TourPackage }) 
           className="h-12 w-auto"
         />
         <p className="text-sm font-bold uppercase tracking-wide text-ink-700">
-          A unit of SNAP Tour and Travels Pvt. Ltd.
+          A unit of SNAP Tours and Travels Pvt. Ltd.
         </p>
       </header>
 
@@ -350,8 +350,8 @@ export default async function ItineraryPrintView({ pkg }: { pkg: TourPackage }) 
           follows so it's never stranded alone at a page bottom, without
           forcing the entire day list to jump together as one block when it
           doesn't fit the room left on the page (which was leaving large
-          blank gaps). Each day block below already carries its own
-          break-inside-avoid. */}
+          blank gaps). Days themselves may also split across pages for the
+          same reason - only each day's heading is glued to its text. */}
       <section className="mt-8">
         <div className="mx-auto w-fit break-inside-avoid break-after-avoid rounded-xl border border-brand-300 px-8 py-3">
           <h2 className="text-4xl font-extrabold uppercase tracking-wide text-brand-600">
@@ -360,11 +360,15 @@ export default async function ItineraryPrintView({ pkg }: { pkg: TourPackage }) 
         </div>
         <div className="mt-5 space-y-4">
           {pkg.itinerary.map((day) => (
-            <div key={day.day} className="break-inside-avoid">
-              <span className="inline-block rounded-md bg-brand-600 px-3 py-1.5 text-[21px] font-bold text-white">
-                Day {day.day} : {day.title}
-              </span>
-              <p className="mt-1.5 text-[19px] leading-relaxed text-ink-800">{day.desc}</p>
+            <div key={day.day}>
+              <div className="break-inside-avoid break-after-avoid">
+                <span className="inline-block rounded-md bg-brand-600 px-3 py-1.5 text-[21px] font-bold text-white">
+                  Day {day.day} : {day.title}
+                </span>
+              </div>
+              <p className="mt-1.5 text-[19px] leading-relaxed text-ink-800 [orphans:3] [widows:3]">
+                {day.desc}
+              </p>
             </div>
           ))}
         </div>

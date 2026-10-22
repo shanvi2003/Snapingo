@@ -331,7 +331,7 @@ export async function buildCustomItineraryHtml(
 
   const itinerary = data.days
     .map(
-      (day) => `<div class="day avoid-break">
+      (day) => `<div class="day">
         <div class="day-head">
           ${
             day.date
@@ -504,7 +504,10 @@ export async function buildCustomItineraryHtml(
   .itinerary-heading h2 { font-size: 36px; line-height: 40px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.025em; color: ${BRAND}; }
   .days { margin-top: 20px; }
   .day + .day { margin-top: 16px; }
-  .day-head { display: flex; align-items: stretch; gap: 8px; }
+  /* Days are allowed to split across pages - keeping a whole day together
+     pushed long days onto the next page and left big blank gaps. Only the
+     heading is glued to the first lines of its description. */
+  .day-head { display: flex; align-items: stretch; gap: 8px; break-inside: avoid; break-after: avoid; }
   /* A small calendar card: icon, weekday above, date below. */
   .day-date {
     display: flex; align-items: center; gap: 8px; border: 1.5px solid ${BRAND}; border-radius: 6px; background: #fff;
@@ -514,7 +517,7 @@ export async function buildCustomItineraryHtml(
   .day-weekday { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: ${BRAND_700}; }
   .day-full { font-size: 16px; font-weight: 800; color: ${INK_900}; }
   .day-pill { display: inline-block; border-radius: 6px; background: ${BRAND}; padding: 6px 12px; font-size: 21px; font-weight: 700; color: #fff; }
-  .day-desc { margin-top: 6px; font-size: 19px; line-height: 1.625; color: ${INK_800}; white-space: pre-line; }
+  .day-desc { margin-top: 6px; font-size: 19px; line-height: 1.625; color: ${INK_800}; white-space: pre-line; orphans: 3; widows: 3; }
 
   /* Flexbox, not grid: Chromium's print pagination can leave a ghost
      fragment of a grid column's border on the previous page. */
@@ -571,7 +574,7 @@ export async function buildCustomItineraryHtml(
 
   <header>
     ${wordmark ? `<img src="${wordmark}" alt="Snapingo">` : `<span class="unit">${esc(siteConfig.name)}</span>`}
-    <p class="unit">A unit of SNAP Tour and Travels Pvt. Ltd.</p>
+    <p class="unit">A unit of SNAP Tours and Travels Pvt. Ltd.</p>
   </header>
 
   <div class="meta">

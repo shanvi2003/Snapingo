@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
-import { LogOut, MonitorSmartphone } from "lucide-react";
+import { LogOut, MonitorSmartphone, ShieldCheck } from "lucide-react";
 import { logoutAction } from "@/lib/actions/auth";
 import PanelNav from "@/components/admin/PanelNav";
 import DesktopOnlyBrandBar from "@/components/admin/DesktopOnlyBrandBar";
@@ -58,7 +58,10 @@ export default function PanelShell({
                   unoptimized
                 />
               </span>
-              <p className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-black">{title}</p>
+              <p className="mt-1.5 flex items-center gap-1.5 font-heading text-[13px] font-semibold text-ink-700">
+                <ShieldCheck className="h-4 w-4 text-brand-600" aria-hidden />
+                {title}
+              </p>
             </div>
             <NotificationBell leadsBasePath={leadsBasePath} align="left" />
           </div>
@@ -88,7 +91,12 @@ export default function PanelShell({
             regardless of the rendering window's width, since printing (an
             invoice, itinerary, etc.) should never be blocked by it. */}
         <div className="hidden flex-1 flex-col overflow-hidden lg:flex print:flex print:overflow-visible">
-          <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 print:h-auto print:overflow-visible">{children}</main>
+          {/* relative: makes <main> the containing block for any absolutely
+              positioned descendant (an sr-only label, a hidden input). Without
+              it they resolve against the page itself, and one far down a long
+              form stretches the document - a second scrollbar and a blank
+              band below the h-screen panel. */}
+          <main className="relative flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 print:h-auto print:overflow-visible">{children}</main>
         </div>
 
         <div className="print-hide relative flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center lg:hidden">

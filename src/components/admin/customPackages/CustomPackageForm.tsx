@@ -37,6 +37,8 @@ const FORM_ID = "custom-package-form";
 const inputClass =
   "w-full rounded-xl border border-ink-200 bg-white px-4 py-2.5 text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100";
 const labelClass = "mb-1.5 block text-xs font-bold uppercase tracking-wide text-ink-900";
+// Shared by the price table's header and rows so the columns line up.
+const PRICE_ROW_GRID = "grid grid-cols-[minmax(0,1fr)_96px_150px_120px_32px] items-center gap-3";
 
 export type Option = { value: string; label: string; freeText?: boolean };
 
@@ -800,7 +802,7 @@ function CustomPackageFormBody({
           <textarea
             id="customInclusions"
             name="customInclusions"
-            rows={3}
+            rows={8}
             defaultValue={defaults?.customInclusions?.join("\n")}
             placeholder={"Airport lounge access\nProfessional photoshoot"}
             className={inputClass}
@@ -821,7 +823,7 @@ function CustomPackageFormBody({
           <textarea
             id="exclusions"
             name="exclusions"
-            rows={3}
+            rows={8}
             defaultValue={defaults?.exclusions?.join("\n")}
             placeholder={"GST and government taxes\nPersonal expenses, tips & shopping\nTravel insurance"}
             className={inputClass}
@@ -832,7 +834,7 @@ function CustomPackageFormBody({
       <Section title="Pricing">
         {/* The per-person rows on the left, the running total beside them, so
             no field stretches across the whole card. */}
-        <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
+        <div className="grid grid-cols-1 items-start gap-8 xl:grid-cols-[minmax(0,1fr)_340px]">
           <div>
             <p className={labelClass}>Per-person price (enter before GST)</p>
             {!defaults?.priceLines?.length && defaults?.price ? (
@@ -846,15 +848,24 @@ function CustomPackageFormBody({
               name="priceLines"
               value={JSON.stringify(priceRows.map(({ label, count, rate }) => ({ label, count, rate })))}
             />
-            <div className="space-y-3">
+            {/* One header row and fixed columns, so every row's fields line up
+                under their heading instead of the first row carrying labels. */}
+            <div className="mt-3 overflow-hidden rounded-xl border border-ink-200">
+              <div className={`${PRICE_ROW_GRID} border-b border-ink-200 bg-ink-50/60 px-4 py-2.5 text-xs font-bold text-ink-900`}>
+                <span>Traveller type</span>
+                <span>Travellers</span>
+                <span>Rate / person (₹)</span>
+                <span className="text-right">With GST</span>
+                <span aria-hidden />
+              </div>
+              <div className="divide-y divide-ink-100">
               {priceRows.map((row, index) => {
                 // Shown with GST added - the figure the customer will see.
                 const rate = Number(row.rate) || 0;
                 const amount = priceLineAmountWithGst({ label: row.label, count: Number(row.count) || 0, rate }, gstPercent);
                 return (
-                  <div key={index} className="flex flex-wrap items-end gap-2 sm:flex-nowrap">
-                    <div className="w-full min-w-0 sm:flex-1">
-                      {index === 0 && <label className="mb-1 block text-xs text-ink-500">Traveller type</label>}
+                  <div key={index} className={`${PRICE_ROW_GRID} px-4 py-3`}>
+                    <div className="min-w-0">
                       {row.custom ? (
                         <input
                           value={row.label}
@@ -877,8 +888,7 @@ function CustomPackageFormBody({
                         />
                       )}
                     </div>
-                    <div className="w-20 shrink-0">
-                      {index === 0 && <label className="mb-1 block text-xs text-ink-500">Travellers</label>}
+                    <div>
                       <input
                         type="number"
                         min={0}
@@ -888,8 +898,7 @@ function CustomPackageFormBody({
                         className={inputClass}
                       />
                     </div>
-                    <div className="w-32 shrink-0">
-                      {index === 0 && <label className="mb-1 block text-xs text-ink-500">Rate / person (₹)</label>}
+                    <div>
                       <input
                         type="number"
                         min={0}
@@ -900,39 +909,40 @@ function CustomPackageFormBody({
                         className={inputClass}
                       />
                     </div>
-                    <div className="w-28 shrink-0 whitespace-nowrap text-right">
-                      {index === 0 && <span className="mb-1 block text-xs text-ink-500">With GST</span>}
-                      <div className="flex h-[42px] flex-col justify-center leading-tight">
-                        <span className="text-sm font-semibold text-ink-900">{formatRupees(amount)}</span>
-                        {Number(row.count) > 1 && rate > 0 && (
-                          <span className="text-[11px] text-ink-500">{formatRupees(rateWithGst(rate, gstPercent))} / person</span>
-                        )}
-                      </div>
+                    <div className="flex flex-col justify-center whitespace-nowrap text-right leading-tight">
+                      <span className="text-sm font-semibold text-ink-900">{formatRupees(amount)}</span>
+                      {Number(row.count) > 1 && rate > 0 && (
+                        <span className="mt-0.5 text-[11px] text-ink-500">{formatRupees(rateWithGst(rate, gstPercent))} / person</span>
+                      )}
                     </div>
                     <button
                       type="button"
                       onClick={() => setPriceRows((rows) => rows.filter((_, i) => i !== index))}
                       aria-label="Remove row"
-                      className="grid h-[42px] w-8 shrink-0 place-items-center rounded-full text-ink-400 hover:bg-red-50 hover:text-red-600"
+                      className="grid h-8 w-8 place-items-center rounded-full text-ink-400 hover:bg-red-50 hover:text-red-600"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 );
               })}
+              </div>
+              {priceRows.length < MAX_PRICE_LINES && (
+                <button
+                  type="button"
+                  onClick={() => setPriceRows((rows) => [...rows, { label: "", count: "1", rate: "" }])}
+                  className="flex w-full items-center gap-1.5 border-t border-ink-100 px-4 py-3 text-sm font-semibold text-brand-600 hover:bg-brand-50/50 hover:text-brand-700"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add traveller type
+                </button>
+              )}
             </div>
-            {priceRows.length < MAX_PRICE_LINES && (
-              <button
-                type="button"
-                onClick={() => setPriceRows((rows) => [...rows, { label: "", count: "1", rate: "" }])}
-                className="mt-2.5 flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:text-brand-700"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Add traveller type
-              </button>
-            )}
 
-            <fieldset className="mt-5">
+            {/* The divider sits on a wrapper: on the fieldset itself the
+                browser draws its border through the legend. */}
+            <div className="mt-6 border-t border-ink-100 pt-5">
+            <fieldset>
               <legend className="text-sm font-medium text-ink-900">Show number of travellers on the itinerary?</legend>
               <input type="hidden" name="showTravellerCount" value={showTravellerCount ? "true" : "false"} />
               <div className="mt-2 inline-flex rounded-lg border border-ink-200 p-0.5">
@@ -954,27 +964,28 @@ function CustomPackageFormBody({
                 ))}
               </div>
             </fieldset>
+            </div>
           </div>
 
-          <div className="rounded-xl border border-ink-200 bg-ink-50/60 p-4">
+          <div className="rounded-xl border border-ink-200 bg-ink-50/60 p-5 xl:mt-[26px]">
             <p className="text-xs font-bold uppercase tracking-wide text-ink-700">
               GST ({gstPercent}%), calculated automatically
             </p>
-            <dl className="mt-2 space-y-1 text-sm text-ink-800">
+            <dl className="mt-4 space-y-2.5 text-sm text-ink-700">
               <div className="flex justify-between">
                 <dt>Price before GST</dt>
-                <dd>{formatRupees(gst.price)}</dd>
+                <dd className="font-medium text-ink-900">{formatRupees(gst.price)}</dd>
               </div>
               <div className="flex justify-between">
                 <dt>GST</dt>
-                <dd>{formatRupees(gst.gstAmount)}</dd>
+                <dd className="font-medium text-ink-900">{formatRupees(gst.gstAmount)}</dd>
               </div>
-              <div className="flex justify-between border-t border-ink-200 pt-1 font-bold text-ink-900">
+              <div className="flex items-baseline justify-between border-t border-ink-200 pt-3 font-bold text-ink-900">
                 <dt>Total with GST</dt>
-                <dd>{formatRupees(gst.totalAmount)}</dd>
+                <dd className="text-lg text-brand-600">{formatRupees(gst.totalAmount)}</dd>
               </div>
             </dl>
-            <p className="mt-2 text-xs text-ink-500">
+            <p className="mt-4 border-t border-ink-200 pt-3 text-xs leading-relaxed text-ink-500">
               The itinerary prints each rate and the total with GST already added, without a separate GST line.
               The rate comes from Settings and is saved onto this quotation, so reprints never change.
             </p>

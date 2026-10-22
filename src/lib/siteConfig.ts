@@ -4,7 +4,7 @@
 // referenced in the itinerary PDF footer and legal pages.
 export const siteConfig = {
   name: "Snapingo",
-  legalName: "SNAP Tour and Travels Pvt. Ltd.",
+  legalName: "SNAP Tours and Travels Pvt. Ltd.",
   // Required on any invoice that charges GST - set the real 15-character
   // GSTIN via this env var once registered. Falls back to a clearly-marked
   // placeholder so an unregistered business doesn't accidentally ship a

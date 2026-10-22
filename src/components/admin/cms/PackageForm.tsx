@@ -370,7 +370,7 @@ export default function PackageForm({
           <textarea
             id="customInclusions"
             name="customInclusions"
-            rows={3}
+            rows={8}
             defaultValue={defaults?.customInclusions?.join("\n")}
             placeholder={"Airport lounge access\nProfessional photoshoot"}
             className={inputClass}
@@ -396,7 +396,7 @@ export default function PackageForm({
           <textarea
             id="exclusions"
             name="exclusions"
-            rows={3}
+            rows={8}
             defaultValue={defaults?.exclusions?.join("\n")}
             placeholder={"GST and government taxes\nPersonal expenses, tips & shopping\nTravel insurance"}
             className={inputClass}

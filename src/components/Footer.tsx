@@ -49,7 +49,7 @@ export default async function Footer() {
             <span className="font-heading text-2xl font-extrabold text-white">Snapingo</span>
           </Link>
           <p className="mt-2 text-xs font-medium uppercase tracking-wide text-white">
-            A unit of SNAP Tour and Travels Pvt. Ltd.
+            A unit of SNAP Tours and Travels Pvt. Ltd.
           </p>
           <p className="mt-4 text-sm leading-relaxed">
             Snapingo curates all-inclusive holiday packages, including flights, stay, transfers &
@@ -144,7 +144,7 @@ export default async function Footer() {
               <ShieldCheck className="h-3.5 w-3.5" />
               Secure & verified bookings
             </div>
-            <p className="mt-4">© {year} SNAP Tour and Travels Pvt. Ltd. All rights reserved.</p>
+            <p className="mt-4">© {year} SNAP Tours and Travels Pvt. Ltd. All rights reserved.</p>
           </div>
         </div>
 
@@ -166,7 +166,7 @@ export default async function Footer() {
                 <span className="font-heading text-2xl font-extrabold text-white">Snapingo</span>
               </Link>
               <p className="mt-2 text-xs font-medium uppercase tracking-wide text-white">
-                A unit of SNAP Tour and Travels Pvt. Ltd.
+                A unit of SNAP Tours and Travels Pvt. Ltd.
               </p>
               <p className="mt-4 max-w-sm text-sm leading-relaxed">
                 Snapingo curates all-inclusive holiday packages, including flights,
@@ -249,7 +249,7 @@ export default async function Footer() {
           </div>
 
           <div className="flex flex-col items-center justify-between gap-4 border-t border-white/10 py-6 text-xs sm:flex-row">
-            <p>© {year} SNAP Tour and Travels Pvt. Ltd. All rights reserved.</p>
+            <p>© {year} SNAP Tours and Travels Pvt. Ltd. All rights reserved.</p>
             <div className="flex items-center gap-5">
               {legalLinks.map((l) => (
                 <Link key={l.href} href={l.href} className="transition hover:text-brand-300">
